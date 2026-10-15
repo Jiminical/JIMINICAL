@@ -963,7 +963,167 @@ input[type="range"]::-moz-range-thumb {
     bottom: 18px;
   }
 }
+/* The nib's upper-left pixel is the click point. No cursor tracking loop. */
+@media (any-hover: hover) and (any-pointer: fine) {
+  :root {
+    --cursor-quill: url("../assets/cursors/quill.svg") 2 2, default;
+    --cursor-quill-active:
+      url("../assets/cursors/quill-active.svg") 2 2, pointer;
+    cursor: var(--cursor-quill);
+  }
+  button,
+  input,
+  label[for],
+  [role="button"] {
+    cursor: var(--cursor-quill-active);
+  }
+  button:enabled {
+    transition: translate 120ms steps(3, end);
+  }
+  button:enabled:hover:not(.is-pressed) {
+    translate: 0 -3px;
+    animation: button-float 1.6s steps(4, end) infinite;
+  }
+}
+button:enabled:active {
+  filter: brightness(1.2);
+}
+button.is-pressed {
+  animation: button-confirm 260ms steps(4, end);
+}
+@keyframes button-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+@keyframes button-confirm {
+  0% {
+    transform: translateY(2px) scale(0.97);
+    filter: brightness(1.45);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+#interaction-effects {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: #fff4be;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1000;
+}
+#interaction-effects::backdrop {
+  background: transparent;
+  pointer-events: none;
+}
+.click-burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  animation: burst-lifetime 440ms linear both;
+}
+.click-burst i {
+  position: absolute;
+  width: var(--size, 4px);
+  height: var(--size, 4px);
+  margin: -2px;
+  background: var(--spark-color, #fff4be);
+  box-shadow: 0 0 6px #ffe8a9b3;
+  animation: pixel-scatter 420ms steps(7, end) both;
+}
+.click-burst .burst-core {
+  width: 24px;
+  height: 24px;
+  margin: -12px;
+  background: #fff9dd;
+  clip-path: polygon(
+    42% 0,
+    58% 0,
+    58% 25%,
+    75% 25%,
+    75% 42%,
+    100% 42%,
+    100% 58%,
+    75% 58%,
+    75% 75%,
+    58% 75%,
+    58% 100%,
+    42% 100%,
+    42% 75%,
+    25% 75%,
+    25% 58%,
+    0 58%,
+    0 42%,
+    25% 42%,
+    25% 25%,
+    42% 25%
+  );
+  animation: nib-flash 240ms steps(4, end) both;
+}
+@keyframes pixel-scatter {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes nib-flash {
+  0% {
+    opacity: 1;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+@keyframes burst-lifetime {
+  0%,
+  99% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.no-motion button {
+  animation: none !important;
+  transition: none !important;
+  translate: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
+  button {
+    translate: none !important;
+  }
   .logo-shine {
     display: none;
   }

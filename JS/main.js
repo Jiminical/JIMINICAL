@@ -374,8 +374,8 @@ const characterSpeech = (() => {
       event.clientX,
       event.clientY,
     )
-      ? "pointer"
-      : "default";
+      ? "var(--cursor-quill-active, pointer)"
+      : "var(--cursor-quill, default)";
   });
   character.addEventListener("click", (event) => {
     if (event.detail === 0) {
@@ -585,6 +585,93 @@ document.addEventListener(
   },
   { once: true },
 );
+// A temporary top-layer overlay also renders above native settings dialogs.
+(() => {
+  const layer = document.querySelector("#interaction-effects");
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const pressTimers = new WeakMap();
+  const colors = ["#fff9dd", "#ffe4a0", "#bce8cb"];
+
+  function clearBursts() {
+    layer.replaceChildren();
+    if (layer.matches(":popover-open")) layer.hidePopover();
+  }
+
+  function burstAt(x, y) {
+    if (!settings.motion || reducedMotion.matches) return;
+    if (typeof layer.showPopover === "function") {
+      if (layer.matches(":popover-open")) layer.hidePopover();
+      layer.showPopover();
+    }
+    if (layer.childElementCount >= 12) layer.firstElementChild.remove();
+    const burst = document.createElement("span");
+    burst.className = "click-burst";
+    burst.style.left = Math.round(x) + "px";
+    burst.style.top = Math.round(y) + "px";
+    const core = document.createElement("i");
+    core.className = "burst-core";
+    burst.append(core);
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement("i");
+      const angle = (i / 12) * Math.PI * 2;
+      const distance = i % 2 ? 24 : 38;
+      spark.style.setProperty(
+        "--dx",
+        Math.round((Math.cos(angle) * distance) / 2) * 2 + "px",
+      );
+      spark.style.setProperty(
+        "--dy",
+        Math.round((Math.sin(angle) * distance) / 2) * 2 + "px",
+      );
+      spark.style.setProperty("--size", (i % 3 ? 4 : 6) + "px");
+      spark.style.setProperty("--spark-color", colors[i % colors.length]);
+      burst.append(spark);
+    }
+    layer.append(burst);
+    // Timed cleanup also runs if motion is disabled during the animation.
+    setTimeout(() => {
+      burst.remove();
+      if (!layer.childElementCount && layer.matches(":popover-open"))
+        layer.hidePopover();
+    }, 460);
+  }
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (event.button !== 0 || !settings.motion || reducedMotion.matches)
+        return;
+      const button = event.target.closest("button:enabled");
+      const control = button || event.target.closest("input, [role='button']");
+      let x = event.clientX;
+      let y = event.clientY;
+      if (event.detail === 0) {
+        if (!control) return;
+        const bounds = control.getBoundingClientRect();
+        x = bounds.left + bounds.width / 2;
+        y = bounds.top + bounds.height / 2;
+      }
+      // Run after the control's action so a newly opened dialog stays below the sparks.
+      setTimeout(() => burstAt(x, y), 0);
+      if (!button) return;
+      clearTimeout(pressTimers.get(button));
+      button.classList.remove("is-pressed");
+      void button.offsetWidth;
+      button.classList.add("is-pressed");
+      pressTimers.set(
+        button,
+        setTimeout(() => button.classList.remove("is-pressed"), 270),
+      );
+    },
+    { capture: true },
+  );
+  motionSwitch.addEventListener("change", () => {
+    if (!settings.motion) clearBursts();
+  });
+  reducedMotion.addEventListener("change", clearBursts);
+  window.addEventListener("scroll", clearBursts, { passive: true });
+  window.addEventListener("blur", clearBursts);
+})();
 const particles = document.querySelector(".particles");
 for (let i = 0; i < 18; i++) {
   const petal = document.createElement("i");

@@ -1071,7 +1071,167 @@ input[type="range"]::-moz-range-thumb {
     bottom: 18px;
   }
 }
+/* The nib's upper-left pixel is the click point. No cursor tracking loop. */
+@media (any-hover: hover) and (any-pointer: fine) {
+  :root {
+    --cursor-quill: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPgogIDxwYXRoIGZpbGw9IiMxMDFlMjkiIGQ9Ik0wIDBoNnYyaDZ2Mmg0djRoMnYyaDJ2MmgydjJoMnYyaDJ2MmgydjRoMnY2aC0ydjJoLTZ2LTJoLTR2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJIOHYtMkg0di00SDJWNkgwWiIvPgogIDxwYXRoIGZpbGw9IiNlNWM5OGIiIGQ9Ik0yIDJoNHYyaDZ2MmgydjRoMnYybC00IDRoLTJ2LTJINnYtMkg0VjZIMloiLz4KICA8cGF0aCBmaWxsPSIjZmZmM2M1IiBkPSJNMiAyaDJ2NGgydjRoMnYyaDJ2Mkg2di0ySDRWNkgyWiIvPgogIDxwYXRoIGZpbGw9IiM4MDVlNDgiIGQ9Ik00IDRoMnYyaDJ2MmgydjJoMnYyaC0ydi0ySDhWOEg2VjZINFoiLz4KICA8cGF0aCBmaWxsPSIjMTUyYzMyIiBkPSJNMTAgMTBoNHY0aC00WiIvPgogIDxwYXRoIGZpbGw9IiNiMGM5YWUiIGQ9Ik0xNCAxMmgydjJoMnYyaC0ydjJoLTJ2LTJoLTJ2LTJoMloiLz4KICA8cGF0aCBmaWxsPSIjM2Q3MjZiIiBkPSJNMTggMTRoMnYyaDJ2MmgydjJoMnY0aC0ydjJoLTR2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJoMnYtMmgyWiIvPgogIDxwYXRoIGZpbGw9IiM4OGI2YTQiIGQ9Ik0xOCAxNGgydjJoMnYyaDJ2MmgtMnYtMmgtMnYtMmgtMloiLz4KICA8cGF0aCBmaWxsPSIjZDljMThiIiBkPSJNMjQgMjJoMnYyaDJ2NGgtNHYtMmgtMnYtMmgyWiIvPgogIDxwYXRoIGZpbGw9IiNmZmYzY2MiIGQ9Ik0yNCAyMmgydjJoLTJaIi8+Cjwvc3ZnPgo=") 2 2, default;
+    --cursor-quill-active:
+      url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPgogIDxwYXRoIGZpbGw9IiMxMDFlMjkiIGQ9Ik0wIDBoNnYyaDZ2Mmg0djRoMnYyaDJ2MmgydjJoMnYyaDJ2MmgydjRoMnY2aC0ydjJoLTZ2LTJoLTR2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJIOHYtMkg0di00SDJWNkgwWiIvPgogIDxwYXRoIGZpbGw9IiNlNWM5OGIiIGQ9Ik0yIDJoNHYyaDZ2MmgydjRoMnYybC00IDRoLTJ2LTJINnYtMkg0VjZIMloiLz4KICA8cGF0aCBmaWxsPSIjZmZmM2M1IiBkPSJNMiAyaDJ2NGgydjRoMnYyaDJ2Mkg2di0ySDRWNkgyWiIvPgogIDxwYXRoIGZpbGw9IiM4MDVlNDgiIGQ9Ik00IDRoMnYyaDJ2MmgydjJoMnYyaC0ydi0ySDhWOEg2VjZINFoiLz4KICA8cGF0aCBmaWxsPSIjMTUyYzMyIiBkPSJNMTAgMTBoNHY0aC00WiIvPgogIDxwYXRoIGZpbGw9IiNiMGM5YWUiIGQ9Ik0xNCAxMmgydjJoMnYyaC0ydjJoLTJ2LTJoLTJ2LTJoMloiLz4KICA8cGF0aCBmaWxsPSIjM2Q3MjZiIiBkPSJNMTggMTRoMnYyaDJ2MmgydjJoMnY0aC0ydjJoLTR2LTJoLTJ2LTJoLTJ2LTJoLTJ2LTJoMnYtMmgyWiIvPgogIDxwYXRoIGZpbGw9IiM4OGI2YTQiIGQ9Ik0xOCAxNGgydjJoMnYyaDJ2MmgtMnYtMmgtMnYtMmgtMloiLz4KICA8cGF0aCBmaWxsPSIjZDljMThiIiBkPSJNMjQgMjJoMnYyaDJ2NGgtNHYtMmgtMnYtMmgyWiIvPgogIDxwYXRoIGZpbGw9IiNmZmYzY2MiIGQ9Ik0yNCAyMmgydjJoLTJaIi8+CiAgPHBhdGggZmlsbD0iI2ZmZjlkOCIgZD0iTTI0IDBoMnYyaDJ2MmgydjJoLTJ2MmgtMnYyaC0yVjhoLTJWNmgtMlY0aDJWMmgyWiIvPgo8L3N2Zz4K") 2 2, pointer;
+    cursor: var(--cursor-quill);
+  }
+  button,
+  input,
+  label[for],
+  [role="button"] {
+    cursor: var(--cursor-quill-active);
+  }
+  button:enabled {
+    transition: translate 120ms steps(3, end);
+  }
+  button:enabled:hover:not(.is-pressed) {
+    translate: 0 -3px;
+    animation: button-float 1.6s steps(4, end) infinite;
+  }
+}
+button:enabled:active {
+  filter: brightness(1.2);
+}
+button.is-pressed {
+  animation: button-confirm 260ms steps(4, end);
+}
+@keyframes button-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+@keyframes button-confirm {
+  0% {
+    transform: translateY(2px) scale(0.97);
+    filter: brightness(1.45);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.15);
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+#interaction-effects {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  background: transparent;
+  color: #fff4be;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1000;
+}
+#interaction-effects::backdrop {
+  background: transparent;
+  pointer-events: none;
+}
+.click-burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  animation: burst-lifetime 440ms linear both;
+}
+.click-burst i {
+  position: absolute;
+  width: var(--size, 4px);
+  height: var(--size, 4px);
+  margin: -2px;
+  background: var(--spark-color, #fff4be);
+  box-shadow: 0 0 6px #ffe8a9b3;
+  animation: pixel-scatter 420ms steps(7, end) both;
+}
+.click-burst .burst-core {
+  width: 24px;
+  height: 24px;
+  margin: -12px;
+  background: #fff9dd;
+  clip-path: polygon(
+    42% 0,
+    58% 0,
+    58% 25%,
+    75% 25%,
+    75% 42%,
+    100% 42%,
+    100% 58%,
+    75% 58%,
+    75% 75%,
+    58% 75%,
+    58% 100%,
+    42% 100%,
+    42% 75%,
+    25% 75%,
+    25% 58%,
+    0 58%,
+    0 42%,
+    25% 42%,
+    25% 25%,
+    42% 25%
+  );
+  animation: nib-flash 240ms steps(4, end) both;
+}
+@keyframes pixel-scatter {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes nib-flash {
+  0% {
+    opacity: 1;
+    transform: scale(0.5);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+@keyframes burst-lifetime {
+  0%,
+  99% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.no-motion button {
+  animation: none !important;
+  transition: none !important;
+  translate: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
+  button {
+    translate: none !important;
+  }
   .logo-shine {
     display: none;
   }
@@ -1090,6 +1250,7 @@ input[type="range"]::-moz-range-thumb {
 </style>
   </head>
   <body>
+    <div id="interaction-effects" popover="manual" aria-hidden="true"></div>
     <main class="scene" aria-label="그린스토아 타이틀 화면">
       <div class="landscape" aria-hidden="true"></div>
       <canvas
@@ -1675,8 +1836,8 @@ const characterSpeech = (() => {
       event.clientX,
       event.clientY,
     )
-      ? "pointer"
-      : "default";
+      ? "var(--cursor-quill-active, pointer)"
+      : "var(--cursor-quill, default)";
   });
   character.addEventListener("click", (event) => {
     if (event.detail === 0) {
@@ -1886,6 +2047,93 @@ document.addEventListener(
   },
   { once: true },
 );
+// A temporary top-layer overlay also renders above native settings dialogs.
+(() => {
+  const layer = document.querySelector("#interaction-effects");
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const pressTimers = new WeakMap();
+  const colors = ["#fff9dd", "#ffe4a0", "#bce8cb"];
+
+  function clearBursts() {
+    layer.replaceChildren();
+    if (layer.matches(":popover-open")) layer.hidePopover();
+  }
+
+  function burstAt(x, y) {
+    if (!settings.motion || reducedMotion.matches) return;
+    if (typeof layer.showPopover === "function") {
+      if (layer.matches(":popover-open")) layer.hidePopover();
+      layer.showPopover();
+    }
+    if (layer.childElementCount >= 12) layer.firstElementChild.remove();
+    const burst = document.createElement("span");
+    burst.className = "click-burst";
+    burst.style.left = Math.round(x) + "px";
+    burst.style.top = Math.round(y) + "px";
+    const core = document.createElement("i");
+    core.className = "burst-core";
+    burst.append(core);
+    for (let i = 0; i < 12; i++) {
+      const spark = document.createElement("i");
+      const angle = (i / 12) * Math.PI * 2;
+      const distance = i % 2 ? 24 : 38;
+      spark.style.setProperty(
+        "--dx",
+        Math.round((Math.cos(angle) * distance) / 2) * 2 + "px",
+      );
+      spark.style.setProperty(
+        "--dy",
+        Math.round((Math.sin(angle) * distance) / 2) * 2 + "px",
+      );
+      spark.style.setProperty("--size", (i % 3 ? 4 : 6) + "px");
+      spark.style.setProperty("--spark-color", colors[i % colors.length]);
+      burst.append(spark);
+    }
+    layer.append(burst);
+    // Timed cleanup also runs if motion is disabled during the animation.
+    setTimeout(() => {
+      burst.remove();
+      if (!layer.childElementCount && layer.matches(":popover-open"))
+        layer.hidePopover();
+    }, 460);
+  }
+
+  document.addEventListener(
+    "click",
+    (event) => {
+      if (event.button !== 0 || !settings.motion || reducedMotion.matches)
+        return;
+      const button = event.target.closest("button:enabled");
+      const control = button || event.target.closest("input, [role='button']");
+      let x = event.clientX;
+      let y = event.clientY;
+      if (event.detail === 0) {
+        if (!control) return;
+        const bounds = control.getBoundingClientRect();
+        x = bounds.left + bounds.width / 2;
+        y = bounds.top + bounds.height / 2;
+      }
+      // Run after the control's action so a newly opened dialog stays below the sparks.
+      setTimeout(() => burstAt(x, y), 0);
+      if (!button) return;
+      clearTimeout(pressTimers.get(button));
+      button.classList.remove("is-pressed");
+      void button.offsetWidth;
+      button.classList.add("is-pressed");
+      pressTimers.set(
+        button,
+        setTimeout(() => button.classList.remove("is-pressed"), 270),
+      );
+    },
+    { capture: true },
+  );
+  motionSwitch.addEventListener("change", () => {
+    if (!settings.motion) clearBursts();
+  });
+  reducedMotion.addEventListener("change", clearBursts);
+  window.addEventListener("scroll", clearBursts, { passive: true });
+  window.addEventListener("blur", clearBursts);
+})();
 const particles = document.querySelector(".particles");
 for (let i = 0; i < 18; i++) {
   const petal = document.createElement("i");

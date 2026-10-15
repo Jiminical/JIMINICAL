@@ -27,6 +27,9 @@ for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png"):
 for font_name in ("Galmuri11.woff2", "Galmuri11-Bold.woff2"):
     encoded = base64.b64encode((ROOT / "assets/fonts" / font_name).read_bytes()).decode("ascii")
     styles = styles.replace("../assets/fonts/" + font_name, "data:font/woff2;base64," + encoded)
+for cursor_name in ("quill.svg", "quill-active.svg"):
+    encoded = base64.b64encode((ROOT / "assets/cursors" / cursor_name).read_bytes()).decode("ascii")
+    styles = styles.replace("../assets/cursors/" + cursor_name, "data:image/svg+xml;base64," + encoded)
 # Preserve the font redistribution license inside the single-file build too.
 license_text = (ROOT / "assets/fonts/LICENSE.txt").read_text()
 styles = "/* Galmuri font license:\n" + license_text + "\n*/\n" + styles
