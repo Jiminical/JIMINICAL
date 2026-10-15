@@ -13,12 +13,12 @@ ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text()
 script = (ROOT / "JS/main.js").read_text()
-for asset_name in ("greenstoa-title.png", "greenstoa-elf-atlas.png"):
+for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png"):
     background = base64.b64encode(
         (ROOT / "assets" / asset_name).read_bytes()
     ).decode("ascii")
     styles = styles.replace("../assets/" + asset_name, "data:image/png;base64," + background)
-    if asset_name == "greenstoa-elf-atlas.png":
+    if asset_name == "greenstoa-elf-idle.png":
         page = re.sub(
             r'data-sprite-src="[^"]*"',
             lambda _: 'data-sprite-src="data:image/png;base64,' + background + '"',

@@ -22,47 +22,151 @@ const volumeSlider = document.querySelector("#volume");
 const volumeLabel = document.querySelector("#volume-label");
 const optionsDialog = document.querySelector("#options-dialog");
 const journeyDialog = document.querySelector("#journey-dialog");
-// Draw registered sprite frames; the canvas itself never moves or scales.
+// Keep one original drawing. Only local pixel coordinates and eyelids change.
 const spriteAnimation = (() => {
   const canvas = document.querySelector(".character-sprite");
-  const context = canvas.getContext("2d");
-  const sheet = new Image();
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  const source = new Image();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-  const durations = [1700, 180, 80, 100, 80, 220, 180, 400];
-  const loopDuration = durations.reduce((sum, duration) => sum + duration, 0);
+  const width = canvas.width;
+  const height = canvas.height;
+  // Transparent overscan lets hair tips move beyond the source cell safely.
+  const inset = 16;
+  const contentWidth = width - inset * 2;
+  const frameCount = 192;
+  const loopMs = 6400;
   let enabled = false;
   let loaded = false;
   let request = 0;
   let started = 0;
   let lastFrame = -1;
+  let still;
+  let closed;
+  let output;
+  let stillPixels;
+  let outputPixels;
+  const movingPixels = [];
+  const eyePixels = [];
+
+  const smooth = (start, end, value) => {
+    const t = Math.max(0, Math.min(1, (value - start) / (end - start)));
+    return t * t * (3 - 2 * t);
+  };
+
+  function prepare() {
+    const cellWidth = source.naturalWidth / 2;
+    context.imageSmoothingEnabled = false;
+    context.clearRect(0, 0, width, height);
+    context.drawImage(
+      source,
+      0,
+      0,
+      cellWidth,
+      source.naturalHeight,
+      inset,
+      0,
+      contentWidth,
+      height,
+    );
+    still = context.getImageData(0, 0, width, height);
+    context.clearRect(0, 0, width, height);
+    context.drawImage(
+      source,
+      cellWidth,
+      0,
+      cellWidth,
+      source.naturalHeight,
+      inset,
+      0,
+      contentWidth,
+      height,
+    );
+    closed = context.getImageData(0, 0, width, height);
+    output = context.createImageData(width, height);
+    stillPixels = new Uint32Array(still.data.buffer);
+    outputPixels = new Uint32Array(output.data.buffer);
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const nx = (x - inset) / contentWidth;
+        const ny = y / height;
+        // Hair roots, head, face, collar and torso remain anchored.
+        const hair =
+          smooth(0.58, 0.88, nx) *
+          smooth(0.4, 0.58, ny) *
+          (1 - smooth(0.78, 0.9, ny));
+        const cloth = smooth(0.68, 0.94, nx) * smooth(0.78, 1, ny);
+        if (hair + cloth > 0)
+          movingPixels.push({ x, y, index: y * width + x, hair, cloth });
+      }
+    }
+
+    // Tiny feathered eyelid patches. The rest of the second portrait is never drawn.
+    const eyes = [
+      { x: 0.295, y: 0.33, rx: 0.044, ry: 0.034 },
+      { x: 0.429, y: 0.362, rx: 0.061, ry: 0.032 },
+    ];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        let mask = 0;
+        for (const eye of eyes) {
+          const distance = Math.hypot(
+            ((x - inset) / contentWidth - eye.x) / eye.rx,
+            (y / height - eye.y) / eye.ry,
+          );
+          mask = Math.max(mask, 1 - smooth(0.7, 1, distance));
+        }
+        if (mask > 0) eyePixels.push({ index: (y * width + x) * 4, mask });
+      }
+    }
+  }
 
   function draw(frame) {
     if (!loaded || frame === lastFrame) return;
-    const frameWidth = sheet.naturalWidth / 4;
-    const frameHeight = sheet.naturalHeight / 2;
-    context.imageSmoothingEnabled = false;
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.drawImage(
-      sheet,
-      (frame % 4) * frameWidth,
-      Math.floor(frame / 4) * frameHeight,
-      frameWidth,
-      frameHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
+    const phase = (frame / frameCount) * Math.PI * 2;
+    const breeze = Math.sin(phase);
+    const ripple = Math.sin(phase * 2);
+    outputPixels.set(stillPixels);
+
+    for (const pixel of movingPixels) {
+      const dx =
+        pixel.hair * (2.3 * breeze + 0.45 * ripple) +
+        pixel.cloth * 0.8 * Math.sin(phase * 2);
+      const dy = pixel.hair * 1.2 * breeze + pixel.cloth * 0.7 * breeze;
+      const sx = Math.round(pixel.x - dx);
+      const sy = Math.round(pixel.y - dy);
+      outputPixels[pixel.index] =
+        sx >= 0 && sx < width && sy >= 0 && sy < height
+          ? stillPixels[sy * width + sx]
+          : 0;
+    }
+
+    const blinkTime = (frame / frameCount) * loopMs - 4600;
+    let blink = 0;
+    if (blinkTime >= 0 && blinkTime < 90) blink = smooth(0, 90, blinkTime);
+    else if (blinkTime >= 90 && blinkTime < 140) blink = 1;
+    else if (blinkTime >= 140 && blinkTime < 280)
+      blink = 1 - smooth(140, 280, blinkTime);
+    if (blink > 0) {
+      for (const eye of eyePixels) {
+        const mix = blink * eye.mask;
+        for (let channel = 0; channel < 3; channel++) {
+          const index = eye.index + channel;
+          output.data[index] = Math.round(
+            still.data[index] * (1 - mix) + closed.data[index] * mix,
+          );
+        }
+      }
+    }
+    context.putImageData(output, 0, 0);
     lastFrame = frame;
     canvas.dataset.frame = String(frame);
   }
 
   function tick(now) {
-    let elapsed = (now - started) % loopDuration;
-    let frame = 0;
-    while (frame < durations.length - 1 && elapsed >= durations[frame]) {
-      elapsed -= durations[frame++];
-    }
+    const frame = Math.floor(
+      (((now - started) % loopMs) / loopMs) * frameCount,
+    );
     draw(frame);
     request = requestAnimationFrame(tick);
   }
@@ -76,12 +180,13 @@ const spriteAnimation = (() => {
     request = requestAnimationFrame(tick);
   }
 
-  sheet.onload = () => {
+  source.onload = () => {
+    prepare();
     loaded = true;
     canvas.dataset.ready = "true";
     refresh();
   };
-  sheet.src = canvas.dataset.spriteSrc;
+  source.src = canvas.dataset.spriteSrc;
   reducedMotion.addEventListener("change", refresh);
   document.addEventListener("visibilitychange", refresh);
   return {
