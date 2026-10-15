@@ -7,7 +7,11 @@
 
 `CSS/main.css`, `JS/main.js`, 배경 이미지를 수정한 뒤에는
 `python3 scripts/build-standalone.py`를 실행해 `index.html`에 반영하세요.
-문구와 화면 구조는 `index.html`에서 수정합니다.
+문구와 화면 구조는 `templates/index.html`에서 수정한 다음 같은 명령으로
+단일 파일을 생성합니다. 생성된 `index.html`에는 폰트까지 모두 포함됩니다.
+
+UI에는 Galmuri 2.40.3 한글 픽셀 폰트를 사용합니다. 라이선스는
+`assets/fonts/LICENSE.txt`와 생성 HTML에 포함되어 있습니다.
 
 캐릭터는 `assets/greenstoa-elf-idle.png` 왼쪽 원화를 고정된 기준으로
 사용합니다. Canvas에서 머리카락·망토 끝의 픽셀 좌표만 주기적으로 바꾸고,

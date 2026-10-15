@@ -1,4 +1,4 @@
-"""Refresh the portable title screen after editing CSS/main.css or JS/main.js.
+"""Build the portable screen from templates/index.html, CSS and JavaScript.
 
 Run: python3 scripts/build-standalone.py
 The generated index.html contains its styles, script and background so it works
@@ -10,7 +10,7 @@ import base64
 import re
 
 ROOT = Path(__file__).resolve().parent.parent
-page = (ROOT / "index.html").read_text()
+page = (ROOT / "templates/index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text()
 script = (ROOT / "JS/main.js").read_text()
 for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png"):
@@ -24,6 +24,12 @@ for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png"):
             lambda _: 'data-sprite-src="data:image/png;base64,' + background + '"',
             page,
         )
+for font_name in ("Galmuri11.woff2", "Galmuri11-Bold.woff2"):
+    encoded = base64.b64encode((ROOT / "assets/fonts" / font_name).read_bytes()).decode("ascii")
+    styles = styles.replace("../assets/fonts/" + font_name, "data:font/woff2;base64," + encoded)
+# Preserve the font redistribution license inside the single-file build too.
+license_text = (ROOT / "assets/fonts/LICENSE.txt").read_text()
+styles = "/* Galmuri font license:\n" + license_text + "\n*/\n" + styles
 style_tag = '<style id="greenstoa-styles">\n' + styles + "\n</style>"
 script_tag = '<script id="greenstoa-script">\n' + script + "\n</script>"
 
@@ -46,5 +52,7 @@ assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
 assert 'data-sprite-src="data:image/png;base64,' in page
+assert "data:font/woff2;base64," in page
+assert "../assets/" not in styles
 (ROOT / "index.html").write_text(page)
 print("Updated standalone index.html with embedded styles, script and background.")

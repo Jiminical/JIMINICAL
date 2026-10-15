@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#121b22" />
+    <meta
+      name="description"
+      content="이종족연합국 그린스토아 — 강물 소리가 들려오는 숲에서."
+    />
+    <title>이종족연합국 그린스토아</title>
+    <link rel="stylesheet" href="CSS/main.css" />
+    <script src="JS/main.js" defer></script>
+  </head>
+  <body>
+    <main class="scene" aria-label="그린스토아 타이틀 화면">
+      <div class="landscape" aria-hidden="true"></div>
+      <canvas
+        class="character-sprite"
+        width="416"
+        height="512"
+        data-sprite-src="assets/greenstoa-elf-idle.png"
+        aria-hidden="true"
+      ></canvas>
+      <svg
+        class="river-light"
+        viewBox="0 0 1536 1024"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        <defs>
+          <clipPath id="river-mask">
+            <path
+              d="m749 493 28 6-17 17 34 12 7 23-44 25 18 36-20 35 48 31-1 35-49 36-9 40-70 38 90 33 13 32-108 46-28 62-86 29-91-17 13-42 56-43 93-37 42-37-56-35-1-26 54-36 42-31-21-29 34-32 7-37 25-23-20-29 22-29-27-19 12-22Z"
+            />
+          </clipPath>
+        </defs>
+        <g clip-path="url(#river-mask)" class="river-glints" fill="#d5fff2">
+          <path
+            d="M640 545h16v2h-16zm78 24h24v2h-24zm39 42h17v3h-17zm-40 49h29v2h-29zm50 35h13v2h-13zm-66 51h25v2h-25zm-22 24h18v3h-18zm-40 69h27v2h-27zm-33 50h19v3h-19zm-59 66h29v3h-29zm-1-11h10v2h-10z"
+          />
+          <path
+            d="M750 516h12v2h-12zm-20 86h20v2h-20zm22 89h20v2h-20zm-56 25h16v2h-16zm-46 66h22v2h-22zm60 40h16v3h-16zm-88 25h23v2h-23zm-51 53h15v2h-15z"
+          />
+        </g>
+      </svg>
+      <div class="scene-shade" aria-hidden="true"></div>
+      <div class="particles" aria-hidden="true"></div>
+
+      <button
+        class="sound-toggle"
+        aria-label="자연 소리 켜기"
+        aria-pressed="false"
+      >
+        <i class="sound-icon" aria-hidden="true">♪</i><span>소리 꺼짐</span>
+      </button>
+
+      <section class="title-content">
+        <h1>
+          <span class="title-prefix">이종족연합국</span
+          ><span class="title-name">그린스토아</span>
+        </h1>
+        <p class="intro-copy">강물 소리가 들려온다.</p>
+        <nav class="main-menu game-window" aria-label="게임 메뉴">
+          <button class="menu-item is-selected" id="start-button">
+            시작하기
+          </button>
+          <button class="menu-item" id="options-button">설정</button>
+        </nav>
+      </section>
+
+      <footer class="footer">
+        <p class="menu-hint">
+          <span>↑ ↓</span> 선택 <b>·</b> <span>Enter</span> 결정
+        </p>
+        <span class="copyright">그린스토아 © 2026</span>
+      </footer>
+    </main>
+
+    <dialog
+      id="options-dialog"
+      class="panel game-window"
+      aria-labelledby="options-title"
+    >
+      <form method="dialog">
+        <div class="panel-header">
+          <h2 id="options-title">설정</h2>
+          <button class="close-button" value="close" aria-label="설정 닫기">
+            닫기
+          </button>
+        </div>
+        <div class="setting-row">
+          <div>
+            <label for="ambient-toggle">자연 소리</label>
+            <p>바람과 흐르는 물소리</p>
+          </div>
+          <input
+            class="switch"
+            id="ambient-toggle"
+            type="checkbox"
+            role="switch"
+          />
+        </div>
+        <div class="volume-setting">
+          <div>
+            <label for="volume">소리 크기</label
+            ><output for="volume" id="volume-label">35%</output>
+          </div>
+          <input type="range" id="volume" min="0" max="100" value="35" />
+        </div>
+        <div class="setting-row">
+          <div>
+            <label for="motion-toggle">화면 움직임</label>
+            <p>캐릭터의 숨결과 숲의 움직임</p>
+          </div>
+          <input
+            class="switch"
+            id="motion-toggle"
+            type="checkbox"
+            role="switch"
+            checked
+          />
+        </div>
+        <p class="settings-note">설정은 자동으로 저장됩니다.</p>
+        <button class="panel-confirm" value="close">돌아가기</button>
+      </form>
+    </dialog>
+
+    <dialog
+      id="journey-dialog"
+      class="panel journey-panel game-window"
+      aria-labelledby="journey-title"
+    >
+      <h2 id="journey-title">숲의 안내자</h2>
+      <p class="journey-line">
+        “처음 보는 얼굴이네요.<br />그린스토아에 오신 걸 환영해요.”
+      </p>
+      <form method="dialog">
+        <button class="panel-confirm">타이틀로 돌아가기</button>
+      </form>
+    </dialog>
+  </body>
+</html>

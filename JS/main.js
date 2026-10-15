@@ -225,8 +225,8 @@ function updateInterface() {
     playing ? "자연 소리 끄기" : "자연 소리 켜기",
   );
   soundButton.querySelector("span").textContent = playing
-    ? "SOUND ON"
-    : "SOUND OFF";
+    ? "소리 켜짐"
+    : "소리 꺼짐";
   soundSwitch.checked = settings.sound;
   motionSwitch.checked = settings.motion;
   volumeSlider.value = settings.volume;
@@ -323,21 +323,36 @@ for (const dialog of [optionsDialog, journeyDialog]) {
   });
 }
 const menuButtons = [...document.querySelectorAll(".main-menu button")];
+let selectedMenuIndex = 0;
+function selectMenu(index) {
+  selectedMenuIndex = index;
+  menuButtons.forEach((button, i) => {
+    button.classList.toggle("is-selected", i === index);
+  });
+}
+menuButtons.forEach((button, index) => {
+  button.addEventListener("pointerenter", () => selectMenu(index));
+  button.addEventListener("focus", () => selectMenu(index));
+});
 document.addEventListener("keydown", (event) => {
-  if (
-    optionsDialog.open ||
-    journeyDialog.open ||
-    !["ArrowDown", "ArrowUp"].includes(event.key)
-  )
-    return;
-  event.preventDefault();
-  const current = menuButtons.indexOf(document.activeElement);
-  const next =
-    current < 0
-      ? 0
-      : (current + (event.key === "ArrowDown" ? 1 : -1) + menuButtons.length) %
-        menuButtons.length;
-  menuButtons[next].focus();
+  if (optionsDialog.open || journeyDialog.open) return;
+  if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+    event.preventDefault();
+    const next =
+      (selectedMenuIndex +
+        (event.key === "ArrowDown" ? 1 : -1) +
+        menuButtons.length) %
+      menuButtons.length;
+    selectMenu(next);
+    menuButtons[next].focus();
+  } else if (
+    event.key === "Enter" &&
+    !event.repeat &&
+    (event.target === document.body || menuButtons.includes(event.target))
+  ) {
+    event.preventDefault();
+    menuButtons[selectedMenuIndex].click();
+  }
 });
 document.addEventListener(
   "pointerdown",
