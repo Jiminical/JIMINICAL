@@ -94,14 +94,18 @@ const eventScenes = (() => {
   function fit() {
     if (!state || root.hidden) return;
     const width = root.clientWidth,
-      available = Math.max(1, root.clientHeight - 106);
-    const fitted =
-      state.kind === "map" ? Math.min(width - 24, available * 1.5) : width;
-    const height = state.kind === "map" ? fitted / 1.5 : available;
+      top = Math.min(62, Math.max(28, root.clientHeight * 0.08)),
+      available = Math.max(1, root.clientHeight - 106 - top),
+      ratio = state.kind === "map" ? 1.5 : 2.15;
+    const fitted = Math.min(
+        width - (state.kind === "map" ? 24 : 0),
+        available * ratio,
+      ),
+      height = fitted / ratio;
     stage.style.width = fitted + "px";
     stage.style.height = height + "px";
     stage.style.left = (width - fitted) / 2 + "px";
-    stage.style.top = (available - height) / 2 + "px";
+    stage.style.top = top + (available - height) / 2 + "px";
     canvas.width = Math.max(
       1,
       Math.min(1200, Math.round(fitted * Math.min(devicePixelRatio || 1, 1.5))),

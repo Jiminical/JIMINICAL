@@ -6,7 +6,6 @@ const guildGame = (() => {
   const assets = document.querySelector("#guild-assets");
   const portrait = document.querySelector("#dialogue-portrait");
   const portraitFrame = document.querySelector("#dialogue-portrait-frame");
-  const portraitContext = portrait.getContext("2d");
   const dialogueBox = document.querySelector("#game-dialogue");
   const dialogueText = document.querySelector("#game-dialogue-glyphs");
   const dialogueLive = document.querySelector("#game-dialogue-live");
@@ -27,30 +26,6 @@ const guildGame = (() => {
   const keys = new Set();
   const W = 720,
     H = 480;
-  let wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
-  const guildCollisions = [
-    { x: 0, y: 422, w: 300, h: 58 },
-    { x: 414, y: 422, w: 306, h: 58 },
-    { x: 230, y: 123, w: 260, h: 36 },
-    { x: 10, y: 132, w: 47, h: 92 },
-    { x: 84, y: 250, w: 151, h: 58 },
-    { x: 90, y: 394, w: 82, h: 20 },
-    { x: 510, y: 269, w: 98, h: 61 },
-    { x: 650, y: 145, w: 55, h: 89 },
-    { x: 662, y: 253, w: 43, h: 92 },
-    ...[
-      [108, 228],
-      [173, 228],
-      [108, 326],
-      [179, 326],
-      [545, 263],
-      [545, 344],
-    ].map(([x, y]) => ({ x, y, w: 22, h: 15 })),
-    ...[233, 295, 361].flatMap((y) => [
-      { x: 311, y, w: 6, h: 7 },
-      { x: 403, y, w: 6, h: 7 },
-    ]),
-  ];
   const cast = {
     hero: {
       name: "",
@@ -101,6 +76,7 @@ const guildGame = (() => {
     return image.decode();
   }
   const ready = Promise.all([
+    greenstoaLore.ready,
     loadPicture("lucy", assets.dataset.lucySrc),
     loadPicture("cast", assets.dataset.castSrc),
     loadPicture("kania", assets.dataset.kaniaSrc),
@@ -122,6 +98,10 @@ const guildGame = (() => {
       "shop",
       "fieldCast",
       "sdField",
+      "library",
+      "guideForest",
+      "guideKania",
+      "sdKania",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]).then(() =>
     fieldSprites.prepare({
@@ -129,6 +109,7 @@ const guildGame = (() => {
       guild: pictures.sdGuild,
       leads: pictures.sdLeads,
       field: pictures.sdField,
+      kania: pictures.sdKania,
     }),
   );
   // Attach rejection handling before a player chooses to enter the room.
@@ -158,7 +139,12 @@ const guildGame = (() => {
     selectedChoice = 0;
   let shopOrigin = "city",
     shopStocks = fieldWorld.freshStock(),
-    fieldFlags = { lucyFarewell: false, leafTaken: false, springUsed: false };
+    fieldFlags = {
+      lucyFarewell: false,
+      leafTaken: false,
+      springUsed: false,
+      libraryReached: false,
+    };
   const visited = new Set(["guild"]);
   let typingTimer = 0,
     toastTimer = 0;
@@ -191,35 +177,7 @@ const guildGame = (() => {
       Object.entries(fieldWorld.maps).map(([key, value]) => [key, value.names]),
     ),
   };
-  const fieldCollisions = {
-    carriage: [
-      { x: 90, y: 220, w: 110, h: 150 },
-      { x: 520, y: 220, w: 110, h: 150 },
-    ],
-    checkpoint: [
-      { x: 0, y: 0, w: 136, h: 480 },
-      { x: 632, y: 0, w: 88, h: 480 },
-      { x: 100, y: 140, w: 155, h: 135 },
-      { x: 270, y: 115, w: 55, h: 148 },
-      { x: 540, y: 160, w: 140, h: 120 },
-      { x: 0, y: 416, w: 270, h: 64 },
-      { x: 455, y: 420, w: 265, h: 60 },
-    ],
-    gate: [
-      { x: 40, y: 130, w: 260, h: 115 },
-      { x: 430, y: 130, w: 250, h: 115 },
-      { x: 0, y: 416, w: 215, h: 64 },
-      { x: 510, y: 421, w: 210, h: 59 },
-    ],
-  };
   function buildMap() {
-    const bounds = {
-      guild: { left: 32, right: 688, top: 178, bottom: 446 },
-      carriage: { left: 210, right: 510, top: 252, bottom: 418 },
-      checkpoint: { left: 136, right: 632, top: 204, bottom: 446 },
-      gate: { left: 135, right: 585, top: 258, bottom: 446 },
-    };
-    wallBounds = fieldWorld.maps[location]?.bounds || bounds[location];
     visited.add(location);
     const art = pictures[location];
     map.imageSmoothingEnabled = false;
@@ -260,22 +218,24 @@ const guildGame = (() => {
     if (!motion()) return;
     const frame = Math.floor(elapsed * 8);
     const water =
-      location === "city"
-        ? [
-            [347, 227],
-            [375, 234],
-            [358, 247],
-            [382, 244],
-          ]
-        : location === "grove"
+      location === "library"
+        ? "여정의 쉼터 · 세계관 설정 / 인물 도감 / 프롤로그 웹툰을 펼쳐 보자."
+        : location === "city"
           ? [
-              [211, 254],
-              [227, 287],
-              [206, 319],
-              [193, 365],
-              [215, 416],
+              [347, 227],
+              [375, 234],
+              [358, 247],
+              [382, 244],
             ]
-          : [];
+          : location === "grove"
+            ? [
+                [211, 254],
+                [227, 287],
+                [206, 319],
+                [193, 365],
+                [215, 416],
+              ]
+            : [];
     water.forEach(([x, y], i) => {
       const cel = (frame + i * 3) % 16;
       ctx.globalAlpha = cel < 8 ? 0.5 : 0.22;
@@ -322,6 +282,7 @@ const guildGame = (() => {
     prompt.hidden = true;
     menu.hidden = true;
     hideTrading();
+    hideReading();
     cancelPortraitMotion();
     gameAudio.stopVoice();
     clearTimeout(typingTimer);
@@ -356,6 +317,7 @@ const guildGame = (() => {
     return transitionTo(() => {
       hideVista();
       hideEvent();
+      hideAction();
       location = destination;
       setup();
       buildMap();
@@ -419,7 +381,8 @@ const guildGame = (() => {
         cinematic = { key, after, started: null, frame: -1, revealed: false };
         vista.classList.toggle("is-sanctuary", key === "sanctuary");
         const art = pictures[key],
-          ratio = art.naturalWidth / art.naturalHeight;
+          ratio =
+            key === "forest" ? 2.15 : art.naturalWidth / art.naturalHeight;
         vistaArt.width = Math.min(960, art.naturalWidth);
         vistaArt.height = Math.round(vistaArt.width / ratio);
         vista.style.setProperty("--vista-ratio", String(ratio));
@@ -483,8 +446,10 @@ const guildGame = (() => {
     const gap = parseFloat(style.gap),
       row = style.flexDirection === "row";
     const ratio =
-      pictures[cinematic.key].naturalWidth /
-      pictures[cinematic.key].naturalHeight;
+      cinematic.key === "forest"
+        ? 2.15
+        : pictures[cinematic.key].naturalWidth /
+          pictures[cinematic.key].naturalHeight;
     const availableWidth = row
       ? innerWidth - copy.getBoundingClientRect().width - gap
       : innerWidth;
@@ -513,8 +478,9 @@ const guildGame = (() => {
     const art = pictures[cinematic.key],
       t = motion() ? Math.min(1, seconds / 18) : 0;
     const zoom = motion() ? 1.025 : 1;
-    const sw = art.naturalWidth / zoom,
-      sh = art.naturalHeight / zoom;
+    const aspect = vistaArt.width / vistaArt.height;
+    const sw = Math.min(art.naturalWidth, art.naturalHeight * aspect) / zoom,
+      sh = sw / aspect;
     vistaContext.imageSmoothingEnabled = false;
     vistaContext.drawImage(
       art,
@@ -664,7 +630,7 @@ const guildGame = (() => {
         player = actor("hero", 395, 420, "up");
         npcs = fieldPeople("grove");
       },
-      () => notify("다리 너머 강가와 약초점을 둘러보자."),
+      () => notify("다리 너머 강가와 도서관을 둘러보자."),
     );
   }
   function returnGate() {
@@ -674,19 +640,107 @@ const guildGame = (() => {
     });
   }
   function enterShop() {
-    shopOrigin = location;
+    shopOrigin = "city";
     travelTo("shop", () => {
       player = actor("hero", 360, 375, "up");
-      npcs = [actor(fieldWorld.shops[shopOrigin].merchant, 360, 106)];
+      npcs = [actor("rose", 360, 106)];
     });
   }
   function exitShop() {
-    if (shopOrigin === "city") visitCity(false);
-    else
-      travelTo("grove", () => {
-        player = actor("hero", 529, 211, "down");
-        npcs = fieldPeople("grove");
+    visitCity(false);
+  }
+  function enterLibrary() {
+    const first = !fieldFlags.libraryReached;
+    travelTo(
+      "library",
+      () => {
+        player = actor("hero", 360, 380, "up");
+        npcs = [actor("rael", 360, 108)];
+        fieldFlags.libraryReached = true;
+      },
+      () => {
+        notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
+        if (first)
+          speak([
+            {
+              kind: "rael",
+              text: "어서 와요. 이슬잎 도서관에 오신 걸 환영해요.\n먼 길의 끝에서는 잠깐 책을 읽으며 쉬어 가셔도 좋아요.",
+            },
+            {
+              kind: "rael",
+              text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
+            },
+          ]);
+      },
+    );
+  }
+  function leaveLibrary() {
+    travelTo("grove", () => {
+      player = actor("hero", 529, 211, "down");
+      npcs = fieldPeople("grove");
+    });
+  }
+  function hideReading() {
+    libraryArchive.hide();
+    root.classList.remove("is-reading");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function openArchive(tab = "world") {
+    keys.clear();
+    phase = "archive";
+    root.dataset.phase = phase;
+    root.classList.add("is-reading");
+    document.querySelector(".world-viewport").inert = true;
+    libraryArchive.show({
+      tab,
+      playerName,
+      drawPortrait: (target, kind) => paintPortrait(target, kind),
+      close: () => {
+        hideReading();
+        phase = "free";
+        root.dataset.phase = phase;
+        keys.clear();
+        canvas.focus({ preventScroll: true });
+        gameAudio.sfx("menuClose");
+      },
+    });
+  }
+  function hideAction() {
+    actionScenes.stop();
+    root.classList.remove("is-action");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function playAction(kind, after) {
+    const prepare = () => {
+      keys.clear();
+      phase = "action";
+      root.dataset.phase = phase;
+      root.classList.add("is-action");
+      document.querySelector(".world-viewport").inert = true;
+      actionScenes.prepare({
+        kind,
+        world: background,
+        pictures,
+        motion: motion(),
+        actors: [...npcs, player].map((a) => ({ ...a })),
+        after: () => {
+          if (!active) return;
+          hideAction();
+          phase = "free";
+          root.dataset.phase = phase;
+          keys.clear();
+          if (after) after();
+        },
       });
+    };
+    if (kind === "guide")
+      return transitionTo(prepare, () => {
+        phase = "action";
+        root.dataset.phase = phase;
+        actionScenes.play();
+      });
+    prepare();
+    actionScenes.play();
   }
   function giveItem(id) {
     const found = inventory.find((item) => item.id === id);
@@ -748,23 +802,25 @@ const guildGame = (() => {
   }
   function updateObjective() {
     objective.textContent =
-      location === "city"
-        ? questAccepted
-          ? "광장의 마차에 타기 전에 여행 준비를 하자."
-          : "길드에서 의뢰를 받고, 광장을 둘러보자."
-        : location === "grove"
-          ? "이슬잎 숲길 · 다리 너머 강가와 약초점을 둘러보자."
-          : location === "shop"
-            ? "주인에게 E · 물건 구입  /  C · 소지품 확인"
-            : location === "carriage"
-              ? "여정 · 동쪽 숲을 지나 성역으로"
-              : location === "checkpoint"
-                ? "카니아에게 모험가증을 보여 주자."
-                : location === "gate"
-                  ? "정문에 다가가 E · 그린스토아 입구 숲길로"
-                  : questAccepted
-                    ? "길드 출입문으로 나가 기사단의 마차에 타자."
-                    : "루시에게 그린스토아행 의뢰를 확인하자.";
+      location === "library"
+        ? "여정의 쉼터 · 세계관 설정 / 인물 도감 / 프롤로그 웹툰을 펼쳐 보자."
+        : location === "city"
+          ? questAccepted
+            ? "광장의 마차에 타기 전에 여행 준비를 하자."
+            : "길드에서 의뢰를 받고, 광장을 둘러보자."
+          : location === "grove"
+            ? "이슬잎 숲길 · 다리 너머 강가와 도서관을 둘러보자."
+            : location === "shop"
+              ? "주인에게 E · 물건 구입  /  C · 소지품 확인"
+              : location === "carriage"
+                ? "여정 · 동쪽 숲을 지나 성역으로"
+                : location === "checkpoint"
+                  ? "카니아에게 모험가증을 보여 주자."
+                  : location === "gate"
+                    ? "정문에 다가가 E · 그린스토아 입구 숲길로"
+                    : questAccepted
+                      ? "길드 출입문으로 나가 기사단의 마차에 타자."
+                      : "루시에게 그린스토아행 의뢰를 확인하자.";
   }
   function notify(text) {
     const toast = document.querySelector("#game-toast");
@@ -811,11 +867,15 @@ const guildGame = (() => {
     );
   }
   function portraitFor(kind, expression = "neutral") {
-    portraitContext.clearRect(0, 0, portrait.width, portrait.height);
-    portrait.hidden = !kind;
     portraitFrame.hidden = !kind;
-    portrait.dataset.character = kind || "";
-    portrait.dataset.expression = expression;
+    paintPortrait(portrait, kind, expression);
+  }
+  function paintPortrait(target, kind, expression = "neutral") {
+    const c = target.getContext("2d");
+    c.clearRect(0, 0, target.width, target.height);
+    target.hidden = !kind;
+    target.dataset.character = kind || "";
+    target.dataset.expression = expression;
     if (!kind) return;
     const sheets = {
       lucy: {
@@ -835,6 +895,7 @@ const guildGame = (() => {
       },
       scout: {
         image: "kania",
+        columnEdges: [0, 542, 1064, 1536],
         columns: 3,
         rows: 2,
         poses: {
@@ -882,8 +943,8 @@ const guildGame = (() => {
       sy = sheet.rowEdges[row];
       ch = sheet.rowEdges[row + 1] - sy;
     }
-    portrait.dataset.sheet = sheet.image;
-    portrait.dataset.frame = String(index);
+    target.dataset.sheet = sheet.image;
+    target.dataset.frame = String(index);
     const frameKey = kind + expression;
     if (!portraitFrames.has(frameKey)) {
       const sample = document.createElement("canvas");
@@ -915,20 +976,17 @@ const guildGame = (() => {
       else portraitFrames.set(frameKey, [sx, sy, cw, ch]);
     }
     [sx, sy, cw, ch] = portraitFrames.get(frameKey);
-    const scale = Math.min(
-      (portrait.width - 12) / cw,
-      (portrait.height - 12) / ch,
-    );
-    portraitContext.imageSmoothingEnabled = false;
+    const scale = Math.min((target.width - 12) / cw, (target.height - 12) / ch);
+    c.imageSmoothingEnabled = false;
     // Fit the full width of the portrait and remove only its transparent padding.
-    portraitContext.drawImage(
+    c.drawImage(
       image,
       sx,
       sy,
       cw,
       ch,
-      (portrait.width - cw * scale) / 2,
-      portrait.height - ch * scale,
+      (target.width - cw * scale) / 2,
+      target.height - ch * scale,
       cw * scale,
       ch * scale,
     );
@@ -1316,14 +1374,19 @@ const guildGame = (() => {
           expression: "embarrassed",
           text: "에…?\n……그, 그럴 수가…….",
         },
-        {
-          text: "노란 머리 도적은 눈물을 훔치며 마차 쪽으로 돌아갔다.\n정찰병이 이쪽으로 시선을 돌린다.",
-        },
       ],
-      () => {
-        npcs = npcs.filter((n) => n.id !== "rogue");
-        notify("카니아에게 다가가 E · 모험가증 제시");
-      },
+      () =>
+        playAction("rogue", () => {
+          npcs = npcs.filter((n) => n.id !== "rogue");
+          speak(
+            [
+              {
+                text: "정찰병이 도적의 뒷모습을 잠시 바라보다가, 이쪽으로 시선을 돌린다.",
+              },
+            ],
+            () => notify("카니아에게 다가가 E · 모험가증 제시"),
+          );
+        }),
     );
   }
   function showCredentials() {
@@ -1357,53 +1420,64 @@ const guildGame = (() => {
         },
       ],
       () =>
-        travelTo(
-          "gate",
-          () => {
-            player = actor("hero", 360, 384, "up");
-            npcs = [actor("scout", 360, 305, "down")];
-            storyStep = "arrival";
-          },
-          () =>
-            speak(
-              [
-                {
-                  kind: "scout",
-                  expression: "welcoming",
-                  text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
-                },
-                {
-                  kind: "scout",
-                  expression: "welcoming",
-                  text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
-                },
-                {
-                  kind: "scout",
-                  expression: "welcoming",
-                  text: "이종족연합국, 그린스토아다.",
-                },
-              ],
-              () =>
-                showVista("sanctuary", () =>
-                  resumeWorld(() => {
-                    storyStep = "arrived";
-                    npcs = [actor("scout", 442, 312, "left")];
-                    updateObjective();
-                    notify("그린스토아에 도착했다.");
-                  }),
-                ),
-            ),
+        playAction("guide", () =>
+          travelTo(
+            "gate",
+            () => {
+              player = actor("hero", 360, 384, "up");
+              npcs = [actor("scout", 360, 305, "down")];
+              storyStep = "arrival";
+            },
+            () =>
+              speak(
+                [
+                  {
+                    kind: "scout",
+                    expression: "welcoming",
+                    text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
+                  },
+                  {
+                    kind: "scout",
+                    expression: "welcoming",
+                    text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
+                  },
+                  {
+                    kind: "scout",
+                    expression: "welcoming",
+                    text: "이종족연합국, 그린스토아다.",
+                  },
+                ],
+                () =>
+                  showVista("sanctuary", () =>
+                    resumeWorld(() => {
+                      storyStep = "arrived";
+                      npcs = [actor("scout", 442, 312, "left")];
+                      updateObjective();
+                      notify("그린스토아에 도착했다.");
+                    }),
+                  ),
+              ),
+          ),
         ),
     );
   }
 
   function npcTalk(id) {
-    if (id === "rose" || id === "rael") {
+    if (id === "rael") {
       speak(
-        fieldWorld.shops[shopOrigin].greeting.map((text) => ({
-          kind: id,
-          text,
-        })),
+        [
+          {
+            kind: "rael",
+            text: "어떤 기록이 궁금하세요?\n세계의 이야기와, 길에서 만난 사람들의 이야기를 함께 모아 두었어요.",
+          },
+        ],
+        () => openArchive("world"),
+      );
+      return;
+    }
+    if (id === "rose") {
+      speak(
+        fieldWorld.shops.city.greeting.map((text) => ({ kind: id, text })),
         trade,
       );
       return;
@@ -1431,7 +1505,7 @@ const guildGame = (() => {
         "그린스토아행 마차는 광장 오른쪽 아래에 있습니다.\n기사단의 조사 의뢰를 받은 분만 타실 수 있어요.",
       ],
       sena: [
-        "처음 오셨어요? 저는 새나예요. 다리 건너 약초점은 라엘 씨 가게고요.\n여긴 앉아서 물소리를 듣기만 해도 시간이 잘 가요.",
+        "처음 오셨어요? 저는 새나예요. 다리 건너 도서관에서는 라엘 씨가 기다리고 있고요.\n여긴 앉아서 물소리를 듣기만 해도 시간이 잘 가요.",
         "저기 작은 샘은 마셔도 괜찮아요. 긴 여행 뒤엔 잠깐 쉬어 가세요.\n강가에 떨어진 잎도 하나쯤은 기념으로 가져가셔도 돼요.",
       ],
       bran: [
@@ -1469,7 +1543,9 @@ const guildGame = (() => {
           ? 176
           : location === "shop"
             ? 190
-            : n.y,
+            : location === "library"
+              ? 212
+              : n.y,
       kind: "npc",
     }));
     if (fieldWorld.maps[location])
@@ -1490,7 +1566,7 @@ const guildGame = (() => {
     if (location === "checkpoint")
       return [
         ...people,
-        { id: "sign", name: "성역 푯말", x: 559, y: 292, kind: "prop" },
+        { id: "sign", name: "성역 푯말", x: 565, y: 316, kind: "prop" },
       ];
     if (location === "gate")
       return [
@@ -1540,6 +1616,11 @@ const guildGame = (() => {
     if (target.id === "door") leaveGuild();
     if (target.id === "guild-entry") visitGuild();
     if (target.id === "shop-entry") enterShop();
+    if (target.id === "library-entry") enterLibrary();
+    if (target.id === "library-exit") leaveLibrary();
+    if (target.id === "archive-world") openArchive("world");
+    if (target.id === "archive-people") openArchive("people");
+    if (target.id === "archive-comic") openArchive("comic");
     if (target.id === "shop-exit") exitShop();
     if (target.id === "carriage-stop") boardCarriage();
     if (target.id === "gate-return") returnGate();
@@ -1561,7 +1642,7 @@ const guildGame = (() => {
     if (target.id === "grove-sign")
       speak([
         {
-          text: "‘이슬잎 숲길 — 강 건너 쉼터, 동쪽에 약초점.’\n낯선 종족의 글자 아래에 공용어가 한 줄 더 적혀 있다.",
+          text: "‘이슬잎 숲길 — 강 건너 쉼터, 동쪽에 도서관.’\n낯선 종족의 글자 아래에 공용어가 한 줄 더 적혀 있다.",
         },
       ]);
     if (target.id === "river-leaf") {
@@ -1610,30 +1691,8 @@ const guildGame = (() => {
       ]);
   }
   function blocked(x, y) {
-    const box = { x: x - 7, y: y - 6, w: 14, h: 9 };
-    if (
-      x < wallBounds.left ||
-      x > wallBounds.right ||
-      y < wallBounds.top ||
-      y > wallBounds.bottom
-    )
-      return true;
-    const overlap = (r) =>
-      box.x < r.x + r.w &&
-      box.x + box.w > r.x &&
-      box.y < r.y + r.h &&
-      box.y + box.h > r.y;
-    return (
-      (
-        fieldWorld.maps[location]?.collisions ||
-        (location === "guild" ? guildCollisions : fieldCollisions[location])
-      ).some(overlap) ||
-      npcs.some(
-        (n) =>
-          !(location === "guild" && n.id === "lucy") &&
-          overlap({ x: n.x - 7, y: n.y - 5, w: 14, h: 9 }),
-      )
-    );
+    if (fieldTerrain.blocked(location, x, y)) return true;
+    return npcs.some((n) => Math.abs(n.x - x) < 14 && Math.abs(n.y - y) < 9);
   }
   function movePlayer(dt) {
     const oldX = player.x,
@@ -1648,17 +1707,119 @@ const guildGame = (() => {
       length = Math.hypot(dx, dy);
     dx = (dx / length) * speed * dt;
     dy = (dy / length) * speed * dt;
-    if (!blocked(player.x + dx, player.y)) player.x += dx;
-    if (!blocked(player.x, player.y + dy)) player.y += dy;
+    const steps = Math.max(
+      1,
+      Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) / 2),
+    );
+    for (let i = 0; i < steps; i++) {
+      if (!blocked(player.x + dx / steps, player.y)) player.x += dx / steps;
+      if (!blocked(player.x, player.y + dy / steps)) player.y += dy / steps;
+    }
     footDistance += Math.hypot(player.x - oldX, player.y - oldY);
     if (footDistance >= (keys.has("ShiftLeft") ? 24 : 22)) {
       footDistance = 0;
       gameAudio.sfx("footstep", location);
     }
   }
+  function drawPropOutlines() {
+    if (phase !== "free") return;
+    const nearest = nearby(),
+      pulse = motion() ? (Math.sin(elapsed * 1.8) + 1) / 2 : 0.5;
+    for (const target of targets()) {
+      if (target.kind === "npc") continue;
+      const shape = fieldTerrain.outline(location, target.id);
+      if (!shape) continue;
+      ctx.save();
+      ctx.beginPath();
+      shape.forEach(([x, y], index) => {
+        if (index) ctx.lineTo(x + 0.5, y + 0.5);
+        else ctx.moveTo(x + 0.5, y + 0.5);
+      });
+      ctx.closePath();
+      ctx.lineJoin = "miter";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.globalAlpha = 0.06 + pulse * 0.04;
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      ctx.globalAlpha =
+        (nearest?.id === target.id ? 0.85 : 0.25) + pulse * 0.12;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+  const patrols = {
+    edan: [
+      [452, 309],
+      [485, 309],
+      [485, 338],
+      [452, 338],
+    ],
+    sena: [
+      [143, 280],
+      [127, 280],
+      [127, 299],
+      [143, 299],
+    ],
+    nara: [
+      [83, 330],
+      [83, 361],
+    ],
+  };
+  function movePeople(dt) {
+    for (const person of npcs) {
+      person.moving = false;
+      if (
+        !motion() ||
+        !patrols[person.id] ||
+        Math.hypot(person.x - player.x, person.y - player.y) < 65
+      )
+        continue;
+      person.patrolWait = Math.max(0, (person.patrolWait || 0) - dt);
+      if (person.patrolWait) continue;
+      const path = patrols[person.id],
+        target = path[person.patrolIndex || 0],
+        dx = target[0] - person.x,
+        dy = target[1] - person.y,
+        distance = Math.hypot(dx, dy);
+      if (distance < 1) {
+        person.patrolIndex = ((person.patrolIndex || 0) + 1) % path.length;
+        person.patrolWait = 1.8;
+        continue;
+      }
+      const amount = Math.min(distance, dt * 19),
+        x = person.x + (dx / distance) * amount,
+        y = person.y + (dy / distance) * amount;
+      if (
+        fieldTerrain.blocked(location, x, y) ||
+        npcs.some(
+          (other) =>
+            other !== person &&
+            Math.abs(other.x - x) < 16 &&
+            Math.abs(other.y - y) < 10,
+        )
+      ) {
+        person.patrolWait = 1;
+        continue;
+      }
+      person.dir =
+        Math.abs(dx) > Math.abs(dy)
+          ? dx < 0
+            ? "left"
+            : "right"
+          : dy < 0
+            ? "up"
+            : "down";
+      person.x = x;
+      person.y = y;
+      person.moving = true;
+    }
+  }
   function counterFor(a) {
     if (location === "guild" && a.id === "lucy") return { shift: 30, edge: 98 };
     if (location === "shop" && a.id !== "hero") return { shift: 30, edge: 104 };
+    if (location === "library" && a.id === "rael")
+      return { shift: 41, edge: 126 };
     return null;
   }
   function drawActor(a) {
@@ -1680,6 +1841,17 @@ const guildGame = (() => {
       ctx.beginPath();
       ctx.rect(0, 0, W, receptionist.edge);
       ctx.clip();
+    }
+    if (phase === "free" && a !== player) {
+      const near = Math.hypot(a.x - player.x, a.y - player.y) < 75;
+      ctx.globalAlpha =
+        (near ? 0.64 : 0.28) + (motion() ? Math.sin(elapsed * 2) * 0.1 : 0);
+      ctx.drawImage(
+        fieldSprites.outline(a.id, a.dir, frame),
+        x - fieldSprites.width / 2,
+        y - fieldSprites.anchorY,
+      );
+      ctx.globalAlpha = 1;
     }
     ctx.drawImage(
       makeSprite(a.id, a.dir, frame),
@@ -1704,6 +1876,7 @@ const guildGame = (() => {
       ctx.drawImage(background, 0, H - 1, W, 1, 0, H, W, 2);
     }
     drawScenery();
+    drawPropOutlines();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
       const target = nearby();
@@ -1734,8 +1907,10 @@ const guildGame = (() => {
     const dt = Math.min(0.04, Math.max(0, (now - previous) / 1000));
     previous = now;
     elapsed += dt;
-    if (phase === "free") movePlayer(dt);
-    else player.moving = false;
+    if (phase === "free") {
+      movePlayer(dt);
+      movePeople(dt);
+    } else player.moving = false;
     drawWorld();
     drawVista();
     request = requestAnimationFrame(tick);
@@ -1784,7 +1959,7 @@ const guildGame = (() => {
         : "아직 수락한 의뢰가 없다.";
       itemList.append(h);
       itemDetail.textContent = questAccepted
-        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 입구 숲길과 주민을 조사하자." : "그린스토아로 이동 중이다."}`
+        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 이슬잎 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
@@ -1852,6 +2027,35 @@ const guildGame = (() => {
     // Let the native sound button handle its own Enter activation.
     if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "archive") {
+      if (
+        ["Enter", "Space"].includes(code) &&
+        event.target.closest?.("#library-reader button")
+      )
+        return;
+      if (libraryArchive.handle(code, event.repeat, event.shiftKey))
+        event.preventDefault();
+      return;
+    }
+    if (phase === "action") {
+      if (code === "Tab") {
+        event.preventDefault();
+        document
+          .querySelector(
+            document.activeElement.id === "action-next"
+              ? "#game-sound-toggle"
+              : "#action-next",
+          )
+          .focus({ preventScroll: true });
+      } else if (["KeyE", "Enter", "Escape"].includes(code)) {
+        event.preventDefault();
+        if (!event.repeat) actionScenes.finish();
+      } else if (
+        ["KeyW", "KeyA", "KeyS", "KeyD", "KeyC", "ShiftLeft"].includes(code)
+      )
+        event.preventDefault();
+      return;
+    }
     if (phase === "shop") {
       // Preserve native keyboard activation for the focused shop buttons.
       if (
@@ -2070,7 +2274,9 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "shop") shopView.handle("KeyE");
+        if (phase === "action") actionScenes.finish();
+        else if (phase === "archive") libraryArchive.handle("KeyE");
+        else if (phase === "shop") shopView.handle("KeyE");
         else if (phase === "event") eventScenes.finish();
         else if (phase === "vista") finishVista();
         else if (phase === "dialogue") advanceDialogue();
@@ -2096,7 +2302,12 @@ const guildGame = (() => {
     storyStep = "lucy";
     shopOrigin = "city";
     shopStocks = fieldWorld.freshStock();
-    fieldFlags = { lucyFarewell: false, leafTaken: false, springUsed: false };
+    fieldFlags = {
+      lucyFarewell: false,
+      leafTaken: false,
+      springUsed: false,
+      libraryReached: false,
+    };
     visited.clear();
     buildMap();
     questAccepted = false;
@@ -2144,6 +2355,8 @@ const guildGame = (() => {
     hideVista();
     hideEvent();
     hideTrading();
+    hideReading();
+    hideAction();
     gameAudio.stopTransient();
     gameAudio.scene("title");
     cancelAnimationFrame(request);
@@ -2179,6 +2392,8 @@ const guildGame = (() => {
         location,
         storyStep,
         event: eventScenes.kind,
+        action: actionScenes.kind,
+        archive: libraryArchive.active ? libraryArchive.tab : null,
         vista: cinematic?.key || null,
         expression: dialogue?.lines[dialogue.index].expression || "neutral",
         player: player

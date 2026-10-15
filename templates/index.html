@@ -14,6 +14,10 @@
     <script src="JS/audio.js" defer></script>
     <script src="JS/events.js" defer></script>
     <script src="JS/fields.js" defer></script>
+    <script src="JS/terrain.js" defer></script>
+    <script src="JS/lore.js" defer></script>
+    <script src="JS/archive.js" defer></script>
+    <script src="JS/staging.js" defer></script>
     <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
     <script src="JS/game.js" defer></script>
@@ -196,7 +200,8 @@
               class="chronicle-art"
               width="1536"
               height="512"
-              data-art-src="assets/greenstoa-prologue.png"
+              data-art-src="assets/prologue-early.webp"
+              data-late-src="assets/prologue-late.webp"
               role="img"
             ></canvas>
             <div class="narration-block">
@@ -314,8 +319,12 @@
           data-city-src="assets/map-city.webp"
           data-grove-src="assets/map-grove.webp"
           data-shop-src="assets/map-shop.webp"
+          data-library-src="assets/map-library.webp"
+          data-guide-forest-src="assets/guide-forest.webp"
+          data-guide-kania-src="assets/guide-kania.webp"
           data-field-cast-src="assets/ld-fields.webp"
           data-sd-field-src="assets/sd-fields.webp"
+          data-sd-kania-src="assets/sd-kania.webp"
           hidden
         ></div>
         <button
@@ -580,6 +589,60 @@
                   돌아가기 <kbd>C</kbd>
                 </button>
               </div>
+            </footer>
+          </div>
+        </section>
+        <section
+          id="story-action"
+          class="journey-action"
+          role="dialog"
+          aria-label="여정 연출"
+          hidden
+        >
+          <div class="action-picture">
+            <canvas
+              id="action-art"
+              width="720"
+              height="480"
+              aria-label="인물과 숲의 여정"
+            ></canvas>
+          </div>
+          <div class="action-caption">
+            <p id="action-label"></p>
+            <button id="action-next" class="guild-button">E · 계속</button>
+          </div>
+        </section>
+        <section
+          id="library-reader"
+          class="library-reader"
+          role="dialog"
+          aria-labelledby="archive-title"
+          hidden
+        >
+          <div class="archive-window game-window">
+            <header>
+              <div>
+                <p class="archive-kicker">성역의 기록을 펼치다</p>
+                <h2 id="archive-title">이슬잎 도서관</h2>
+              </div>
+              <button id="archive-close" class="guild-button">
+                책 덮기 <kbd>C</kbd>
+              </button>
+            </header>
+            <nav class="archive-tabs" aria-label="자료 종류">
+              <button data-archive-tab="world">세계관 설정</button
+              ><button data-archive-tab="people">인물 도감</button
+              ><button data-archive-tab="comic">프롤로그 웹툰</button>
+            </nav>
+            <div class="archive-body">
+              <aside id="archive-index" aria-label="목차"></aside>
+              <div id="archive-scroll" tabindex="0" aria-label="기록 내용">
+                <article id="archive-page"></article>
+              </div>
+            </div>
+            <footer>
+              <span>A/D 분류 · W/S 목차 또는 스크롤 · C 책 덮기</span
+              ><span id="archive-page-count"></span>
             </footer>
           </div>
         </section>

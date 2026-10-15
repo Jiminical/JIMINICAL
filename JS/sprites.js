@@ -7,7 +7,7 @@ const fieldSprites = (() => {
   const cast = {
     hero: { sheet: "hero", row: 0, height: 72 },
     lucy: { sheet: "leads", row: 0, height: 70 },
-    scout: { sheet: "leads", row: 1, height: 74 },
+    scout: { sheet: "kania", row: 0, height: 74 },
     rogue: { sheet: "leads", row: 2, height: 72 },
     leon: { sheet: "leads", row: 3, height: 72 },
     bran: { sheet: "guild", row: 0, height: 72 },
@@ -20,10 +20,11 @@ const fieldSprites = (() => {
     sena: { sheet: "field", row: 3, height: 70 },
   };
   const directions = ["down", "left", "right", "up"];
+  const outlines = new Map();
   const cache = new Map(),
     bases = new Map();
   let sheets = {};
-  function analyse(image) {
+  function analyse(image, rowCount = 4) {
     const c = document.createElement("canvas");
     c.width = image.naturalWidth;
     c.height = image.naturalHeight;
@@ -37,9 +38,9 @@ const fieldSprites = (() => {
     const edges = [0];
     // Generated sheets can leave unequal blank gutters between rows.
     // Split on the clear gap nearest each nominal quarter, keeping boot tips.
-    for (let row = 1; row < 4; row++) {
-      const nominal = Math.round((c.height * row) / 4),
-        radius = Math.floor((c.height / 4) * 0.16);
+    for (let row = 1; row < rowCount; row++) {
+      const nominal = Math.round((c.height * row) / rowCount),
+        radius = Math.floor((c.height / rowCount) * 0.16);
       let best = nominal,
         bestScore = Infinity;
       for (let y = nominal - radius; y <= nominal + radius; y++) {
@@ -53,7 +54,7 @@ const fieldSprites = (() => {
     }
     edges.push(c.height);
     const cells = [];
-    for (let row = 0; row < 4; row++) {
+    for (let row = 0; row < rowCount; row++) {
       const columns = new Uint32Array(c.width);
       for (let y = edges[row]; y < edges[row + 1]; y++)
         for (let x = 0; x < c.width; x++)
@@ -125,9 +126,13 @@ const fieldSprites = (() => {
   }
   function prepare(images) {
     cache.clear();
+    outlines.clear();
     bases.clear();
     sheets = Object.fromEntries(
-      Object.entries(images).map(([name, image]) => [name, analyse(image)]),
+      Object.entries(images).map(([name, image]) => [
+        name,
+        analyse(image, name === "kania" ? 1 : 4),
+      ]),
     );
     for (const [kind, person] of Object.entries(cast)) {
       const cells =
@@ -231,6 +236,33 @@ const fieldSprites = (() => {
     cache.set(key, image);
     return image;
   }
+  function outline(kind, direction = "down", frame = 0) {
+    const key = kind + direction + frame;
+    if (outlines.has(key)) return outlines.get(key);
+    const source = make(kind, direction, frame),
+      mask = document.createElement("canvas");
+    mask.width = width;
+    mask.height = height;
+    const m = mask.getContext("2d");
+    m.drawImage(source, 0, 0);
+    m.globalCompositeOperation = "source-in";
+    m.fillStyle = "#ffffff";
+    m.fillRect(0, 0, width, height);
+    const edge = document.createElement("canvas");
+    edge.width = width;
+    edge.height = height;
+    const c = edge.getContext("2d");
+    [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ].forEach(([x, y]) => c.drawImage(mask, x, y));
+    c.globalCompositeOperation = "destination-out";
+    c.drawImage(source, 0, 0);
+    outlines.set(key, edge);
+    return edge;
+  }
   function badge() {
     const canvas = document.createElement("canvas");
     canvas.width = 44;
@@ -250,6 +282,7 @@ const fieldSprites = (() => {
   return {
     prepare,
     make,
+    outline,
     badge,
     width,
     height,

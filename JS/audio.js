@@ -116,7 +116,7 @@ const gameAudio = (() => {
     );
   }
   function ambientLevel() {
-    return ["guild", "shop"].includes(place)
+    return ["guild", "shop", "library"].includes(place)
       ? 0.055
       : place === "carriage"
         ? 0.11
@@ -125,7 +125,7 @@ const gameAudio = (() => {
   function scene(next) {
     place = next;
     if (!ambience) return;
-    const indoor = ["guild", "shop"].includes(next);
+    const indoor = ["guild", "shop", "library"].includes(next);
     ambience.gain.setTargetAtTime(ambientLevel(), context.currentTime, 0.7);
     ambienceFilter.frequency.setTargetAtTime(
       indoor ? 420 : next === "carriage" ? 260 : 1100,
@@ -359,6 +359,24 @@ const gameAudio = (() => {
         noise(0.12, 0.3, 1500);
         noise(0.09, 0.24, 1100, 0.14);
         break;
+      case "jump":
+        tone(300, 0.13, { wave: "square", level: 0.09, end: 620 });
+        break;
+      case "cry":
+        [0, 0.18].forEach((delay) =>
+          tone(460, 0.16, { wave: "triangle", level: 0.12, end: 180, delay }),
+        );
+        break;
+      case "birds":
+        [0, 0.14, 0.36].forEach((delay, i) =>
+          tone(1500 + i * 240, 0.1, {
+            wave: "sine",
+            level: 0.032,
+            end: 2100 + i * 120,
+            delay,
+          }),
+        );
+        break;
       case "purchase":
         [784, 988, 1175].forEach((hz, i) =>
           tone(hz, 0.095, { wave: "triangle", level: 0.12, delay: i * 0.045 }),
@@ -376,7 +394,7 @@ const gameAudio = (() => {
         break;
       case "footstep":
         tone(
-          ["guild", "carriage", "shop"].includes(variant)
+          ["guild", "carriage", "shop", "library"].includes(variant)
             ? 115
             : variant === "city"
               ? 215
@@ -388,7 +406,11 @@ const gameAudio = (() => {
             filter: 750,
           },
         );
-        noise(0.045, 0.13, ["guild", "shop"].includes(variant) ? 370 : 1000);
+        noise(
+          0.045,
+          0.13,
+          ["guild", "shop", "library"].includes(variant) ? 370 : 1000,
+        );
         break;
       case "sanctuary":
         [196, 294, 392, 588].forEach((hz, i) =>

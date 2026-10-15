@@ -6,7 +6,6 @@ const storyJourney = (() => {
   const curtain = document.querySelector("#scene-curtain");
   const content = screen.querySelector(".story-content");
   const art = document.querySelector("#chronicle-art");
-  const artContext = art.getContext("2d");
   const narration = document.querySelector("#story-narration");
   const accessibleNarration = document.querySelector(
     "#story-narration-accessible",
@@ -24,53 +23,7 @@ const storyJourney = (() => {
     confirm: document.querySelector("#name-confirmation"),
     complete: document.querySelector("#name-complete"),
   };
-  const scenes = [
-    {
-      panel: 0,
-      text: "먼 옛날, 아직 나라와 국경조차 없던 시대.\n제루스 대륙은 끝없는 혼돈에 휩싸여 있었다.",
-      art: "폭풍과 어둠에 뒤덮인 고대 제루스 대륙의 기록화.",
-    },
-    {
-      panel: 1,
-      text: "들끓는 마족과 포악한 짐승, 사악한 악령들.\n약탈과 죽음이 끊이지 않았고, 어디에도 안전한 땅은 없었다.",
-      art: "마족과 짐승, 악령이 여행자의 길을 가로막는 기록화.",
-    },
-    {
-      panel: 2,
-      text: "그러나 대륙이 제루스라 불리기 수천 년 전부터, 생명의 거목 ‘어머니 나무’는 굳건히 서 있었다.\n순수한 생명력이 깃든 그 성역만큼은 누구도 감히 침범하지 못했다.",
-      art: "어둠 속에서도 빛나는 성역을 지키는 거대한 어머니 나무.",
-    },
-    {
-      panel: 2,
-      text: "어머니 나무로부터 태어나 그 힘을 나눠 받고, 성역을 지키며 살아가는 이들.\n세상은 그 종족을 ‘엘프’라 불렀다.",
-      art: "어머니 나무의 생명력으로 빛나는 고대 성역의 기록화.",
-    },
-    {
-      panel: 3,
-      text: "하지만 어머니 나무의 힘을 나눠 받은 고대 엘프들조차 대륙의 혼란을 잠재우기에는 역부족이었다.\n마침내 그들은 나라의 필요성을 깨닫고, 평등과 자유를 기치로 성역 주변에 중립 국가를 세웠다.",
-      art: "어머니 나무 아래에 모여 새로운 나라의 터를 닦는 고대 엘프들.",
-    },
-    {
-      panel: 4,
-      text: "그 나라의 이름은 그린스토아.\n인간들의 차별을 피해 자유를 갈망하던 이종족들이 대륙 각지에서 모여들었다.\n그들은 평등과 보금자리에 보답하며, 시민이자 성역을 지키는 힘이 되었다.",
-      art: "어머니 나무와 강을 둘러싼 도시, 함께 살아가는 여러 종족들.",
-    },
-    {
-      panel: 4,
-      text: "그리고 마침내 나타난 최초의 용사, 제르.\n당대 최강의 인간들과 그린스토아는 동맹을 맺고 선대 마왕을 격퇴했다.\n흩어진 대륙이 하나로 이어지고, 이 땅에는 긴 평화가 찾아왔다.",
-      art: "여러 종족이 나란히 바라보는 평화로운 성역의 도시.",
-    },
-    {
-      panel: 4,
-      text: "오늘날 그린스토아는 제루스 대륙의 허파이자, 수려한 대자연을 품은 이종족들의 연합국.\n종족도 신분도 묻지 않는 중립 지대, 열정으로 꿈을 현실로 만들 수 있는 땅이다.",
-      art: "강과 숲, 어머니 나무의 품 아래 살아가는 그린스토아.",
-    },
-    {
-      panel: 5,
-      text: "그러나 최근, 이 신성한 땅에도 불길한 기운이 감돈다는 소문이 들려온다.\n제르디아 기사단은 성역을 조사할 모험가를 찾기 시작했다.\n그리고 지금, 한 모험가가 길드의 접수대 앞에 서 있다…",
-      art: "고요한 성역의 나무 뿌리 사이로 스며드는 불길한 그림자.",
-    },
-  ];
+  const scenes = greenstoaLore.scenes;
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const segmenter =
     typeof Intl.Segmenter === "function"
@@ -88,12 +41,7 @@ const storyJourney = (() => {
   let glyphs = [];
   let revealed = 0;
   let typing = false;
-  const artwork = new Image();
-  artwork.src = art.dataset.artSrc;
-  const artworkReady = artwork
-    .decode()
-    .then(() => true)
-    .catch(() => false);
+  const artworkReady = greenstoaLore.ready.then(() => true).catch(() => false);
 
   function motionEnabled() {
     return (
@@ -199,32 +147,13 @@ const storyJourney = (() => {
     else revealNext();
   }
   function drawArtwork() {
-    if (phase !== "prologue" || !artwork.complete || !artwork.naturalWidth)
-      return;
-    const bounds = art.getBoundingClientRect();
+    if (phase !== "prologue") return;
+    const bounds = art.getBoundingClientRect(),
+      density = Math.min(devicePixelRatio || 1, 2);
     if (!bounds.width || !bounds.height) return;
-    const density = Math.min(devicePixelRatio || 1, 2);
     art.width = Math.round(bounds.width * density);
     art.height = Math.round(bounds.height * density);
-    const tileWidth = artwork.naturalWidth / 2;
-    const tileHeight = artwork.naturalHeight / 3;
-    // Fit the entire panel uniformly; no crop or independent X/Y stretching.
-    const scale = Math.min(art.width / tileWidth, art.height / tileHeight);
-    const drawWidth = tileWidth * scale;
-    const drawHeight = tileHeight * scale;
-    artContext.imageSmoothingEnabled = false;
-    artContext.clearRect(0, 0, art.width, art.height);
-    artContext.drawImage(
-      artwork,
-      (scenes[index].panel % 2) * tileWidth,
-      Math.floor(scenes[index].panel / 2) * tileHeight,
-      tileWidth,
-      tileHeight,
-      (art.width - drawWidth) / 2,
-      (art.height - drawHeight) / 2,
-      drawWidth,
-      drawHeight,
-    );
+    greenstoaLore.paintChapter(art, index);
   }
   function showPage(nextPhase) {
     phase = nextPhase;

@@ -12,7 +12,7 @@ import re
 ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text() + "\n" + (ROOT / "CSS/game.css").read_text()
-script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "shops.js", "sprites.js", "game.js", "story.js", "main.js"))
+script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "terrain.js", "lore.js", "archive.js", "staging.js", "shops.js", "sprites.js", "game.js", "story.js", "main.js"))
 # All image references are embedded, including the game maps and scenic interludes.
 image_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp)", page + "\n" + styles)))
 for ref in image_refs:
@@ -47,15 +47,16 @@ if '<script id="greenstoa-script">' in page:
         r'<script id="greenstoa-script">.*?</script>', lambda _: script_tag, page, flags=re.S
     )
 else:
-    page = re.sub(r'\s*<script src="JS/(?:audio|events|fields|shops|sprites|game|story|main).js" defer></script>', "", page)
+    page = re.sub(r'\s*<script src="JS/(?:audio|events|fields|terrain|lore|archive|staging|shops|sprites|game|story|main).js" defer></script>', "", page)
     page = page.replace("</body>", script_tag + "\n</body>")
 
 assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
 assert 'data-sprite-src="data:image/png;base64,' in page
-assert 'data-art-src="data:image/png;base64,' in page
-for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-guild', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field'):
+assert 'data-art-src="data:image/webp;base64,' in page
+assert 'data-late-src="data:image/webp;base64,' in page
+for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-guild', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles
