@@ -110,8 +110,17 @@ const guildGame = (() => {
       "sanctuary",
       "events",
       "eventProps",
+      "sdHero",
+      "sdGuild",
+      "sdLeads",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
-  ]);
+  ]).then(() =>
+    fieldSprites.prepare({
+      hero: pictures.sdHero,
+      guild: pictures.sdGuild,
+      leads: pictures.sdLeads,
+    }),
+  );
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
   let active = false,
@@ -316,7 +325,7 @@ const guildGame = (() => {
           atlas: pictures.events,
           props: pictures.eventProps,
           name: playerName,
-          avatar: makeSprite("hero", "down", 0),
+          avatar: fieldSprites.badge(),
           onImpact: options.onImpact,
           onFinish: () => {
             if (options.destination)
@@ -555,9 +564,6 @@ const guildGame = (() => {
   }
 
   const makeSprite = fieldSprites.make;
-  for (const kind of Object.keys(cast))
-    for (const dir of ["up", "down", "left", "right"])
-      for (let f = 0; f < 4; f++) makeSprite(kind, dir, f);
 
   function actor(id, x, y, dir = "down") {
     return { id, x, y, dir, moving: false };
@@ -1358,15 +1364,30 @@ const guildGame = (() => {
   }
   function drawActor(a) {
     const x = Math.round(a.x),
-      y = Math.round(a.y);
+      receptionist = location === "guild" && a.id === "lucy",
+      y = Math.round(a.y + (receptionist ? 30 : 0));
     // A low, warm contact shadow ties the shared foot anchor to each floor.
-    rect(ctx, x - 6, y - 1, 12, 3, "#303b324a");
-    rect(ctx, x - 8, y, 16, 1, "#303b3233");
+    if (!receptionist) {
+      rect(ctx, x - 6, y - 1, 12, 3, "#303b324a");
+      rect(ctx, x - 8, y, 16, 1, "#303b3233");
+    }
     const frame = a.moving
       ? Math.floor(elapsed * (a === player && keys.has("ShiftLeft") ? 12 : 8)) %
         4
       : 0;
-    ctx.drawImage(makeSprite(a.id, a.dir, frame), x - 22, y - 56);
+    ctx.save();
+    if (receptionist) {
+      // The desk's back edge covers her lower body while she is at reception.
+      ctx.beginPath();
+      ctx.rect(0, 0, W, 98);
+      ctx.clip();
+    }
+    ctx.drawImage(
+      makeSprite(a.id, a.dir, frame),
+      x - fieldSprites.width / 2,
+      y - fieldSprites.anchorY,
+    );
+    ctx.restore();
   }
   function drawWorld() {
     const menuUnavailable = phase !== "free" || inputLocked;
@@ -1391,7 +1412,19 @@ const guildGame = (() => {
       prompt.hidden = !target;
       if (target) {
         const x = Math.round(target.x),
-          y = Math.round(target.y) - 65;
+          person =
+            target.kind === "npc" ? npcs.find((n) => n.id === target.id) : null,
+          y = person
+            ? Math.max(
+                2,
+                Math.round(
+                  person.y +
+                    (location === "guild" && person.id === "lucy" ? 30 : 0),
+                ) -
+                  fieldSprites.bodyHeight(person.id) -
+                  18,
+              )
+            : Math.round(target.y) - 65;
         panel(ctx, x - 7, y, 14, 13, "#252c35", "#cbbd91");
         ctx.fillStyle = "#eee4c8";
         ctx.font = "9px monospace";
