@@ -214,14 +214,24 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 8px;
-  background: transparent;
-  color: #dddcc7;
-  font-size: 12px;
-  text-shadow: 2px 2px #142833;
+  min-height: 38px;
+  padding: 6px 12px;
+  background: #22333f;
+  border: 2px solid #93a7a4;
+  box-shadow:
+    2px 2px 0 #0d1c26,
+    inset 0 0 0 1px #40535e;
+  color: #ede8d2;
+  font-size: 14px;
+  text-shadow: none;
 }
 .sound-toggle:hover {
+  background: #354a55;
   color: #fff5d3;
+}
+.sound-toggle[aria-pressed="true"] {
+  background: #344b50;
+  border-color: #c5caaa;
 }
 .sound-icon {
   font-style: normal;
@@ -1313,7 +1323,7 @@ const volumeSlider = document.querySelector("#volume");
 const volumeLabel = document.querySelector("#volume-label");
 const optionsDialog = document.querySelector("#options-dialog");
 const journeyDialog = document.querySelector("#journey-dialog");
-// Keep one original drawing. Only local pixel coordinates and eyelids change.
+// Build registered pixel cels once, then hold/swap those drawings at 10 fps.
 const spriteAnimation = (() => {
   const canvas = document.querySelector(".character-sprite");
   const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -1324,8 +1334,47 @@ const spriteAnimation = (() => {
   // Transparent overscan lets hair tips move beyond the source cell safely.
   const inset = 16;
   const contentWidth = width - inset * 2;
-  const frameCount = 192;
+  const frameCount = 64;
   const loopMs = 6400;
+  const windCels = [
+    [0, 0],
+    [0.5, 0],
+    [1, 0],
+    [1.5, 0.5],
+    [2, 0.5],
+    [2.5, 1],
+    [2.5, 1],
+    [2, 1],
+    [1.5, 0.5],
+    [1, 0.5],
+    [0.5, 0],
+    [0, 0],
+    [-0.5, 0],
+    [-1, -0.5],
+    [-1.5, -0.5],
+    [-2, -1],
+    [-2.5, -1],
+    [-2.5, -1],
+    [-2, -0.5],
+    [-1.5, -0.5],
+    [-1, 0],
+    [-0.5, 0],
+    [0, 0],
+    [0.5, 0.5],
+    [1, 0.5],
+    [1, 0.5],
+    [0.5, 0],
+    [0, 0],
+    [-0.5, 0],
+    [-0.5, 0],
+    [0, 0],
+    [0, 0],
+  ];
+  const breathCels = [0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 0, 0, 0];
+  const cloakCels = [
+    0, 0, 0, 0.5, 1, 1, 0.5, 0, -0.5, -1, -1, -0.5, 0, 0, 0, 0,
+  ];
+  const idleFrames = [];
   let enabled = false;
   let loaded = false;
   let request = 0;
@@ -1336,6 +1385,8 @@ const spriteAnimation = (() => {
   let output;
   let stillPixels;
   let outputPixels;
+  let closedPixels;
+  let paintedFrame;
   const movingPixels = [];
   const eyePixels = [];
 
@@ -1376,6 +1427,7 @@ const spriteAnimation = (() => {
     output = context.createImageData(width, height);
     stillPixels = new Uint32Array(still.data.buffer);
     outputPixels = new Uint32Array(output.data.buffer);
+    closedPixels = new Uint32Array(closed.data.buffer);
 
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
@@ -1400,7 +1452,7 @@ const spriteAnimation = (() => {
       }
     }
 
-    // Tiny feathered eyelid patches. The rest of the second portrait is never drawn.
+    // Small eyelid patches. The rest of the second portrait is never drawn.
     const eyes = [
       { x: 0.295, y: 0.33, rx: 0.044, ry: 0.034 },
       { x: 0.429, y: 0.362, rx: 0.061, ry: 0.032 },
@@ -1408,35 +1460,47 @@ const spriteAnimation = (() => {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         let mask = 0;
+        let eyelidRow = 0;
         for (const eye of eyes) {
           const distance = Math.hypot(
             ((x - inset) / contentWidth - eye.x) / eye.rx,
             (y / height - eye.y) / eye.ry,
           );
-          mask = Math.max(mask, 1 - smooth(0.7, 1, distance));
+          const candidate = 1 - smooth(0.7, 1, distance);
+          if (candidate > mask) {
+            mask = candidate;
+            eyelidRow = (y / height - eye.y + eye.ry) / (eye.ry * 2);
+          }
         }
-        if (mask > 0) eyePixels.push({ index: (y * width + x) * 4, mask });
+        if (mask >= 0.2) eyePixels.push({ index: y * width + x, eyelidRow });
       }
+    }
+
+    const cache = new Map();
+    for (let frame = 0; frame < frameCount; frame++) {
+      const wind = windCels[Math.floor(frame / 2)];
+      const pose = {
+        hairX: wind[0],
+        hairY: wind[1],
+        cloth: cloakCels[Math.floor(frame / 4)],
+        breath: breathCels[Math.floor(frame / 2) % breathCels.length],
+        blink: frame === 47 ? 1 : frame === 46 || frame === 48 ? 0.64 : 0,
+      };
+      const key = JSON.stringify(pose);
+      if (!cache.has(key)) cache.set(key, makeCel(pose));
+      idleFrames.push(cache.get(key));
     }
   }
 
-  function draw(frame) {
-    if (!loaded || frame === lastFrame) return;
-    const phase = (frame / frameCount) * Math.PI * 2;
-    const breeze = Math.sin(phase);
-    const ripple = Math.sin(phase * 2);
-    // A quiet 3.2-second inhale/exhale, capped at two source pixels.
-    const inhale = (1 - Math.cos(phase * 2)) / 2;
+  function makeCel(pose) {
     outputPixels.set(stillPixels);
 
     for (const pixel of movingPixels) {
-      const dx =
-        pixel.hair * (2.3 * breeze + 0.45 * ripple) +
-        pixel.cloth * 0.8 * Math.sin(phase * 2);
+      const dx = pixel.hair * pose.hairX + pixel.cloth * pose.cloth;
       const dy =
-        pixel.hair * 1.2 * breeze +
-        pixel.cloth * 0.7 * breeze -
-        pixel.breath * 1.8 * inhale;
+        pixel.hair * pose.hairY +
+        pixel.cloth * pose.cloth * 0.5 -
+        pixel.breath * pose.breath;
       const sx = Math.round(pixel.x - dx);
       const sy = Math.round(pixel.y - dy);
       outputPixels[pixel.index] =
@@ -1445,32 +1509,31 @@ const spriteAnimation = (() => {
           : 0;
     }
 
-    const blinkTime = (frame / frameCount) * loopMs - 4600;
-    let blink = 0;
-    if (blinkTime >= 0 && blinkTime < 90) blink = smooth(0, 90, blinkTime);
-    else if (blinkTime >= 90 && blinkTime < 140) blink = 1;
-    else if (blinkTime >= 140 && blinkTime < 280)
-      blink = 1 - smooth(140, 280, blinkTime);
-    if (blink > 0) {
+    if (pose.blink > 0) {
       for (const eye of eyePixels) {
-        const mix = blink * eye.mask;
-        for (let channel = 0; channel < 3; channel++) {
-          const index = eye.index + channel;
-          output.data[index] = Math.round(
-            still.data[index] * (1 - mix) + closed.data[index] * mix,
-          );
-        }
+        // Draw open / half-closed / closed eyelids as solid pixel cels, never a dissolve.
+        if (eye.eyelidRow <= pose.blink)
+          outputPixels[eye.index] = closedPixels[eye.index];
       }
     }
-    context.putImageData(output, 0, 0);
+    return new ImageData(new Uint8ClampedArray(output.data), width, height);
+  }
+
+  function draw(frame) {
+    if (!loaded || frame === lastFrame) return;
+    const cel = idleFrames[frame];
+    if (cel !== paintedFrame) {
+      context.putImageData(cel, 0, 0);
+      paintedFrame = cel;
+    }
     lastFrame = frame;
     canvas.dataset.frame = String(frame);
   }
 
   function tick(now) {
-    const frame = Math.floor(
-      (((now - started) % loopMs) / loopMs) * frameCount,
-    );
+    // A restarted loop can receive the current display tick's earlier timestamp.
+    const elapsed = Math.max(0, now - started);
+    const frame = Math.floor(((elapsed % loopMs) / loopMs) * frameCount);
     draw(frame);
     request = requestAnimationFrame(tick);
   }
@@ -1516,7 +1579,7 @@ const spriteAnimation = (() => {
       const x = Math.floor((clientX - bounds.left) / bounds.scale);
       const y = Math.floor((clientY - bounds.top) / bounds.scale);
       if (x < 0 || x >= width || y < 0 || y >= height) return false;
-      let alpha = output.data[(y * width + x) * 4 + 3];
+      let alpha = paintedFrame.data[(y * width + x) * 4 + 3];
       if (getComputedStyle(canvas).maskImage !== "none") {
         const relativeY =
           (clientY - bounds.element.top) / bounds.element.height;

@@ -106,14 +106,24 @@ input:focus-visible {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 8px;
-  background: transparent;
-  color: #dddcc7;
-  font-size: 12px;
-  text-shadow: 2px 2px #142833;
+  min-height: 38px;
+  padding: 6px 12px;
+  background: #22333f;
+  border: 2px solid #93a7a4;
+  box-shadow:
+    2px 2px 0 #0d1c26,
+    inset 0 0 0 1px #40535e;
+  color: #ede8d2;
+  font-size: 14px;
+  text-shadow: none;
 }
 .sound-toggle:hover {
+  background: #354a55;
   color: #fff5d3;
+}
+.sound-toggle[aria-pressed="true"] {
+  background: #344b50;
+  border-color: #c5caaa;
 }
 .sound-icon {
   font-style: normal;
