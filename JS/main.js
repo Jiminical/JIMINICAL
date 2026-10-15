@@ -639,6 +639,9 @@ document.addEventListener(
   document.addEventListener(
     "click",
     (event) => {
+      // An opening fade should stay quiet instead of flashing the click burst over it.
+      if (event.target.closest("#start-button,#story-return,#name-finish"))
+        return;
       if (event.button !== 0 || !settings.motion || reducedMotion.matches)
         return;
       const button = event.target.closest("button:enabled");
@@ -669,6 +672,7 @@ document.addEventListener(
     if (!settings.motion) clearBursts();
   });
   reducedMotion.addEventListener("change", clearBursts);
+  document.addEventListener("greenstoa:storychange", clearBursts);
   window.addEventListener("scroll", clearBursts, { passive: true });
   window.addEventListener("blur", clearBursts);
 })();

@@ -178,10 +178,23 @@
             class="story-page"
             aria-label="프롤로그 장면"
           >
-            <div id="chronicle-art" class="chronicle-art" role="img"></div>
+            <canvas
+              id="chronicle-art"
+              class="chronicle-art"
+              width="1536"
+              height="512"
+              data-art-src="assets/greenstoa-prologue.png"
+              role="img"
+            ></canvas>
             <div class="narration-block">
               <span class="narration-mark" aria-hidden="true">✦</span>
-              <p id="story-narration" aria-live="polite" aria-atomic="true"></p>
+              <p id="story-narration" aria-hidden="true"></p>
+              <p
+                id="story-narration-accessible"
+                class="visually-hidden"
+                aria-live="polite"
+                aria-atomic="true"
+              ></p>
             </div>
           </article>
           <section
@@ -257,10 +270,12 @@
           </button>
           <span id="story-count" aria-label="장면 순서">01 / 06</span>
           <button id="story-next" class="story-next" aria-label="다음 장면">
-            다음 <span aria-hidden="true">▸</span>
+            <span id="story-next-label">다음</span>
+            <span aria-hidden="true">▸</span>
           </button>
         </footer>
       </section>
+      <div id="scene-curtain" aria-hidden="true" hidden></div>
     </main>
 
     <dialog

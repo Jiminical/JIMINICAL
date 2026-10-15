@@ -24,6 +24,8 @@ for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-p
             lambda _: 'data-sprite-src="data:image/png;base64,' + background + '"',
             page,
         )
+    if asset_name == "greenstoa-prologue.png":
+        page = re.sub(r'data-art-src="[^"]*"', lambda _: 'data-art-src="data:image/png;base64,' + background + '"', page)
 for font_name in ("Galmuri11.woff2", "Galmuri11-Bold.woff2"):
     encoded = base64.b64encode((ROOT / "assets/fonts" / font_name).read_bytes()).decode("ascii")
     styles = styles.replace("../assets/fonts/" + font_name, "data:font/woff2;base64," + encoded)
@@ -55,6 +57,7 @@ assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
 assert 'data-sprite-src="data:image/png;base64,' in page
+assert 'data-art-src="data:image/png;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles
 (ROOT / "index.html").write_text(page)
