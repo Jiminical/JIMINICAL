@@ -55,10 +55,7 @@ assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
 assert 'data-sprite-src="data:image/png;base64,' in page
 assert 'data-art-src="data:image/png;base64,' in page
-assert 'data-lucy-src="data:image/png;base64,' in page
-assert 'data-cast-src="data:image/png;base64,' in page
-assert 'data-expressions-src="data:image/webp;base64,' in page
-for attribute in ('featured', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary'):
+for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles

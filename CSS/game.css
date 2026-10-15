@@ -1,6 +1,6 @@
 /* The room remains a 720 × 480 pixel canvas; surrounding UI shares the title's font. */
 .game-screen[hidden],
-.game-dialogue[hidden],
+#game-dialogue[hidden],
 .guild-menu[hidden],
 #game-toast[hidden],
 #game-interaction[hidden],
@@ -23,6 +23,12 @@
 .scene.is-game-active {
   background: #11151c;
   min-height: 0;
+}
+@media (min-width: 701px) and (min-height: 701px) and (max-aspect-ratio: 6/5) {
+  .scene.is-game-active {
+    height: calc(100svh - 48px);
+    aspect-ratio: auto;
+  }
 }
 .game-hud {
   position: absolute;
@@ -202,12 +208,43 @@
   bottom: calc(100% + 2px);
   left: 4px;
   width: auto;
-  height: min(43cqh, 340px);
-  max-width: 58%;
-  aspect-ratio: 4/5;
+  height: min(56cqh, 450px);
+  max-width: none;
+  aspect-ratio: 8/7;
   object-fit: contain;
   image-rendering: pixelated;
   pointer-events: none;
+}
+.is-dialogue-compact .game-dialogue {
+  top: 84px;
+  bottom: 30px;
+  left: 16px;
+  right: 16px;
+  min-height: 0;
+  padding: 10px 16px 8px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+.is-dialogue-compact .game-dialogue:has(#dialogue-portrait:not([hidden])) {
+  padding-left: clamp(180px, 35cqw, 280px);
+}
+.is-dialogue-compact #dialogue-portrait {
+  left: 12px;
+  bottom: 8px;
+}
+.is-dialogue-compact #game-dialogue-text {
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.is-dialogue-compact .game-choices {
+  margin-top: 6px;
+  gap: 2px;
+}
+.is-dialogue-compact .game-choices button {
+  padding-block: 3px;
+  font-size: 13px;
 }
 #game-transition {
   position: absolute;
@@ -457,8 +494,11 @@
     line-height: 1.9;
   }
   #dialogue-portrait {
-    height: min(34cqh, 260px);
-    max-width: 65%;
+    height: min(46cqh, 350px);
+    max-width: none;
+  }
+  .game-screen[data-phase="dialogue"] .game-objective {
+    visibility: hidden;
   }
   .game-choices button {
     font-size: 13px;

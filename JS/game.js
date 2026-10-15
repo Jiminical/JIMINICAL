@@ -62,8 +62,8 @@ const guildGame = (() => {
     lucy: {
       name: "루시",
       portrait: "lucy",
-      coat: "#795144",
-      trim: "#b38b69",
+      coat: "#eee9df",
+      trim: "#c4c7cf",
       hair: "#bec58b",
       skin: "#f3c9b1",
     },
@@ -134,16 +134,11 @@ const guildGame = (() => {
   const ready = Promise.all([
     loadPicture("lucy", assets.dataset.lucySrc),
     loadPicture("cast", assets.dataset.castSrc),
-    loadPicture("expressions", assets.dataset.expressionsSrc),
-    ...[
-      "featured",
-      "guild",
-      "carriage",
-      "checkpoint",
-      "gate",
-      "forest",
-      "sanctuary",
-    ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
+    loadPicture("kania", assets.dataset.kaniaSrc),
+    loadPicture("rogue", assets.dataset.rogueSrc),
+    ...["guild", "carriage", "checkpoint", "gate", "forest", "sanctuary"].map(
+      (key) => loadPicture(key, assets.dataset[key + "Src"]),
+    ),
   ]);
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -532,7 +527,7 @@ const guildGame = (() => {
       // Stepped hair silhouette, highlights and individual bangs.
       q(14, 5, 18, 3, p.hair);
       q(10, 8, 26, 17, p.hair);
-      q(12, 7, 22, 3, p.trim);
+      q(12, 7, 22, 3, kind === "lucy" ? "#d5d5a8" : p.trim);
       q(16, 7, 10, 2, "#ded3ad");
       if (front) {
         q(13 + side, 12, 18, 15, p.skin);
@@ -566,8 +561,8 @@ const guildGame = (() => {
         q(19, 31, 3, 3, "#8c65a1");
         q(24, 31, 4, 3, "#563e76");
         q(22, 33, 3, 7, "#6e4d8b");
-        q(15, 39, 1, 4, "#e2c68d");
-        q(30, 39, 1, 4, "#e2c68d");
+        q(23, 40, 1, 1, "#9ea6b4");
+        q(23, 43, 1, 1, "#9ea6b4");
         q(34, 30, 4, 9, p.hair);
         q(33, 33, 2, 7, "#d6d5a9");
         q(15, 43, 16, 5, "#5d423c");
@@ -761,58 +756,58 @@ const guildGame = (() => {
     portrait.dataset.character = kind || "";
     portrait.dataset.expression = expression;
     if (!kind) return;
-    let image,
-      columns = 1,
-      rows = 1,
-      index = 0,
-      source;
-    if (kind === "lucy") {
-      const poses = { reading: 0, incredulous: 1, concerned: 2 };
-      if (expression in poses) {
-        image = pictures.expressions;
-        columns = 3;
-        index = poses[expression];
-      } else image = pictures.lucy;
-    } else if (kind === "scout" || kind === "rogue") {
-      image = pictures.featured;
-      columns = 2;
-      rows = 2;
-      index =
-        kind === "scout"
-          ? expression === "welcoming"
-            ? 1
-            : 0
-          : expression === "embarrassed"
-            ? 3
-            : 2;
-    } else {
-      image = pictures.cast;
-      // The generated sheet has slightly unequal gutters. Use their actual empty
-      // boundaries, preserving the entire silhouette rather than trimming shoulders.
-      const frames = [
-        [0, 0, 394, 506],
-        [394, 0, 374, 506],
-        [768, 0, 365, 506],
-        [1133, 0, 403, 506],
-        [0, 510, 422, 514],
-        [422, 510, 352, 514],
-        [774, 510, 391, 514],
-        [1165, 510, 371, 514],
-      ];
-      source = frames[cast[kind].portrait].map(
-        (v, i) =>
-          v *
-          (i % 2 === 0
-            ? image.naturalWidth / 1536
-            : image.naturalHeight / 1024),
-      );
+    const sheets = {
+      lucy: {
+        image: "lucy",
+        columns: 3,
+        rows: 2,
+        // The hand-drawn gutters are slightly offset; keep every hair strand.
+        columnEdges: [0, 530, 1038, 1536],
+        poses: {
+          neutral: 0,
+          reading: 1,
+          incredulous: 2,
+          concerned: 3,
+          weary: 4,
+          soft: 5,
+        },
+      },
+      scout: {
+        image: "kania",
+        columns: 3,
+        rows: 2,
+        poses: {
+          neutral: 0,
+          warning: 1,
+          skeptical: 2,
+          explaining: 3,
+          welcoming: 4,
+          flustered: 5,
+        },
+      },
+      rogue: {
+        image: "rogue",
+        columns: 2,
+        rows: 2,
+        poses: { neutral: 0, boasting: 1, offended: 2, embarrassed: 3 },
+      },
+    };
+    const sheet = sheets[kind] || { image: "cast", columns: 3, rows: 2 };
+    const image = pictures[sheet.image],
+      index = sheet.poses
+        ? (sheet.poses[expression] ?? 0)
+        : cast[kind].portrait;
+    let cw = image.naturalWidth / sheet.columns,
+      ch = image.naturalHeight / sheet.rows;
+    let sx = (index % sheet.columns) * cw,
+      sy = Math.floor(index / sheet.columns) * ch;
+    if (sheet.columnEdges) {
+      const column = index % sheet.columns;
+      sx = sheet.columnEdges[column];
+      cw = sheet.columnEdges[column + 1] - sx;
     }
-    let [sx, sy, cw, ch] = source || [
-      ((index % columns) * image.naturalWidth) / columns,
-      (Math.floor(index / columns) * image.naturalHeight) / rows,
-      image.naturalWidth / columns,
-      image.naturalHeight / rows,
-    ];
+    portrait.dataset.sheet = sheet.image;
+    portrait.dataset.frame = String(index);
     const frameKey = kind + expression;
     if (!portraitFrames.has(frameKey)) {
       const sample = document.createElement("canvas");
@@ -919,6 +914,7 @@ const guildGame = (() => {
     dialogueLive.textContent = line.text;
     nextLabel.textContent = "E 모두 보기";
     if (!inputLocked) typeLetter();
+    fitPortrait();
   }
   function speak(lines, after, choices) {
     keys.clear();
@@ -1150,7 +1146,7 @@ const guildGame = (() => {
                 },
                 {
                   kind: "lucy",
-                  expression: "concerned",
+                  expression: "soft",
                   text: "의뢰서는 챙겨 두세요. 모험가증도 잃어버리지 마시고.\n…가시기 전에 빵이라도 드세요. 빈속에 떠나지 마시고.",
                 },
               ],
@@ -1167,6 +1163,7 @@ const guildGame = (() => {
             speak([
               {
                 kind: "lucy",
+                expression: "weary",
                 text: "현명하시네요. …비꼬는 거 아니에요.\n천천히 생각하고 오세요. 저는 어차피 여기 있을 테니까.",
               },
             ]),
@@ -1223,19 +1220,23 @@ const guildGame = (() => {
         },
         {
           kind: "rogue",
+          expression: "boasting",
           text: "우헤켈켈켈! 형씨, 그린스토아는 나 혼자 갈 줄 알았는데 말야!\n나처럼 짜릿한 위협을 즐기는 용자가 아직 남아 있었구만?!",
         },
         {
           kind: "rogue",
+          expression: "boasting",
           text: "뭐, 마족이든 악마든 목을 따서 기사단에 바치면,\n그걸로 인생 날먹 아니겠어?!",
         },
         { kind: "hero", text: "…조사 의뢰라고 들었는데." },
         {
           kind: "rogue",
+          expression: "boasting",
           text: "에이, 조사하다 보면 뭐든 나오겠지!\n게다가… 형씨도 들었겠지만 말야…",
         },
         {
           kind: "rogue",
+          expression: "boasting",
           text: "지금 그린스토아에는 남자가 없다잖아…? 킥킥.\n미인 엘프들하고 한탕 거하게 놀아 볼 거라구~",
         },
         {
@@ -1259,9 +1260,14 @@ const guildGame = (() => {
   function checkpointConversation() {
     speak(
       [
-        { kind: "scout", text: "거기, 노란 머리 도적은 돌아가라." },
+        {
+          kind: "scout",
+          expression: "warning",
+          text: "거기, 노란 머리 도적은 돌아가라.",
+        },
         {
           kind: "rogue",
+          expression: "offended",
           text: "어…? 나? 방금 도착했는데?!\n평등한 나라라면서 이래도 되는 거냐고!",
         },
         {
@@ -1270,9 +1276,14 @@ const guildGame = (() => {
         },
         {
           kind: "scout",
+          expression: "explaining",
           text: "그래서 마기와 음기를 철저히 단속하고 있지.\n너는 엄청난 음기를 뿜는 데다, 제대로 된 모험가증조차 없군.",
         },
-        { kind: "scout", text: "네놈을 들일 수는 없다. 돌아가라." },
+        {
+          kind: "scout",
+          expression: "warning",
+          text: "네놈을 들일 수는 없다. 돌아가라.",
+        },
         {
           kind: "rogue",
           expression: "embarrassed",
@@ -1297,17 +1308,17 @@ const guildGame = (() => {
         },
         {
           kind: "scout",
-          expression: "welcoming",
+          expression: "skeptical",
           text: `…${playerName}. 확인했다. 어서 와라.\n의뢰를 받아 왔겠지만, 당장 터질 위협이 있는 것은 아니다.`,
         },
         {
           kind: "scout",
-          expression: "welcoming",
+          expression: "explaining",
           text: "의뢰 내용도 조사일 테고.\n그러니 있는 동안에는 서두르지 말고 편히 지내도 된다.",
         },
         {
           kind: "scout",
-          expression: "welcoming",
+          expression: "neutral",
           text: "조사원이 편안한 것이 우리에게도 좋으니.\n따라와라. 정문까지 안내하지.",
         },
       ],
@@ -1354,6 +1365,7 @@ const guildGame = (() => {
         speak([
           {
             kind: "scout",
+            expression: "welcoming",
             text: "먼 길 오느라 수고했다.\n낯선 곳이겠지만, 이곳에서는 네 종족도 신분도 묻지 않는다.",
           },
         ]);
@@ -1837,14 +1849,31 @@ const guildGame = (() => {
   );
   // The dialogue grows with Korean wrapping and choices. Keep the entire
   // portrait below the HUD, even on a narrow phone, without squeezing its width.
-  const fitPortrait = () => {
+  function fitPortrait() {
     if (root.hidden || dialogueBox.hidden) return;
-    const available =
-      dialogueBox.getBoundingClientRect().top -
-      root.getBoundingClientRect().top -
-      104;
-    portrait.style.maxHeight = Math.max(0, available) + "px";
-  };
+    const view = root.getBoundingClientRect();
+    const compact = view.height < 500 && view.width > 700;
+    root.classList.toggle("is-dialogue-compact", compact);
+    if (portrait.hidden) return;
+    const box = dialogueBox.getBoundingClientRect();
+    const mobile = view.width <= 700,
+      ratio = portrait.width / portrait.height;
+    const available = compact
+      ? box.height - 16
+      : Math.max(0, box.top - view.top - (mobile ? 64 : 104));
+    const desired = Math.min(
+      view.height * (mobile ? 0.48 : 0.58),
+      mobile ? 350 : 450,
+    );
+    const widthLimit = compact
+      ? parseFloat(getComputedStyle(dialogueBox).paddingLeft) - 24
+      : box.width * (mobile ? 0.96 : 0.54);
+    const height = Math.min(available, desired, widthLimit / ratio);
+    // Set both dimensions together so max-width never silently shrinks the bust.
+    portrait.style.height = height + "px";
+    portrait.style.width = height * ratio + "px";
+    portrait.style.maxHeight = "none";
+  }
   const dialogueLayout = new ResizeObserver(fitPortrait);
   dialogueLayout.observe(dialogueBox);
   dialogueLayout.observe(root);
