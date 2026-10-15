@@ -293,6 +293,7 @@
           id="guild-assets"
           data-lucy-src="assets/lucy-portrait.png"
           data-cast-src="assets/guild-portraits.png"
+          data-expressions-src="assets/lucy-expressions.png"
           hidden
         ></div>
         <header class="game-hud">
@@ -356,12 +357,14 @@
         >
           <canvas
             id="dialogue-portrait"
-            width="384"
-            height="420"
+            width="480"
+            height="600"
             aria-hidden="true"
           ></canvas>
           <h2 id="game-speaker"></h2>
-          <p id="game-dialogue-text" aria-hidden="true"></p>
+          <p id="game-dialogue-text" aria-hidden="true">
+            <span id="game-dialogue-glyphs"></span>
+          </p>
           <p
             id="game-dialogue-live"
             class="visually-hidden"
@@ -371,6 +374,7 @@
           <div id="game-choices" class="game-choices" hidden></div>
           <button id="game-dialogue-next" class="guild-button">E 다음</button>
         </section>
+        <div id="game-transition" aria-hidden="true" hidden></div>
         <section
           id="guild-menu"
           class="guild-menu"

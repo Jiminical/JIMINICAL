@@ -172,6 +172,7 @@
   line-height: 1.4;
 }
 #game-dialogue-text {
+  display: grid;
   margin: 0;
   white-space: pre-line;
   min-height: 65px;
@@ -179,6 +180,14 @@
   line-height: 1.85;
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+#game-dialogue-text::after {
+  content: attr(data-full-text);
+  visibility: hidden;
+}
+#game-dialogue-text::after,
+#game-dialogue-glyphs {
+  grid-area: 1 / 1;
 }
 #game-dialogue-next {
   display: block;
@@ -194,10 +203,29 @@
   width: auto;
   height: min(43cqh, 340px);
   max-width: 58%;
-  aspect-ratio: 384/420;
+  aspect-ratio: 4/5;
   object-fit: contain;
   image-rendering: pixelated;
   pointer-events: none;
+}
+#game-transition {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #080c10;
+  pointer-events: auto;
+}
+#game-transition[hidden] {
+  display: none;
+}
+.game-screen.is-recollection .world-viewport {
+  opacity: 0.24;
+}
+.game-screen.is-recollection .game-objective {
+  visibility: hidden;
+}
+.game-screen.is-recollection .game-dialogue {
+  background: #151e2a;
 }
 .game-choices {
   display: grid;

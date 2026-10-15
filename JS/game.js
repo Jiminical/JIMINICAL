@@ -1,4 +1,4 @@
-// A self-contained 30 × 20 tile guild room. World coordinates are pixels at 720 × 480.
+// A self-contained opening journey. Each room uses a 720 × 480 pixel world.
 const guildGame = (() => {
   const root = document.querySelector("#game-screen");
   const canvas = document.querySelector("#guild-world");
@@ -7,7 +7,7 @@ const guildGame = (() => {
   const portrait = document.querySelector("#dialogue-portrait");
   const portraitContext = portrait.getContext("2d");
   const dialogueBox = document.querySelector("#game-dialogue");
-  const dialogueText = document.querySelector("#game-dialogue-text");
+  const dialogueText = document.querySelector("#game-dialogue-glyphs");
   const dialogueLive = document.querySelector("#game-dialogue-live");
   const speakerLabel = document.querySelector("#game-speaker");
   const nextLabel = document.querySelector("#game-dialogue-next");
@@ -21,8 +21,8 @@ const guildGame = (() => {
   const keys = new Set();
   const W = 720,
     H = 480;
-  const wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
-  const collisions = [
+  let wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
+  const guildCollisions = [
     { x: 224, y: 130, w: 304, h: 40 },
     { x: 24, y: 174, w: 38, h: 100 },
     { x: 100, y: 294, w: 112, h: 50 },
@@ -102,6 +102,22 @@ const guildGame = (() => {
       hair: "#353b53",
       skin: "#e1bea3",
     },
+    rogue: {
+      name: "노란 머리 도적",
+      portrait: 6,
+      coat: "#756047",
+      trim: "#b29865",
+      hair: "#ecd16e",
+      skin: "#e1ac87",
+    },
+    scout: {
+      name: "정찰병 엘프",
+      portrait: 7,
+      coat: "#355e53",
+      trim: "#b0b88c",
+      hair: "#b9c5ae",
+      skin: "#edd3bc",
+    },
   };
   const pictures = {};
   function loadPicture(key, src) {
@@ -113,6 +129,7 @@ const guildGame = (() => {
   const ready = Promise.all([
     loadPicture("lucy", assets.dataset.lucySrc),
     loadPicture("cast", assets.dataset.castSrc),
+    loadPicture("expressions", assets.dataset.expressionsSrc),
   ]);
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -122,6 +139,12 @@ const guildGame = (() => {
     previous = 0,
     elapsed = 0;
   let inputLocked = true;
+  let location = "guild",
+    storyStep = "recollection",
+    queueActive = false;
+  let transitionSerial = 0,
+    transitionAnimation;
+  const transition = document.querySelector("#game-transition");
   let player,
     npcs = [],
     playerName = "",
@@ -142,6 +165,7 @@ const guildGame = (() => {
   background.height = H;
   const map = background.getContext("2d");
   const spriteBank = new Map();
+  const portraitFrames = new Map();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const motion = () =>
     !reduced.matches && !document.body.classList.contains("no-motion");
@@ -205,7 +229,7 @@ const guildGame = (() => {
     rect(map, x + 7, y + 41, 14, 5, "#807087");
     rect(map, x + 10, y + 46, 8, 5, "#64516f");
   }
-  function buildMap() {
+  function buildGuildMap() {
     rect(map, 0, 0, W, H, "#171b25");
     for (let y = 120; y < 480; y += 24)
       for (let x = 0; x < 720; x += 48) {
@@ -353,110 +377,462 @@ const guildGame = (() => {
     for (let i = 0; i < 3; i++) rect(map, 331, 456 + i * 6, 58, 2, "#ad9271");
   }
 
+  const placeNames = {
+    guild: ["제르디아 왕국", "모험가 길드"],
+    carriage: ["제르디아 기사단 파견 마차", "동쪽 숲길"],
+    checkpoint: ["그린스토아 외곽", "성역 검문소"],
+    gate: ["이종족연합국 그린스토아", "어머니 나무의 품 아래"],
+  };
+  const fieldCollisions = {
+    carriage: [
+      { x: 90, y: 220, w: 110, h: 150 },
+      { x: 520, y: 220, w: 110, h: 150 },
+    ],
+    checkpoint: [
+      { x: 68, y: 190, w: 150, h: 125 },
+      { x: 500, y: 180, w: 145, h: 134 },
+    ],
+    gate: [
+      { x: 40, y: 130, w: 215, h: 160 },
+      { x: 465, y: 130, w: 215, h: 160 },
+    ],
+  };
+  function forest(c, x, y, size = 1) {
+    const leaf = (a, b, w, h, color) =>
+      rect(c, x + a * size, y + b * size, w * size, h * size, color);
+    leaf(13, 26, 8, 28, "#35463b");
+    leaf(15, 28, 3, 24, "#79765b");
+    leaf(9, 51, 16, 3, "#35463b");
+    leaf(19, 34, 6, 3, "#566349");
+    leaf(5, 7, 26, 31, "#213f3d");
+    leaf(-5, 19, 46, 15, "#213f3d");
+    leaf(10, 1, 17, 8, "#345e4e");
+    leaf(2, 9, 32, 14, "#3d7058");
+    leaf(-3, 21, 43, 9, "#315f4d");
+    leaf(2, 30, 33, 7, "#284f46");
+    leaf(6, 8, 11, 4, "#729569");
+    leaf(19, 5, 7, 3, "#5b875f");
+    leaf(1, 16, 9, 4, "#5a865f");
+    leaf(15, 14, 10, 5, "#527d59");
+    leaf(27, 13, 5, 5, "#426f53");
+    leaf(31, 22, 6, 4, "#527e59");
+    leaf(4, 25, 7, 3, "#436f52");
+    leaf(18, 26, 9, 4, "#3e6a50");
+    leaf(13, 19, 4, 2, "#7a9b6d");
+    leaf(26, 27, 3, 2, "#779564");
+    leaf(7, 34, 6, 2, "#3d654e");
+    leaf(23, 34, 5, 2, "#416c52");
+  }
+  function buildMap() {
+    if (location === "guild") {
+      wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
+      buildGuildMap();
+    } else if (location === "carriage") {
+      wallBounds = { left: 210, right: 510, top: 252, bottom: 418 };
+      rect(map, 0, 0, W, H, "#121d26");
+      panel(map, 64, 36, 592, 402, "#7b583e", "#292b32");
+      for (let x = 72; x < 650; x += 24) {
+        rect(map, x, 42, 2, 392, "#473b33");
+        rect(map, x + 3, 42, 2, 386, "#ab8255");
+      }
+      for (const x of [96, 426]) {
+        panel(map, x, 78, 198, 130, "#243e42");
+        rect(map, x + 8, 86, 182, 110, "#71998a");
+        for (let n = 0; n < 7; n++) forest(map, x + 8 + n * 27, 126, 0.75);
+        rect(map, x, 75, 198, 7, "#cab282");
+        rect(map, x + 91, 80, 8, 126, "#564735");
+      }
+      rect(map, 292, 71, 134, 139, "#5b4534");
+      panel(map, 324, 91, 72, 90, "#4a4251", "#bd9f6a");
+      rect(map, 356, 108, 7, 48, "#c8b988");
+      rect(map, 342, 126, 35, 6, "#c8b988");
+      panel(map, 88, 244, 111, 135, "#68505a");
+      panel(map, 521, 244, 111, 135, "#68505a");
+      for (const x of [92, 525]) {
+        rect(map, x, 252, 103, 6, "#a47d6c");
+        rect(map, x, 310, 103, 4, "#433941");
+      }
+      rect(map, 208, 225, 304, 201, "#8f6d4a");
+      for (let y = 232; y < 425; y += 20) rect(map, 211, y, 296, 2, "#634d38");
+      panel(map, 300, 382, 120, 39, "#535448");
+      rect(map, 309, 389, 102, 2, "#aaa07a");
+    } else {
+      wallBounds = {
+        left: 45,
+        right: 675,
+        top: location === "gate" ? 276 : 204,
+        bottom: 446,
+      };
+      rect(map, 0, 0, W, H, "#3b6251");
+      for (let y = 0; y < H; y += 12)
+        for (let x = 0; x < W; x += 12) {
+          const n = hash(x / 12, y / 12);
+          rect(
+            map,
+            x,
+            y,
+            12,
+            12,
+            ["#3c6651", "#426c55", "#436b53", "#385d4e"][n % 4],
+          );
+          if (n < 4) rect(map, x + 3, y + 5, 2, 3, "#7c9570");
+        }
+      rect(map, 270, 128, 180, 352, "#b8ad85");
+      rect(map, 280, 130, 160, 350, "#d0c39d");
+      for (let y = 140; y < H; y += 19)
+        for (let x = 286; x < 433; x += 31) {
+          rect(map, x + (hash(x, y) % 5), y, 26, 15, "#bdb38f");
+          rect(map, x + 2, y + 1, 21, 1, "#e4d4ad");
+        }
+      for (const x of [20, 85, 149, 559, 623, 687])
+        for (const y of [15, 85, 165]) forest(map, x, y, 1.4);
+      if (location === "checkpoint") {
+        panel(map, 68, 183, 150, 112, "#7f775a");
+        rect(map, 60, 173, 166, 16, "#365c50");
+        rect(map, 75, 163, 136, 10, "#577b5e");
+        panel(map, 90, 200, 48, 50, "#314748");
+        rect(map, 112, 202, 3, 46, "#bfba8c");
+        panel(map, 160, 226, 38, 67, "#5c5944");
+        rect(map, 500, 184, 146, 112, "#6d735c");
+        for (let i = 0; i < 5; i++)
+          panel(map, 507 + i * 27, 193, 19, 88, "#a0a184");
+        rect(map, 258, 217, 8, 81, "#4d5140");
+        rect(map, 455, 217, 8, 81, "#4d5140");
+        rect(map, 260, 212, 200, 8, "#bfb485");
+        rect(map, 267, 215, 188, 2, "#ece0b4");
+        panel(map, 516, 325, 96, 47, "#394e48", "#a8b08e");
+        map.font = "12px Galmuri";
+        map.fillStyle = "#e8d6a7";
+        map.fillText("성역 검문소", 526, 351);
+      } else {
+        // A distant immense living tree, framed by the open stone gate.
+        rect(map, 0, 0, W, 130, "#8aa394");
+        forest(map, 283, -95, 5);
+        for (const x of [25, 122, 527, 620]) forest(map, x, 0, 1.6);
+        panel(map, 50, 128, 202, 157, "#7a8d7f", "#273f3d");
+        panel(map, 468, 128, 202, 157, "#7a8d7f", "#273f3d");
+        for (let y = 139; y < 280; y += 22)
+          for (const x of [60, 478])
+            for (let col = 0; col < 4; col++)
+              rect(map, x + col * 46, y, 43, 19, "#91a08a");
+        for (const x of [226, 463]) {
+          panel(map, x, 65, 32, 225, "#b0b69b", "#40594e");
+          rect(map, x + 7, 70, 5, 211, "#d5d5b3");
+          rect(map, x - 6, 58, 44, 12, "#c0c6a5");
+          rect(map, x + 8, 30, 16, 28, "#77ceb0");
+          rect(map, x + 13, 17, 6, 42, "#c4efd2");
+        }
+        rect(map, 247, 60, 226, 18, "#9baa92");
+        rect(map, 256, 64, 208, 3, "#dce0bd");
+        for (const x of [135, 552]) {
+          rect(map, x, 151, 27, 78, "#355f57");
+          rect(map, x + 12, 163, 3, 49, "#c7d2a2");
+          rect(map, x + 5, 181, 17, 3, "#c7d2a2");
+        }
+        plant(232, 345);
+        plant(468, 345);
+      }
+      for (const x of [65, 172, 536, 642])
+        for (const y of [340, 412]) {
+          rect(map, x, y, 3, 2, "#d7c38f");
+          rect(map, x + 7, y + 4, 2, 2, "#97b6a0");
+        }
+    }
+    document.querySelector(".game-place").textContent = placeNames[location][0];
+    document.querySelector(".game-hud strong").textContent =
+      placeNames[location][1];
+    root.dataset.location = location;
+    root.setAttribute("aria-label", placeNames[location].join(" · "));
+    canvas.setAttribute(
+      "aria-label",
+      placeNames[location][1] +
+        ". WASD 이동, 왼쪽 Shift 달리기, E 상호작용, C 메뉴.",
+    );
+  }
+  function drawScenery() {
+    if (location === "carriage" && motion()) {
+      const shift = Math.floor(elapsed * 18) % 182;
+      for (const x of [104, 434]) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x, 86, 182, 110);
+        ctx.clip();
+        for (let i = -1; i < 6; i++)
+          forest(ctx, x + i * 46 - (shift % 46), 129, 1);
+        ctx.restore();
+        rect(ctx, x + 83, 80, 8, 126, "#564735");
+      }
+      // Small integer-pixel carriage cels, with no continuous CSS bobbing.
+      const j = Math.floor(elapsed * 5) % 4 === 0 ? 1 : 0;
+      if (j) {
+        rect(ctx, 214, 427, 293, 1, "#c2a477");
+      }
+    }
+    if (location === "gate") {
+      const n = motion() ? Math.floor(elapsed * 3) % 3 : 1;
+      for (const x of [241, 478]) {
+        rect(ctx, x - 1, 29 + n * 3, 3, 3, "#e1ffe0");
+      }
+    }
+  }
+  async function travelTo(destination, setup, after) {
+    const token = ++transitionSerial;
+    phase = "transition";
+    root.dataset.phase = phase;
+    keys.clear();
+    dialogueBox.hidden = true;
+    prompt.hidden = true;
+    menu.hidden = true;
+    clearTimeout(typingTimer);
+    clearTimeout(toastTimer);
+    document.querySelector("#game-toast").hidden = true;
+    dialogue = null;
+    transition.hidden = false;
+    const fade = async (from, to) => {
+      transitionAnimation = transition.animate(
+        [{ opacity: from }, { opacity: to }],
+        {
+          duration: motion() ? 460 : 0,
+          fill: "forwards",
+          easing: "ease-in-out",
+        },
+      );
+      await transitionAnimation.finished.catch(() => {});
+      if (token !== transitionSerial || !active) return false;
+      transition.style.opacity = String(to);
+      transitionAnimation.cancel();
+      return true;
+    };
+    if (!(await fade(0, 1))) return;
+    location = destination;
+    setup();
+    buildMap();
+    updateObjective();
+    drawWorld();
+    if (!(await fade(1, 0))) return;
+    transition.hidden = true;
+    phase = "free";
+    root.dataset.phase = phase;
+    if (after) after();
+  }
+
+  // 44 × 60 SD cels add hair, cloth and equipment detail at a shared foot anchor.
   function makeSprite(kind, direction, frame) {
     const key = kind + direction + frame;
     if (spriteBank.has(key)) return spriteBank.get(key);
     const image = document.createElement("canvas");
-    image.width = 32;
-    image.height = 42;
-    const c = image.getContext("2d");
-    const p = cast[kind],
-      bob = frame === 1 || frame === 3 ? 1 : 0,
+    image.width = 44;
+    image.height = 60;
+    const c = image.getContext("2d"),
+      p = cast[kind];
+    const bob = frame % 2,
       step = frame === 1 ? 2 : frame === 3 ? -2 : 0;
     const q = (x, y, w, h, color) => rect(c, x, y + bob, w, h, color);
-    // Boots and independently alternating legs.
-    rect(c, 10, 33 + Math.max(0, step), 5, 7 - Math.max(0, step), "#302b31");
-    rect(c, 18, 33 + Math.max(0, -step), 5, 7 - Math.max(0, -step), "#302b31");
-    rect(c, 9, 38 + Math.min(0, step), 7, 3, "#5b4538");
-    rect(c, 17, 38 + Math.min(0, -step), 7, 3, "#5b4538");
+    const side = direction === "left" ? -3 : direction === "right" ? 3 : 0;
+    const front = direction !== "up",
+      ink = "#232634";
+    // Separate feet and trousers keep the four walking cels legible.
+    for (const [x, offset] of [
+      [13, step],
+      [25, -step],
+    ]) {
+      rect(c, x, 46 + Math.max(0, offset), 7, 10 - Math.max(0, offset), ink);
+      rect(c, x + 1, 47 + Math.max(0, offset), 4, 5, "#4c4650");
+      rect(c, x - 1, 54 + Math.min(0, offset), 9, 3, "#332e32");
+      rect(c, x, 54 + Math.min(0, offset), 6, 1, "#957350");
+    }
     if (kind === "hero") {
-      q(8, 14, 17, 20, "#222d39");
-      q(6, 23, 21, 13, "#293747");
-      q(8, 21, 17, 14, p.coat);
-      q(10, 19, 3, 15, "#596976");
-      q(23, 22, 2, 11, "#1e2936");
-      q(7, 30, 20, 5, "#354351");
-      q(9, 4, 15, 4, "#263442");
-      q(6, 8, 21, 13, "#263442");
-      q(8, 6, 17, 17, p.coat);
-      if (direction !== "up") {
-        q(
-          direction === "left" ? 8 : direction === "right" ? 13 : 10,
-          10,
-          12,
-          10,
-          "#101820",
-        );
-        q(11, 10, 9, 8, "#090f15");
+      q(10, 23, 25, 25, "#243142");
+      q(7, 32, 31, 16, "#293b50");
+      q(10, 29, 25, 17, "#4d6375");
+      q(11, 31, 3, 13, "#80939c");
+      q(16, 31, 3, 16, "#3c5065");
+      q(28, 32, 4, 14, "#304355");
+      q(9, 45, 28, 3, "#1f2e3e");
+      q(11, 45, 5, 1, "#a7afa7");
+      q(13, 5, 19, 3, "#455969");
+      q(9, 8, 27, 20, "#354b5e");
+      q(11, 7, 23, 22, "#607788");
+      q(14, 7, 14, 2, "#91a5ac");
+      q(10, 13, 3, 13, "#41566b");
+      q(32, 13, 3, 12, "#2e4055");
+      if (front) {
+        q(14 + side, 12, 17, 15, "#14202b");
+        q(16 + side, 13, 12, 12, "#080e17");
+        q(13 + side, 12, 3, 11, "#99a6ab");
+        q(16 + side, 11, 12, 2, "#7c929d");
+      } else {
+        q(17, 10, 2, 13, "#7c919a");
+        q(19, 22, 11, 3, "#4b6177");
       }
-      q(8, 18, 19, 4, "#64717a");
-      q(11, 20, 3, 8, "#485c69");
-      q(9, 30, 16, 2, "#785b43");
-      q(18, 28, 7, 7, "#8b6c4b");
-      q(6, 25, 3, 6, "#293039");
-      q(25, 25, 3, 6, "#293039");
+      q(10, 27, 25, 4, "#81949c");
+      q(16, 29, 4, 10, "#566f7d");
+      q(22, 30, 3, 3, "#d9c189");
+      q(13, 34, 20, 2, "#967550");
+      q(29, 38, 9, 10, "#a58254");
+      q(30, 39, 7, 2, "#d6b37b");
+      q(32, 43, 3, 2, "#43352e");
+      q(8, 38, 4, 7, "#2b303b");
     } else {
-      const dwarf = kind === "tobin";
-      if (kind === "lucy" || kind === "mia" || kind === "nara") {
-        q(8, 9, 18, 16, p.hair);
-        q(23, 13, 5, 16, p.hair);
-        q(25, 22, 4, 7, "#8c9567");
+      const longHair = ["lucy", "mia", "nara", "scout"].includes(kind);
+      if (longHair) {
+        q(9, 13, 27, 24, p.hair);
+        q(33, 20, 5, 21, p.hair);
+        q(35, 23, 2, 15, "#7e8c72");
+        q(10, 20, 2, 14, "#8e9874");
       }
-      q(8, 20, dwarf ? 19 : 17, 14, "#262a2c");
-      q(9, 20, dwarf ? 17 : 15, 13, p.coat);
-      q(7, 23, 4, 10, p.coat);
-      q(23, 23, 4, 10, p.coat);
-      q(10, 21, 2, 10, p.trim);
-      q(21, 21, 2, 10, p.trim);
-      q(11, 33, 11, 2, "#3e3633");
-      q(9, 5, 15, 4, p.hair);
-      q(7, 9, 19, 10, p.hair);
-      if (direction !== "up") {
-        const side = direction === "left" ? -2 : direction === "right" ? 2 : 0;
-        q(10 + side, 9, 13, 10, p.skin);
-        q(10 + side, 8, 13, 4, p.hair);
-        q(9 + side, 9, 4, 7, p.hair);
-        q(12 + side, 14, 2, 2, kind === "lucy" ? "#8b4b77" : "#2c3032");
-        if (direction === "down")
-          q(20, 14, 2, 2, kind === "lucy" ? "#8b4b77" : "#2c3032");
-        q(15 + side, 19, 5, 1, "#b48172");
-        if (kind === "tobin") {
-          q(10, 16, 15, 8, p.hair);
-          q(13, 22, 9, 4, p.hair);
-          q(13, 18, 8, 1, "#b18457");
+      q(10, 29, 25, 19, ink);
+      q(11, 30, 23, 16, p.coat);
+      q(7, 32, 6, 14, p.coat);
+      q(32, 32, 6, 14, p.coat);
+      q(9, 32, 2, 11, p.trim);
+      q(33, 33, 2, 10, p.trim);
+      q(14, 30, 3, 15, p.trim);
+      q(28, 30, 2, 15, p.trim);
+      q(12, 46, 22, 2, "#302f3a");
+      q(7, 44, 5, 3, "#33313c");
+      q(34, 44, 5, 3, "#33313c");
+      // Stepped hair silhouette, highlights and individual bangs.
+      q(14, 5, 18, 3, p.hair);
+      q(10, 8, 26, 17, p.hair);
+      q(12, 7, 22, 3, p.trim);
+      q(16, 7, 10, 2, "#ded3ad");
+      if (front) {
+        q(13 + side, 12, 18, 15, p.skin);
+        q(15 + side, 25, 14, 3, p.skin);
+        q(13 + side, 11, 19, 5, p.hair);
+        q(12 + side, 13, 4, 10, p.hair);
+        q(20 + side, 14, 3, 3, p.hair);
+        q(28 + side, 13, 3, 6, p.hair);
+        const eyes =
+          kind === "lucy"
+            ? "#95537f"
+            : kind === "scout"
+              ? "#397c78"
+              : "#343644";
+        q(17 + side, 20, 3, 3, "#faf1df");
+        q(18 + side, 20, 2, 3, eyes);
+        q(17 + side, 19, 4, 1, ink);
+        if (direction === "down") {
+          q(27, 20, 3, 3, "#faf1df");
+          q(27, 20, 2, 3, eyes);
+          q(26, 19, 4, 1, ink);
         }
-        if (kind === "leon") {
-          q(10, 13, 6, 5, "#b4aea0");
-          q(18, 13, 6, 5, "#b4aea0");
-          q(12, 14, 3, 2, "#3f485b");
-          q(20, 14, 3, 2, "#3f485b");
-        }
+        q(23 + side, 24, 2, 1, "#cc9786");
+        q(21 + side, 27, 4, 1, "#ac786d");
+      } else {
+        q(16, 12, 2, 11, p.trim);
+        q(27, 14, 2, 10, p.trim);
       }
       if (kind === "lucy") {
-        q(14, 22, 6, 10, "#e9e5d6");
-        q(15, 22, 4, 3, "#705281");
-        q(16, 25, 2, 5, "#705281");
-        q(7, 31, 4, 3, "#34303b");
-        q(24, 31, 4, 3, "#34303b");
+        q(19, 30, 8, 15, "#eee9dd");
+        q(19, 31, 3, 3, "#8c65a1");
+        q(24, 31, 4, 3, "#563e76");
+        q(22, 33, 3, 7, "#6e4d8b");
+        q(15, 39, 1, 4, "#e2c68d");
+        q(30, 39, 1, 4, "#e2c68d");
+        q(34, 30, 4, 9, p.hair);
+        q(33, 33, 2, 7, "#d6d5a9");
+        q(15, 43, 16, 5, "#5d423c");
+        q(16, 43, 14, 1, "#c6a477");
       }
       if (kind === "bran") {
-        q(10, 20, 15, 3, "#a15c49");
-        q(12, 23, 3, 6, "#a15c49");
+        q(12, 29, 23, 4, "#a65f50");
+        q(15, 32, 4, 8, "#c17d5e");
+        if (front) {
+          q(16 + side, 25, 4, 1, "#a97961");
+          q(26 + side, 25, 3, 1, "#a97961");
+        }
       }
       if (kind === "nara") {
-        q(7, 3, 5, 8, p.hair);
-        q(21, 3, 5, 8, p.hair);
-        q(8, 4, 2, 4, "#b38a80");
-        q(22, 4, 2, 4, "#b38a80");
-        q(20, 28, 7, 6, "#8b6947");
+        q(9, 2, 6, 10, p.hair);
+        q(30, 2, 6, 10, p.hair);
+        q(11, 4, 2, 5, "#bd8a8c");
+        q(31, 4, 2, 5, "#bd8a8c");
+        q(14, 29, 20, 4, "#6b91ad");
+        q(18, 32, 4, 7, "#8bacbe");
+        q(29, 41, 8, 7, "#886d4b");
       }
       if (kind === "mia") {
-        q(23, 13, 3, 19, "#8c6848");
-        q(23, 29, 3, 3, "#b3a76b");
+        for (let y = 17; y < 43; y += 4) {
+          q(32, y, 5, 4, p.hair);
+          q(33, y, 2, 1, "#ac8960");
+        }
+        q(33, 43, 3, 3, "#d6c183");
+        q(15, 33, 18, 2, "#9b825a");
+      }
+      if (kind === "tobin") {
+        q(9, 33, 28, 12, p.coat);
+        if (front) {
+          q(13, 23, 21, 12, p.hair);
+          q(17, 34, 13, 4, p.hair);
+          q(16, 24, 3, 8, "#b17650");
+          q(27, 25, 2, 9, "#a96c45");
+          q(18, 28, 11, 2, "#e0b98c");
+          q(18, 35, 3, 2, "#d7ba70");
+        }
+        q(16, 40, 16, 2, "#b4a174");
+      }
+      if (kind === "leon") {
+        if (front) {
+          q(14 + side, 18, 9, 7, "#d6cebb");
+          q(25 + side, 18, 9, 7, "#d6cebb");
+          q(16 + side, 19, 5, 4, "#4a576c");
+          q(27 + side, 19, 5, 4, "#4a576c");
+          q(23 + side, 20, 2, 1, "#c7bfa7");
+        }
+        q(18, 30, 9, 4, "#a194ba");
+        q(25, 39, 11, 8, "#60506f");
+        q(26, 40, 8, 1, "#d2bb7d");
+      }
+      if (kind === "rogue") {
+        q(11, 3, 5, 7, p.hair);
+        q(23, 2, 5, 8, p.hair);
+        q(32, 6, 5, 6, p.hair);
+        q(13, 30, 18, 4, "#dbcbb0");
+        q(16, 35, 16, 2, "#b0945b");
+        q(24, 38, 2, 6, "#ddc778");
+        if (front) q(29 + side, 22, 1, 4, "#a47466");
+      }
+      if (kind === "scout") {
+        q(6, 17, 7, 4, p.skin);
+        q(32, 17, 8, 4, p.skin);
+        q(5, 16, 4, 2, p.skin);
+        q(37, 15, 4, 3, p.skin);
+        q(12, 29, 23, 5, "#537e69");
+        q(17, 31, 4, 14, "#84a087");
+        q(26, 32, 3, 3, "#dac78e");
+        q(31, 37, 3, 10, "#8f704d");
       }
     }
-    spriteBank.set(key, image);
-    return image;
+    // Cache a crisp dark contour with a restrained light rim for floor contrast.
+    const mask = document.createElement("canvas");
+    mask.width = 44;
+    mask.height = 60;
+    const m = mask.getContext("2d");
+    m.drawImage(image, 0, 0);
+    m.globalCompositeOperation = "source-in";
+    m.fillStyle = "#e3d3ac";
+    m.fillRect(0, 0, 44, 60);
+    const outlined = document.createElement("canvas");
+    outlined.width = 44;
+    outlined.height = 60;
+    const o = outlined.getContext("2d");
+    o.globalAlpha = 0.55;
+    o.drawImage(mask, -1, -1);
+    o.globalAlpha = 1;
+    m.fillStyle = "#17202d";
+    m.fillRect(0, 0, 44, 60);
+    for (const [x, y] of [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+    ])
+      o.drawImage(mask, x, y);
+    o.drawImage(image, 0, 0);
+    spriteBank.set(key, outlined);
+    return outlined;
   }
   buildMap();
   for (const kind of Object.keys(cast))
@@ -467,11 +843,18 @@ const guildGame = (() => {
     return { id, x, y, dir, moving: false, path: [], pathDelay: 0 };
   }
   function updateObjective() {
-    objective.textContent = questAccepted
-      ? "봉인된 서신을 챙기고 출발을 준비하자."
-      : phase === "queue"
-        ? "접수 순서를 기다리자."
-        : "루시에게 그린스토아행 의뢰를 확인하자.";
+    objective.textContent =
+      location === "carriage"
+        ? "여정 · 동쪽 숲을 지나 성역으로"
+        : location === "checkpoint"
+          ? "정찰병에게 모험가증을 보여 주자."
+          : location === "gate"
+            ? "어머니 나무의 품 아래, 그린스토아에 도착했다."
+            : questAccepted
+              ? "길드 출입문으로 나가 기사단의 마차에 타자."
+              : phase === "queue"
+                ? "접수 순서를 기다리자."
+                : "루시에게 그린스토아행 의뢰를 확인하자.";
   }
   function notify(text) {
     const toast = document.querySelector("#game-toast");
@@ -480,36 +863,107 @@ const guildGame = (() => {
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => (toast.hidden = true), 2600);
   }
-  function portraitFor(kind) {
+  function portraitFor(kind, expression = "neutral") {
     portraitContext.clearRect(0, 0, portrait.width, portrait.height);
     portrait.hidden = !kind;
+    portrait.dataset.character = kind || "";
+    portrait.dataset.expression = expression;
     if (!kind) return;
-    const entry = cast[kind],
-      image = pictures[entry.portrait === "lucy" ? "lucy" : "cast"];
-    const cellW =
-      entry.portrait === "lucy" ? image.naturalWidth : image.naturalWidth / 3;
-    const cellH =
-      entry.portrait === "lucy" ? image.naturalHeight : image.naturalHeight / 2;
-    const col = entry.portrait === "lucy" ? 0 : entry.portrait % 3,
-      row = entry.portrait === "lucy" ? 0 : Math.floor(entry.portrait / 3);
-    // Ignore the atlas gutters so a neighbouring coat cannot bleed into a portrait.
-    const gutter = entry.portrait === "lucy" ? 0 : cellW * 0.07;
-    const portraitWidth = cellW - gutter * 2;
+    let image,
+      columns = 1,
+      rows = 1,
+      index = 0,
+      source;
+    if (kind === "lucy") {
+      const poses = { reading: 0, incredulous: 1, concerned: 2 };
+      if (expression in poses) {
+        image = pictures.expressions;
+        columns = 3;
+        index = poses[expression];
+        // These poses were drawn to the thighs; use a waist-up view like the
+        // original Lucy, without changing the source aspect or clipping her arms.
+        source = [
+          (index * image.naturalWidth) / 3,
+          (128 * image.naturalHeight) / 1024,
+          image.naturalWidth / 3,
+          (680 * image.naturalHeight) / 1024,
+        ];
+      } else image = pictures.lucy;
+    } else {
+      image = pictures.cast;
+      // The generated sheet has slightly unequal gutters. Use their actual empty
+      // boundaries, preserving the entire silhouette rather than trimming shoulders.
+      const frames = [
+        [0, 0, 394, 506],
+        [394, 0, 374, 506],
+        [768, 0, 365, 506],
+        [1133, 0, 403, 506],
+        [0, 510, 422, 514],
+        [422, 510, 352, 514],
+        [774, 510, 391, 514],
+        [1165, 510, 371, 514],
+      ];
+      source = frames[cast[kind].portrait].map(
+        (v, i) =>
+          v *
+          (i % 2 === 0
+            ? image.naturalWidth / 1536
+            : image.naturalHeight / 1024),
+      );
+    }
+    let [sx, sy, cw, ch] = source || [
+      ((index % columns) * image.naturalWidth) / columns,
+      (Math.floor(index / columns) * image.naturalHeight) / rows,
+      image.naturalWidth / columns,
+      image.naturalHeight / rows,
+    ];
+    const frameKey = kind + expression;
+    if (!portraitFrames.has(frameKey)) {
+      const sample = document.createElement("canvas");
+      sample.width = Math.ceil(cw);
+      sample.height = Math.ceil(ch);
+      const c = sample.getContext("2d", { willReadFrequently: true });
+      c.drawImage(image, sx, sy, cw, ch, 0, 0, cw, ch);
+      const pixels = c.getImageData(0, 0, sample.width, sample.height).data;
+      let l = sample.width,
+        r = 0,
+        t = sample.height,
+        b = 0;
+      for (let y = 0; y < sample.height; y++)
+        for (let x = 0; x < sample.width; x++) {
+          if (pixels[(y * sample.width + x) * 4 + 3] > 8) {
+            l = Math.min(l, x);
+            r = Math.max(r, x);
+            t = Math.min(t, y);
+            b = Math.max(b, y);
+          }
+        }
+      if (r >= l)
+        portraitFrames.set(frameKey, [
+          sx + Math.max(0, l - 8),
+          sy + Math.max(0, t - 4),
+          Math.min(cw, r + 9) - Math.max(0, l - 8),
+          Math.min(ch, b + 2) - Math.max(0, t - 4),
+        ]);
+      else portraitFrames.set(frameKey, [sx, sy, cw, ch]);
+    }
+    [sx, sy, cw, ch] = portraitFrames.get(frameKey);
     const scale = Math.min(
-      portrait.width / portraitWidth,
-      portrait.height / cellH,
+      (portrait.width - 12) / cw,
+      (portrait.height - 12) / ch,
     );
     portraitContext.imageSmoothingEnabled = false;
+    // Fit the full width of the portrait and remove only its transparent padding.
     portraitContext.drawImage(
       image,
-      col * cellW + gutter,
-      row * cellH,
-      portraitWidth,
-      cellH,
-      (portrait.width - portraitWidth * scale) / 2,
-      portrait.height - cellH * scale,
-      portraitWidth * scale,
-      cellH * scale,
+      sx,
+      sy,
+      cw,
+      ch,
+      (portrait.width - cw * scale) / 2,
+      portrait.height - ch * scale,
+      cw * scale,
+      ch * scale,
     );
   }
   function lineComplete() {
@@ -549,8 +1003,13 @@ const guildGame = (() => {
       ? line.kind === "hero"
         ? playerName
         : person.name
-      : "제르디아 왕국 · 모험가 길드";
-    portraitFor(line.kind);
+      : line.voice
+        ? "어디선가 들려오는 목소리"
+        : root.classList.contains("is-recollection")
+          ? "떠오르는 이야기"
+          : placeNames[location][1];
+    portraitFor(line.kind, line.expression);
+    dialogueText.parentElement.dataset.fullText = line.text;
     dialogue.letters = Array.from(line.text);
     dialogue.shown = 0;
     dialogueText.textContent = "";
@@ -622,6 +1081,7 @@ const guildGame = (() => {
     if (after) after();
   }
   function beginQueue() {
+    queueActive = true;
     phase = "queue";
     root.dataset.phase = phase;
     queueTime = 0;
@@ -657,12 +1117,77 @@ const guildGame = (() => {
       }
     updateObjective();
   }
+  function beginRecollection() {
+    storyStep = "recollection";
+    beginQueue();
+    root.classList.add("is-recollection");
+    speak(
+      [
+        {
+          text: "그린스토아.\n제루스 대륙의 허파이자, 수려한 대자연을 품은 이종족들의 연합국.",
+        },
+        {
+          text: "그 건국 전설의 중심에는 어머니 나무가 있었다.\n대륙이 제루스라 불리기 수천 년 전부터 존재해 온, 순수한 생명력의 집합체.",
+        },
+        {
+          text: "그 나무로부터 태어나 성역을 지키며 살아가는 이들을\n세상은 ‘엘프’라 불렀다.",
+        },
+        {
+          text: "하지만 고대의 엘프들조차 대륙의 혼란을 잠재우지는 못했다.\n마족과 악령이 들끓고, 국가조차 없어 약탈과 죽음이 끊이지 않던 시대.",
+        },
+        {
+          text: "마침내 국가의 필요성을 느낀 엘프들은 성역을 중심으로\n중립이자 개방 국가인 그린스토아를 세웠다.",
+        },
+        {
+          text: "인간들의 차별을 피해 자유를 갈망하던 이종족들이 모여들었다.\n그들은 평등과 보금자리에 보답하며, 시민이자 성역을 지키는 힘이 되었다.",
+        },
+        {
+          text: "그리고 최초의 용사, 제르가 나타났다.\n당대 최강의 인간들과 그린스토아는 동맹을 맺고 선대 마왕을 격퇴했다.",
+        },
+        {
+          text: "대륙은 하나로 이어졌고, 이 땅에는 긴 평화가 찾아왔다.\n시간이 흐른 지금, 그곳의 또 다른 이름은—",
+        },
+        { voice: true, text: "…님…" },
+        { text: "종족 불문, 신분 불문.\n모두가 평등한 중립 지대—" },
+        { voice: true, text: "…험가 님…" },
+        { text: "이종족연합국, 그린스토…" },
+        { voice: true, text: "모험가 님~" },
+      ],
+      () => {
+        root.classList.remove("is-recollection");
+        if (queueActive) {
+          phase = "queue";
+          root.dataset.phase = phase;
+        } else wakeAtCounter();
+      },
+    );
+  }
+  function wakeAtCounter() {
+    storyStep = "lucy";
+    speak(
+      [
+        { kind: "lucy", text: "모험가 님, 정신 차리세요~" },
+        {
+          kind: "lucy",
+          expression: "incredulous",
+          text: "아. 드디어 이쪽을 보시네.\n몇 분 동안 말이 없으셨다고요. 기절하셨던 건 아니죠?",
+        },
+        { kind: "hero", text: "…잠깐, 생각을 좀 했어." },
+        {
+          kind: "lucy",
+          text: "네, 뭐. 숨은 쉬고 계셨으니까요.\n그린스토아로 가시는 거, 맞죠?",
+        },
+      ],
+      lucyConversation,
+    );
+  }
   function lucyConversation() {
     if (questAccepted) {
       speak([
         {
           kind: "lucy",
-          text: `${playerName} 모험가님, 서신은 그린스토아의 연합 길드에 전해 주세요.\n봉인은 그대로 두시고요. …조심해서 다녀오세요.`,
+          expression: "concerned",
+          text: `${playerName} 모험가 님. 마차는 길드 앞에 와 있을 거예요.\n…조사 의뢰예요. 무슨 일이 생기면 혼자 해결하려 들지 마시고요.`,
         },
       ]);
       return;
@@ -671,48 +1196,64 @@ const guildGame = (() => {
       [
         {
           kind: "lucy",
-          text: "다음 분. …아, 오래 기다리셨죠?\n제르디아 왕국 모험가 길드의 접수원, 루시예요.",
+          text: "관광이 아니라 의뢰라면… 일반적인 건 없어요.\n제르디아 기사단이 직접 공표한 건 하나 있는데.",
         },
         {
           kind: "lucy",
-          text: `등록된 이름은… ${playerName}. 맞으시죠?\n오늘은 어떤 의뢰를 찾으세요?`,
-        },
-        { kind: "hero", text: "그린스토아로 가는 의뢰를 찾고 있어." },
-        {
-          kind: "lucy",
-          text: "그린스토아요? 마침 연합 길드에 전할 서신이 하나 있어요.\n성역 주변에서 이상한 기운이 감돈다는 보고가 들어왔거든요.",
+          expression: "reading",
+          text: "영 꺼림칙해서, 아직 신청자가 없는 상태예요.\n어디 보자… 공문에는 이렇게 적혀 있네요.",
         },
         {
           kind: "lucy",
-          text: "일은 간단해요. 이 서신을 봉인된 채로 전해 주시면 돼요.\n그린스토아까지 가실 생각이라면, 맡아 보시겠어요?",
+          expression: "reading",
+          text: "‘최근 성역 그린스토아에 불미스러운 기운이 감돌고 있으니,\n파견을 통한 사전 조사를 맡길 모험가를 구한다.’",
+        },
+        {
+          kind: "lucy",
+          expression: "concerned",
+          text: "어머니 나무가 있는 구역을 노릴 배짱이라면,\n보통내기는 아닐 테니까요.",
+        },
+        {
+          kind: "lucy",
+          text: "…굳이 골라서 고생할 필요는 없잖아요.\n그래도 이 의뢰, 맡으시겠어요?",
         },
       ],
       null,
       [
         {
-          label: "의뢰를 맡는다",
+          label: "조사 의뢰를 맡는다",
           action: () => {
             questAccepted = true;
+            storyStep = "accepted";
             inventory.push({
-              id: "letter",
-              name: "봉인된 서신",
+              id: "dispatch",
+              name: "기사단 조사 의뢰서",
               count: 1,
               description:
-                "제르디아 왕국 길드의 인장이 찍힌 서신.\n그린스토아 연합 길드에 봉인된 채로 전달해야 한다.",
+                "제르디아 기사단 직속 파견 의뢰.\n목적: 성역 그린스토아의 이상 징후 사전 조사.\n정문 검문소에 제시할 수 있도록 기사단 인장이 찍혀 있다.",
             });
-            updateObjective();
             speak(
               [
                 {
                   kind: "lucy",
-                  text: "여기요. 의뢰서를 함께 넣어 두었어요.\n출발 전에 필요한 게 있으면 길드를 둘러보세요.",
+                  expression: "incredulous",
+                  text: "…하신다고요?\n…….",
                 },
                 {
                   kind: "lucy",
-                  text: `…${playerName} 모험가님.\n그린스토아에서는 익숙한 길도 조심하는 게 좋을 거예요.`,
+                  expression: "reading",
+                  text: `${playerName} 님. 수주 완료되었습니다.\n기사단 직속 의뢰이니, 예정된 시간에 마차가 직접 올 거예요.`,
+                },
+                {
+                  kind: "lucy",
+                  expression: "concerned",
+                  text: "의뢰서는 챙겨 두세요. 모험가증도 잃어버리지 마시고.\n…가시기 전에 빵이라도 드세요. 빈속에 떠나지 마시고.",
                 },
               ],
-              () => notify("의뢰 수락 · 그린스토아로 보내는 서신"),
+              () => {
+                updateObjective();
+                notify("의뢰 수락 · 성역의 이상 징후 사전 조사");
+              },
             );
           },
         },
@@ -722,14 +1263,184 @@ const guildGame = (() => {
             speak([
               {
                 kind: "lucy",
-                text: "좋아요. 준비되시면 다시 말씀해 주세요.\n서신은 제가 맡아 둘게요.",
+                text: "현명하시네요. …비꼬는 거 아니에요.\n천천히 생각하고 오세요. 저는 어차피 여기 있을 테니까.",
               },
             ]),
         },
       ],
     );
   }
+  function leaveGuild() {
+    speak(
+      [
+        {
+          text: "길드 문밖에 기사단의 인장이 찍힌 마차가 기다리고 있다.\n그린스토아로 출발할까?",
+        },
+      ],
+      null,
+      [
+        {
+          label: "그린스토아로 출발한다",
+          action: () => {
+            storyStep = "departure";
+            speak(
+              [
+                {
+                  kind: "lucy",
+                  expression: "concerned",
+                  text: "…나 참, 위험하다는 말을 해줘도.\n……멀쩡히 돌아오기나 하세요.",
+                },
+              ],
+              () =>
+                travelTo(
+                  "carriage",
+                  () => {
+                    player = actor("hero", 250, 326, "right");
+                    npcs = [actor("rogue", 466, 326, "left")];
+                    storyStep = "carriage";
+                  },
+                  carriageConversation,
+                ),
+            );
+          },
+        },
+        {
+          label: "아직 준비가 덜 됐다",
+          action: () => notify("필요한 준비를 마치고 다시 오자."),
+        },
+      ],
+    );
+  }
+  function carriageConversation() {
+    speak(
+      [
+        {
+          text: "덜컹, 덜컹.\n마차는 제르디아의 성벽을 지나 동쪽 숲으로 접어들었다.",
+        },
+        {
+          kind: "rogue",
+          text: "우헤켈켈켈! 형씨, 그린스토아는 나 혼자 갈 줄 알았는데 말야!\n나처럼 짜릿한 위협을 즐기는 용자가 아직 남아 있었구만?!",
+        },
+        {
+          kind: "rogue",
+          text: "뭐, 마족이든 악마든 목을 따서 기사단에 바치면,\n그걸로 인생 날먹 아니겠어?!",
+        },
+        { kind: "hero", text: "…조사 의뢰라고 들었는데." },
+        {
+          kind: "rogue",
+          text: "에이, 조사하다 보면 뭐든 나오겠지!\n게다가… 형씨도 들었겠지만 말야…",
+        },
+        {
+          kind: "rogue",
+          text: "지금 그린스토아에는 남자가 없다잖아…? 킥킥.\n미인 엘프들하고 한탕 거하게 놀아 볼 거라구~",
+        },
+        {
+          text: "대꾸하지 않자, 그는 혼자서도 한참을 떠들었다.\n숲은 점점 깊어졌고, 마침내 마차가 멈췄다.",
+        },
+      ],
+      () =>
+        travelTo(
+          "checkpoint",
+          () => {
+            player = actor("hero", 343, 380, "up");
+            npcs = [actor("scout", 360, 261), actor("rogue", 414, 328, "up")];
+            storyStep = "checkpoint";
+          },
+          checkpointConversation,
+        ),
+    );
+  }
+  function checkpointConversation() {
+    speak(
+      [
+        { kind: "scout", text: "거기, 노란 머리 도적은 돌아가라." },
+        {
+          kind: "rogue",
+          text: "어…? 나? 방금 도착했는데?!\n평등한 나라라면서 이래도 되는 거냐고!",
+        },
+        {
+          kind: "scout",
+          text: "평등을 침해하려는 것은 아니다.\n현재 그린스토아에는 불미스러운 기운이 감돌고 있다.",
+        },
+        {
+          kind: "scout",
+          text: "그래서 마기와 음기를 철저히 단속하고 있지.\n너는 엄청난 음기를 뿜는 데다, 제대로 된 모험가증조차 없군.",
+        },
+        { kind: "scout", text: "네놈을 들일 수는 없다. 돌아가라." },
+        { kind: "rogue", text: "에…?\n……그, 그럴 수가……." },
+        {
+          text: "노란 머리 도적은 눈물을 훔치며 마차 쪽으로 돌아갔다.\n정찰병이 이쪽으로 시선을 돌린다.",
+        },
+      ],
+      () => {
+        npcs = npcs.filter((n) => n.id !== "rogue");
+        notify("정찰병에게 다가가 E · 모험가증 제시");
+      },
+    );
+  }
+  function showCredentials() {
+    speak(
+      [
+        {
+          kind: "hero",
+          text: "제르디아에서 조사 의뢰를 받고 왔어.\n모험가증과 기사단 의뢰서야.",
+        },
+        {
+          kind: "scout",
+          text: `…${playerName}. 확인했다. 어서 와라.\n의뢰를 받아 왔겠지만, 당장 터질 위협이 있는 것은 아니다.`,
+        },
+        {
+          kind: "scout",
+          text: "의뢰 내용도 조사일 테고.\n그러니 있는 동안에는 서두르지 말고 편히 지내도 된다.",
+        },
+        {
+          kind: "scout",
+          text: "조사원이 편안한 것이 우리에게도 좋으니.\n따라와라. 정문까지 안내하지.",
+        },
+      ],
+      () =>
+        travelTo(
+          "gate",
+          () => {
+            player = actor("hero", 360, 384, "up");
+            npcs = [actor("scout", 360, 305, "down")];
+            storyStep = "arrival";
+          },
+          () =>
+            speak(
+              [
+                {
+                  kind: "scout",
+                  text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
+                },
+                {
+                  kind: "scout",
+                  text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
+                },
+                { text: "이종족연합국\n그린스토아." },
+              ],
+              () => {
+                storyStep = "arrived";
+                updateObjective();
+                notify("그린스토아에 도착했다.");
+              },
+            ),
+        ),
+    );
+  }
+
   function npcTalk(id) {
+    if (id === "scout") {
+      if (location === "checkpoint") showCredentials();
+      else
+        speak([
+          {
+            kind: "scout",
+            text: "먼 길 오느라 수고했다.\n낯선 곳이겠지만, 이곳에서는 네 종족도 신분도 묻지 않는다.",
+          },
+        ]);
+      return;
+    }
     if (id === "lucy") {
       lucyConversation();
       return;
@@ -761,18 +1472,31 @@ const guildGame = (() => {
     speak([{ kind: id, text: texts[id][(npc.talkCount - 1) % 2] }]);
   }
   function targets() {
-    return [
-      ...npcs.map((n) => ({
-        id: n.id,
-        name: cast[n.id].name,
-        x: n.id === "lucy" ? 360 : n.x,
-        y: n.id === "lucy" ? 176 : n.y,
-        kind: "npc",
-      })),
-      { id: "board", name: "의뢰 게시판", x: 125, y: 193, kind: "prop" },
-      { id: "door", name: "길드 출입문", x: 360, y: 442, kind: "prop" },
-      { id: "books", name: "길드 기록장", x: 650, y: 359, kind: "prop" },
-    ];
+    const people = npcs.map((n) => ({
+      id: n.id,
+      name: cast[n.id].name,
+      x: n.x,
+      y: n.id === "lucy" ? 176 : n.y,
+      kind: "npc",
+    }));
+    if (location === "guild")
+      return [
+        ...people,
+        { id: "board", name: "의뢰 게시판", x: 125, y: 193, kind: "prop" },
+        { id: "door", name: "길드 출입문", x: 360, y: 442, kind: "prop" },
+        { id: "books", name: "길드 기록장", x: 650, y: 359, kind: "prop" },
+      ];
+    if (location === "checkpoint")
+      return [
+        ...people,
+        { id: "sign", name: "성역 푯말", x: 560, y: 364, kind: "prop" },
+      ];
+    if (location === "gate")
+      return [
+        ...people,
+        { id: "gate", name: "그린스토아 정문", x: 360, y: 280, kind: "prop" },
+      ];
+    return people;
   }
   function nearby() {
     let best = null,
@@ -808,15 +1532,28 @@ const guildGame = (() => {
     if (target.id === "board")
       speak([
         {
-          text: "약초 채집, 호위, 분실물 수색…\n여러 의뢰서가 겹겹이 붙어 있다. 그린스토아행 연락 의뢰에는 길드의 인장이 찍혀 있다.",
+          text: "약초 채집, 호위, 분실물 수색…\n여러 의뢰서가 겹겹이 붙어 있다. 그린스토아 사전 조사 의뢰에는 제르디아 기사단의 인장이 찍혀 있다.",
         },
       ]);
-    if (target.id === "door")
+    if (target.id === "door") {
+      if (questAccepted) leaveGuild();
+      else
+        speak([
+          {
+            text: "문밖으로 제르디아의 분주한 거리가 보인다.\n그린스토아행 의뢰부터 접수원에게 확인해야겠다.",
+          },
+        ]);
+    }
+    if (target.id === "gate")
       speak([
         {
-          text: questAccepted
-            ? "문틈으로 서늘한 바람이 스며든다.\n그린스토아로 보낼 서신을 챙겼다. 이제 출발할 준비를 마저 하자."
-            : "문밖으로 제르디아의 분주한 거리가 보인다.\n그린스토아행 의뢰부터 접수원에게 확인해야겠다.",
+          text: "열린 문 너머로 잎사귀 스치는 소리가 들려온다.\n어머니 나무의 그늘 아래, 새로운 이야기가 기다리고 있다.",
+        },
+      ]);
+    if (target.id === "sign")
+      speak([
+        {
+          text: "‘성역 그린스토아. 모든 종족에게 평등을, 모든 생명에게 자유를.’\n이끼 낀 푯말에 깊게 새겨진 문장이다.",
         },
       ]);
     if (target.id === "books")
@@ -841,7 +1578,9 @@ const guildGame = (() => {
       box.y < r.y + r.h &&
       box.y + box.h > r.y;
     return (
-      collisions.some(overlap) ||
+      (location === "guild" ? guildCollisions : fieldCollisions[location]).some(
+        overlap,
+      ) ||
       npcs.some(
         (n) =>
           n.id !== "lucy" && overlap({ x: n.x - 7, y: n.y - 5, w: 14, h: 9 }),
@@ -898,20 +1637,27 @@ const guildGame = (() => {
       ? Math.floor(elapsed * (a === player && keys.has("ShiftLeft") ? 12 : 8)) %
         4
       : 0;
-    ctx.drawImage(makeSprite(a.id, a.dir, frame), x - 16, y - 40);
+    ctx.drawImage(makeSprite(a.id, a.dir, frame), x - 22, y - 56);
   }
   function drawWorld() {
     const menuUnavailable = phase !== "free" || inputLocked;
     if (menuButton.disabled !== menuUnavailable)
       menuButton.disabled = menuUnavailable;
     ctx.imageSmoothingEnabled = false;
+    rect(ctx, 0, 0, W, H, "#121d26");
+    ctx.save();
+    if (location === "carriage" && motion())
+      ctx.translate(0, [0, -1, 0, 1][Math.floor(elapsed * 5) % 4]);
     ctx.drawImage(background, 0, 0);
-    // A few deliberately square fire pixels; the room's collision remains static.
-    const f = motion() ? Math.floor(elapsed * 5) % 3 : 1;
-    rect(ctx, 662, 220 - f * 2, 5, 12 + f * 2, "#c17b3d");
-    rect(ctx, 668, 214 + f, 7, 18 - f, "#e9ac53");
-    rect(ctx, 676, 221 - f, 5, 11 + f, "#d28e42");
-    rect(ctx, 671, 222, 3, 9, "#f3d17c");
+    if (location === "guild") {
+      // Square fire cels; collision remains static.
+      const f = motion() ? Math.floor(elapsed * 5) % 3 : 1;
+      rect(ctx, 662, 220 - f * 2, 5, 12 + f * 2, "#c17b3d");
+      rect(ctx, 668, 214 + f, 7, 18 - f, "#e9ac53");
+      rect(ctx, 676, 221 - f, 5, 11 + f, "#d28e42");
+      rect(ctx, 671, 222, 3, 9, "#f3d17c");
+    }
+    drawScenery();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
       const target = nearby();
@@ -919,13 +1665,14 @@ const guildGame = (() => {
       prompt.hidden = !target;
       if (target) {
         const x = Math.round(target.x),
-          y = Math.round(target.y) - 49;
+          y = Math.round(target.y) - 65;
         panel(ctx, x - 7, y, 14, 13, "#252c35", "#cbbd91");
         ctx.fillStyle = "#eee4c8";
         ctx.font = "9px monospace";
         ctx.fillText("E", x - 3, y + 10);
       }
     } else prompt.hidden = true;
+    ctx.restore();
   }
   function tick(now) {
     if (!active) return;
@@ -934,7 +1681,7 @@ const guildGame = (() => {
     elapsed += dt;
     if (phase === "free") movePlayer(dt);
     else player.moving = false;
-    if (phase === "queue") {
+    if (queueActive) {
       queueTime += dt;
       for (const a of [
         npcs.find((n) => n.id === "bran"),
@@ -943,8 +1690,9 @@ const guildGame = (() => {
       ])
         followPath(a, dt, 108);
       if ([player, ...npcs].every((a) => !a.path.length)) {
+        queueActive = false;
         player.dir = "up";
-        lucyConversation();
+        if (phase === "queue") wakeAtCounter();
       }
     }
     drawWorld();
@@ -985,11 +1733,11 @@ const guildGame = (() => {
       const h = document.createElement("p");
       h.className = "quest-entry";
       h.textContent = questAccepted
-        ? "▸ 그린스토아로 보내는 서신"
+        ? "▸ 성역의 이상 징후 사전 조사"
         : "아직 수락한 의뢰가 없다.";
       itemList.append(h);
       itemDetail.textContent = questAccepted
-        ? "의뢰인: 제르디아 왕국 모험가 길드\n목적지: 그린스토아 연합 길드\n\n봉인된 서신을 훼손하지 않고 전달한다.\n길드에서 출발 준비를 마치자."
+        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${location === "guild" ? "길드 앞 마차로 출발하자." : location === "gate" ? "그린스토아 도착 · 정문 통과 허가" : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
@@ -1171,6 +1919,19 @@ const guildGame = (() => {
   canvas.addEventListener("pointerdown", () =>
     canvas.focus({ preventScroll: true }),
   );
+  // The dialogue grows with Korean wrapping and choices. Keep the entire
+  // portrait below the HUD, even on a narrow phone, without squeezing its width.
+  const fitPortrait = () => {
+    if (root.hidden || dialogueBox.hidden) return;
+    const available =
+      dialogueBox.getBoundingClientRect().top -
+      root.getBoundingClientRect().top -
+      92;
+    portrait.style.maxHeight = Math.max(0, available) + "px";
+  };
+  const dialogueLayout = new ResizeObserver(fitPortrait);
+  dialogueLayout.observe(dialogueBox);
+  dialogueLayout.observe(root);
   for (const b of document.querySelectorAll("[data-game-key]")) {
     b.addEventListener("pointerdown", (event) => {
       event.preventDefault();
@@ -1196,6 +1957,10 @@ const guildGame = (() => {
     active = true;
     phase = "dialogue";
     elapsed = 0;
+    location = "guild";
+    storyStep = "recollection";
+    queueActive = false;
+    buildMap();
     questAccepted = false;
     hp = 18;
     coins = 18;
@@ -1214,6 +1979,13 @@ const guildGame = (() => {
         description: "여행 가방에 넣어 둔 빵.\n먹으면 체력을 6 회복한다.",
       },
     ];
+    inventory.push({
+      id: "credentials",
+      name: "모험가증",
+      count: 1,
+      description:
+        "제르디아 모험가 길드에 등록된 증명서.\n성역에 들어가려면 정문에서 제시해야 한다.",
+    });
     player = actor("hero", 360, 268, "up");
     npcs = [
       actor("lucy", 360, 129),
@@ -1230,21 +2002,15 @@ const guildGame = (() => {
     drawWorld();
     request = requestAnimationFrame(tick);
     canvas.focus({ preventScroll: true });
-    speak(
-      [
-        {
-          text: "잉크 냄새와 사람들의 웅성거림.\n눈을 뜨자, 낯선 길드의 접수 줄 한가운데 서 있었다.",
-        },
-        {
-          kind: "bran",
-          text: "거기, 후드 쓴 양반. 정신이 드나?\n마침 줄이 줄었군. 이제 당신 차례요.",
-        },
-      ],
-      beginQueue,
-    );
+    beginRecollection();
   }
   function stop() {
     active = false;
+    ++transitionSerial;
+    transitionAnimation?.cancel();
+    transition.hidden = true;
+    root.classList.remove("is-recollection");
+    queueActive = false;
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
@@ -1271,6 +2037,9 @@ const guildGame = (() => {
     getState() {
       return {
         phase,
+        location,
+        storyStep,
+        expression: dialogue?.lines[dialogue.index].expression || "neutral",
         player: player
           ? { x: player.x, y: player.y, direction: player.dir }
           : null,
