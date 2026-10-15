@@ -12,8 +12,8 @@ import re
 ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text()
-script = (ROOT / "JS/main.js").read_text()
-for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png"):
+script = (ROOT / "JS/story.js").read_text() + "\n" + (ROOT / "JS/main.js").read_text()
+for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-prologue.png"):
     background = base64.b64encode(
         (ROOT / "assets" / asset_name).read_bytes()
     ).decode("ascii")
@@ -48,7 +48,7 @@ if '<script id="greenstoa-script">' in page:
         r'<script id="greenstoa-script">.*?</script>', lambda _: script_tag, page, flags=re.S
     )
 else:
-    page = re.sub(r'\s*<script src="JS/main.js" defer></script>', "", page)
+    page = re.sub(r'\s*<script src="JS/(?:story|main).js" defer></script>', "", page)
     page = page.replace("</body>", script_tag + "\n</body>")
 
 assert '<style id="greenstoa-styles">' in page

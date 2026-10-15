@@ -21,7 +21,6 @@ const motionSwitch = document.querySelector("#motion-toggle");
 const volumeSlider = document.querySelector("#volume");
 const volumeLabel = document.querySelector("#volume-label");
 const optionsDialog = document.querySelector("#options-dialog");
-const journeyDialog = document.querySelector("#journey-dialog");
 // Build registered pixel cels once, then hold/swap those drawings at 10 fps.
 const spriteAnimation = (() => {
   const canvas = document.querySelector(".character-sprite");
@@ -442,7 +441,7 @@ function updateInterface() {
   volumeSlider.value = settings.volume;
   volumeLabel.textContent = settings.volume + "%";
   document.body.classList.toggle("no-motion", !settings.motion);
-  spriteAnimation.setEnabled(settings.motion);
+  spriteAnimation.setEnabled(settings.motion && !storyJourney.active);
   if (masterGain)
     masterGain.gain.setTargetAtTime(
       playing ? (settings.volume / 100) * 0.12 : 0,
@@ -519,9 +518,10 @@ document.querySelector("#options-button").addEventListener("click", () => {
 document.querySelector("#start-button").addEventListener("click", () => {
   characterSpeech.close();
   activateAudio();
-  journeyDialog.showModal();
+  storyJourney.start();
 });
-for (const dialog of [optionsDialog, journeyDialog]) {
+document.addEventListener("greenstoa:storychange", updateInterface);
+for (const dialog of [optionsDialog]) {
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();
@@ -547,7 +547,7 @@ menuButtons.forEach((button, index) => {
   button.addEventListener("focus", () => selectMenu(index));
 });
 document.addEventListener("keydown", (event) => {
-  if (optionsDialog.open || journeyDialog.open) return;
+  if (optionsDialog.open || storyJourney.active) return;
   if (["ArrowDown", "ArrowUp"].includes(event.key)) {
     event.preventDefault();
     const next =

@@ -10,154 +10,257 @@
     />
     <title>이종족연합국 그린스토아</title>
     <link rel="stylesheet" href="CSS/main.css" />
+    <script src="JS/story.js" defer></script>
     <script src="JS/main.js" defer></script>
   </head>
   <body>
     <div id="interaction-effects" popover="manual" aria-hidden="true"></div>
     <main class="scene" aria-label="그린스토아 타이틀 화면">
-      <div class="landscape" aria-hidden="true"></div>
-      <canvas
-        class="character-sprite"
-        width="416"
-        height="512"
-        data-sprite-src="assets/greenstoa-elf-idle.png"
-        role="button"
-        tabindex="0"
-        aria-label="숲의 안내자와 대화하기"
-        aria-controls="character-speech"
-        aria-haspopup="dialog"
-        aria-expanded="false"
-      ></canvas>
-      <svg
-        class="river-light"
-        viewBox="0 0 1536 1024"
-        preserveAspectRatio="xMidYMid slice"
-        aria-hidden="true"
-      >
-        <defs>
-          <clipPath id="river-mask">
-            <path
-              d="m749 493 28 6-17 17 34 12 7 23-44 25 18 36-20 35 48 31-1 35-49 36-9 40-70 38 90 33 13 32-108 46-28 62-86 29-91-17 13-42 56-43 93-37 42-37-56-35-1-26 54-36 42-31-21-29 34-32 7-37 25-23-20-29 22-29-27-19 12-22Z"
-            />
-          </clipPath>
-        </defs>
-        <g clip-path="url(#river-mask)" class="river-glints" fill="#d5fff2">
-          <path
-            d="M640 545h16v2h-16zm78 24h24v2h-24zm39 42h17v3h-17zm-40 49h29v2h-29zm50 35h13v2h-13zm-66 51h25v2h-25zm-22 24h18v3h-18zm-40 69h27v2h-27zm-33 50h19v3h-19zm-59 66h29v3h-29zm-1-11h10v2h-10z"
-          />
-          <path
-            d="M750 516h12v2h-12zm-20 86h20v2h-20zm22 89h20v2h-20zm-56 25h16v2h-16zm-46 66h22v2h-22zm60 40h16v3h-16zm-88 25h23v2h-23zm-51 53h15v2h-15z"
-          />
-        </g>
-      </svg>
-      <div class="scene-shade" aria-hidden="true"></div>
-      <div class="particles" aria-hidden="true"></div>
-
-      <button
-        class="sound-toggle"
-        aria-label="자연 소리 켜기"
-        aria-pressed="false"
-      >
-        <i class="sound-icon" aria-hidden="true">♪</i><span>소리 꺼짐</span>
-      </button>
-
-      <section class="title-content">
-        <h1 class="title-logo">
-          <span class="title-prefix">이종족연합국</span>
-          <span class="logo-wordmark">
-            <span class="title-name"
-              >그린스토아<span class="logo-shine" aria-hidden="true"
-                >그린스토아</span
-              ></span
-            >
-            <svg
-              class="logo-sprig"
-              viewBox="0 0 16 24"
-              fill="none"
-              aria-hidden="true"
-            >
+      <div id="title-screen">
+        <div class="landscape" aria-hidden="true"></div>
+        <canvas
+          class="character-sprite"
+          width="416"
+          height="512"
+          data-sprite-src="assets/greenstoa-elf-idle.png"
+          role="button"
+          tabindex="0"
+          aria-label="숲의 안내자와 대화하기"
+          aria-controls="character-speech"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+        ></canvas>
+        <svg
+          class="river-light"
+          viewBox="0 0 1536 1024"
+          preserveAspectRatio="xMidYMid slice"
+          aria-hidden="true"
+        >
+          <defs>
+            <clipPath id="river-mask">
               <path
-                d="M14 22h-2v-4h-2v-4H8v-4H6V6H4V2"
-                stroke="currentColor"
-                stroke-width="2"
+                d="m749 493 28 6-17 17 34 12 7 23-44 25 18 36-20 35 48 31-1 35-49 36-9 40-70 38 90 33 13 32-108 46-28 62-86 29-91-17 13-42 56-43 93-37 42-37-56-35-1-26 54-36 42-31-21-29 34-32 7-37 25-23-20-29 22-29-27-19 12-22Z"
               />
+            </clipPath>
+          </defs>
+          <g clip-path="url(#river-mask)" class="river-glints" fill="#d5fff2">
+            <path
+              d="M640 545h16v2h-16zm78 24h24v2h-24zm39 42h17v3h-17zm-40 49h29v2h-29zm50 35h13v2h-13zm-66 51h25v2h-25zm-22 24h18v3h-18zm-40 69h27v2h-27zm-33 50h19v3h-19zm-59 66h29v3h-29zm-1-11h10v2h-10z"
+            />
+            <path
+              d="M750 516h12v2h-12zm-20 86h20v2h-20zm22 89h20v2h-20zm-56 25h16v2h-16zm-46 66h22v2h-22zm60 40h16v3h-16zm-88 25h23v2h-23zm-51 53h15v2h-15z"
+            />
+          </g>
+        </svg>
+        <div class="scene-shade" aria-hidden="true"></div>
+        <div class="particles" aria-hidden="true"></div>
+
+        <button
+          class="sound-toggle"
+          aria-label="자연 소리 켜기"
+          aria-pressed="false"
+        >
+          <i class="sound-icon" aria-hidden="true">♪</i><span>소리 꺼짐</span>
+        </button>
+
+        <section class="title-content">
+          <h1 class="title-logo">
+            <span class="title-prefix">이종족연합국</span>
+            <span class="logo-wordmark">
+              <span class="title-name"
+                >그린스토아<span class="logo-shine" aria-hidden="true"
+                  >그린스토아</span
+                ></span
+              >
+              <svg
+                class="logo-sprig"
+                viewBox="0 0 16 24"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M14 22h-2v-4h-2v-4H8v-4H6V6H4V2"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <path
+                  d="M2 3h4v4H4v2H2V3Zm6 7h4V8h2v6h-4v-2H8v-2Z"
+                  fill="currentColor"
+                />
+              </svg>
+              <svg
+                class="logo-leaf"
+                viewBox="0 0 20 28"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2 26V16h2v-4h2V8h2V4h4V2h6v4h-2v4h-2v4h-4v2H6v10H2Z"
+                  fill="currentColor"
+                />
+                <path d="M6 23v-6h4v-2h8v4h-2v2h-4v2H6Z" fill="currentColor" />
+                <path d="M6 16v-4h2V8h4V6" stroke="#41584c" stroke-width="2" />
+              </svg>
+            </span>
+            <svg class="logo-spark" viewBox="0 0 10 20" aria-hidden="true">
               <path
-                d="M2 3h4v4H4v2H2V3Zm6 7h4V8h2v6h-4v-2H8v-2Z"
+                d="M4 0h2v6h2v2h2v2H8v2H6v8H4v-8H2v-2H0V8h2V6h2V0Z"
                 fill="currentColor"
               />
             </svg>
             <svg
-              class="logo-leaf"
-              viewBox="0 0 20 28"
-              fill="none"
+              class="logo-tails"
+              viewBox="0 0 360 12"
+              preserveAspectRatio="none"
               aria-hidden="true"
             >
               <path
-                d="M2 26V16h2v-4h2V8h2V4h4V2h6v4h-2v4h-2v4h-4v2H6v10H2Z"
+                d="M0 2h4v2h10v2h20v2h12v2H12V8H4V6H0V2Zm360 0h-4v2h-10v2h-20v2h-12v2h34V8h8V6h4V2Z"
                 fill="currentColor"
               />
-              <path d="M6 23v-6h4v-2h8v4h-2v2h-4v2H6Z" fill="currentColor" />
-              <path d="M6 16v-4h2V8h4V6" stroke="#41584c" stroke-width="2" />
+              <path
+                d="M46 8h10V6h8v2h-6v2H46V8Zm268 0h-10V6h-8v2h6v2h12V8Zm-136-2h4v2h2v2h-2v2h-4v-2h-2V8h2V6Z"
+                fill="currentColor"
+              />
             </svg>
-          </span>
-          <svg class="logo-spark" viewBox="0 0 10 20" aria-hidden="true">
-            <path
-              d="M4 0h2v6h2v2h2v2H8v2H6v8H4v-8H2v-2H0V8h2V6h2V0Z"
-              fill="currentColor"
-            />
-          </svg>
-          <svg
-            class="logo-tails"
-            viewBox="0 0 360 12"
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M0 2h4v2h10v2h20v2h12v2H12V8H4V6H0V2Zm360 0h-4v2h-10v2h-20v2h-12v2h34V8h8V6h4V2Z"
-              fill="currentColor"
-            />
-            <path
-              d="M46 8h10V6h8v2h-6v2H46V8Zm268 0h-10V6h-8v2h6v2h12V8Zm-136-2h4v2h2v2h-2v2h-4v-2h-2V8h2V6Z"
-              fill="currentColor"
-            />
-          </svg>
-          <span class="logo-twinkles" aria-hidden="true"
-            ><i></i><i></i><i></i><i></i
-          ></span>
-        </h1>
-        <p class="intro-copy">강물 소리가 들려온다.</p>
-        <nav class="main-menu game-window" aria-label="게임 메뉴">
-          <button class="menu-item is-selected" id="start-button">
-            시작하기
+            <span class="logo-twinkles" aria-hidden="true"
+              ><i></i><i></i><i></i><i></i
+            ></span>
+          </h1>
+          <p class="intro-copy">강물 소리가 들려온다.</p>
+          <nav class="main-menu game-window" aria-label="게임 메뉴">
+            <button class="menu-item is-selected" id="start-button">
+              시작하기
+            </button>
+            <button class="menu-item" id="options-button">설정</button>
+          </nav>
+        </section>
+
+        <section
+          id="character-speech"
+          class="character-speech game-window"
+          role="dialog"
+          aria-labelledby="speech-speaker"
+          aria-describedby="speech-line"
+          hidden
+        >
+          <div class="speech-header">
+            <span id="speech-speaker">숲의 안내자</span
+            ><button id="speech-close" aria-label="말풍선 닫기">×</button>
+          </div>
+          <p id="speech-line" role="status" aria-live="polite"></p>
+          <button id="speech-next" class="speech-next">
+            다음 대사 <span aria-hidden="true">▶</span>
           </button>
-          <button class="menu-item" id="options-button">설정</button>
-        </nav>
-      </section>
+        </section>
 
+        <footer class="footer">
+          <p class="menu-hint">
+            <span>↑ ↓</span> 선택 <b>·</b> <span>Enter</span> 결정
+          </p>
+          <span class="copyright">그린스토아 © 2026</span>
+        </footer>
+      </div>
       <section
-        id="character-speech"
-        class="character-speech game-window"
-        role="dialog"
-        aria-labelledby="speech-speaker"
-        aria-describedby="speech-line"
+        id="story-screen"
+        class="story-screen"
+        aria-label="그린스토아 프롤로그"
         hidden
       >
-        <div class="speech-header">
-          <span id="speech-speaker">숲의 안내자</span
-          ><button id="speech-close" aria-label="말풍선 닫기">×</button>
+        <header class="story-header">
+          <button id="story-return" class="story-quiet">← 타이틀</button>
+          <span class="chronicle-label">제루스의 기록</span>
+          <button id="story-skip" class="story-quiet">건너뛰기</button>
+        </header>
+        <div class="story-content">
+          <article
+            id="prologue-page"
+            class="story-page"
+            aria-label="프롤로그 장면"
+          >
+            <div id="chronicle-art" class="chronicle-art" role="img"></div>
+            <div class="narration-block">
+              <span class="narration-mark" aria-hidden="true">✦</span>
+              <p id="story-narration" aria-live="polite" aria-atomic="true"></p>
+            </div>
+          </article>
+          <section
+            id="name-page"
+            class="name-page"
+            aria-labelledby="name-question"
+            hidden
+          >
+            <div class="name-ornament" aria-hidden="true">— ✦ —</div>
+            <p class="name-prelude">이제, 당신의 이야기를 기록할 차례.</p>
+            <h2 id="name-question">당신의 이름은?</h2>
+            <form id="name-form" novalidate>
+              <label for="player-name" class="visually-hidden"
+                >당신의 이름</label
+              >
+              <input
+                id="player-name"
+                name="player-name"
+                type="text"
+                maxlength="24"
+                autocomplete="off"
+                spellcheck="false"
+                aria-describedby="name-hint name-error"
+              />
+              <p id="name-hint" class="name-hint">12자 이내로 적어 주세요.</p>
+              <p id="name-error" class="name-error" role="alert"></p>
+              <button type="submit" class="story-action">
+                이름 정하기 <span aria-hidden="true">▸</span>
+              </button>
+            </form>
+          </section>
+          <section
+            id="name-confirmation"
+            class="name-page"
+            aria-labelledby="confirm-question"
+            hidden
+          >
+            <div class="name-ornament" aria-hidden="true">— ✦ —</div>
+            <h2 id="confirm-question">이 이름으로 하시겠습니까?</h2>
+            <p id="confirmed-name" class="written-name"></p>
+            <div class="name-actions">
+              <button id="name-edit" class="story-quiet">다시 쓸게요</button>
+              <button id="name-accept" class="story-action">
+                네, 이 이름으로 <span aria-hidden="true">▸</span>
+              </button>
+            </div>
+          </section>
+          <section
+            id="name-complete"
+            class="name-page"
+            aria-labelledby="complete-heading"
+            hidden
+          >
+            <div class="name-ornament" aria-hidden="true">— ✦ —</div>
+            <p class="name-prelude" id="complete-heading">
+              이름이 기록되었습니다.
+            </p>
+            <p id="recorded-name" class="written-name"></p>
+            <p class="record-note" id="record-note" role="status"></p>
+            <div class="name-actions">
+              <button id="name-rewrite" class="story-quiet">
+                이름 다시 쓰기
+              </button>
+              <button id="name-finish" class="story-action">
+                타이틀로 돌아가기
+              </button>
+            </div>
+          </section>
         </div>
-        <p id="speech-line" role="status" aria-live="polite"></p>
-        <button id="speech-next" class="speech-next">
-          다음 대사 <span aria-hidden="true">▶</span>
-        </button>
+        <footer class="story-footer">
+          <button id="story-auto" class="story-quiet" aria-pressed="true">
+            자동 넘김 · 켜짐
+          </button>
+          <span id="story-count" aria-label="장면 순서">01 / 06</span>
+          <button id="story-next" class="story-next" aria-label="다음 장면">
+            다음 <span aria-hidden="true">▸</span>
+          </button>
+        </footer>
       </section>
-
-      <footer class="footer">
-        <p class="menu-hint">
-          <span>↑ ↓</span> 선택 <b>·</b> <span>Enter</span> 결정
-        </p>
-        <span class="copyright">그린스토아 © 2026</span>
-      </footer>
     </main>
 
     <dialog
@@ -206,20 +309,6 @@
         </div>
         <p class="settings-note">설정은 자동으로 저장됩니다.</p>
         <button class="panel-confirm" value="close">돌아가기</button>
-      </form>
-    </dialog>
-
-    <dialog
-      id="journey-dialog"
-      class="panel journey-panel game-window"
-      aria-labelledby="journey-title"
-    >
-      <h2 id="journey-title">숲의 안내자</h2>
-      <p class="journey-line">
-        “처음 보는 얼굴이네요.<br />그린스토아에 오신 걸 환영해요.”
-      </p>
-      <form method="dialog">
-        <button class="panel-confirm">타이틀로 돌아가기</button>
       </form>
     </dialog>
   </body>
