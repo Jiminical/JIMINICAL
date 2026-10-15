@@ -88,6 +88,10 @@ const guildGame = (() => {
       name: "카니아",
       portrait: 7,
     },
+    rose: { name: "로제", portrait: 0, fieldPortrait: true },
+    rael: { name: "라엘", portrait: 1, fieldPortrait: true },
+    edan: { name: "에단", portrait: 2, fieldPortrait: true },
+    sena: { name: "새나", portrait: 3, fieldPortrait: true },
   };
   const pictures = {};
   function loadPicture(key, src) {
@@ -113,12 +117,18 @@ const guildGame = (() => {
       "sdHero",
       "sdGuild",
       "sdLeads",
+      "city",
+      "grove",
+      "shop",
+      "fieldCast",
+      "sdField",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]).then(() =>
     fieldSprites.prepare({
       hero: pictures.sdHero,
       guild: pictures.sdGuild,
       leads: pictures.sdLeads,
+      field: pictures.sdField,
     }),
   );
   // Attach rejection handling before a player chooses to enter the room.
@@ -146,6 +156,10 @@ const guildGame = (() => {
   let menuTab = "items",
     selectedItem = 0,
     selectedChoice = 0;
+  let shopOrigin = "city",
+    shopStocks = fieldWorld.freshStock(),
+    fieldFlags = { lucyFarewell: false, leafTaken: false, springUsed: false };
+  const visited = new Set(["guild"]);
   let typingTimer = 0,
     toastTimer = 0;
   let footDistance = 0;
@@ -173,6 +187,9 @@ const guildGame = (() => {
     carriage: ["제르디아 기사단 파견 마차", "동쪽 숲길"],
     checkpoint: ["그린스토아 외곽", "성역 검문소"],
     gate: ["이종족연합국 그린스토아", "어머니 나무의 품 아래"],
+    ...Object.fromEntries(
+      Object.entries(fieldWorld.maps).map(([key, value]) => [key, value.names]),
+    ),
   };
   const fieldCollisions = {
     carriage: [
@@ -202,7 +219,8 @@ const guildGame = (() => {
       checkpoint: { left: 136, right: 632, top: 204, bottom: 446 },
       gate: { left: 135, right: 585, top: 258, bottom: 446 },
     };
-    wallBounds = bounds[location];
+    wallBounds = fieldWorld.maps[location]?.bounds || bounds[location];
+    visited.add(location);
     const art = pictures[location];
     map.imageSmoothingEnabled = false;
     map.clearRect(0, 0, W, H);
@@ -221,21 +239,55 @@ const guildGame = (() => {
       art.naturalWidth * scale,
       art.naturalHeight * scale,
     );
-    document.querySelector(".game-place").textContent = placeNames[location][0];
-    document.querySelector(".game-hud strong").textContent =
-      placeNames[location][1];
+    const names =
+      location === "shop"
+        ? [
+            shopOrigin === "city" ? "제르디아 시내" : "그린스토아 입구",
+            fieldWorld.shops[shopOrigin].title,
+          ]
+        : placeNames[location];
+    document.querySelector(".game-place").textContent = names[0];
+    document.querySelector(".game-hud strong").textContent = names[1];
     root.dataset.location = location;
     gameAudio.scene(location);
-    root.setAttribute("aria-label", placeNames[location].join(" · "));
+    root.setAttribute("aria-label", names.join(" · "));
     canvas.setAttribute(
       "aria-label",
-      placeNames[location][1] +
-        ". WASD 이동, 왼쪽 Shift 달리기, E 상호작용, C 메뉴.",
+      names[1] + ". WASD 이동, 왼쪽 Shift 달리기, E 상호작용, C 메뉴.",
     );
   }
   function drawScenery() {
     if (!motion()) return;
     const frame = Math.floor(elapsed * 8);
+    const water =
+      location === "city"
+        ? [
+            [347, 227],
+            [375, 234],
+            [358, 247],
+            [382, 244],
+          ]
+        : location === "grove"
+          ? [
+              [211, 254],
+              [227, 287],
+              [206, 319],
+              [193, 365],
+              [215, 416],
+            ]
+          : [];
+    water.forEach(([x, y], i) => {
+      const cel = (frame + i * 3) % 16;
+      ctx.globalAlpha = cel < 8 ? 0.5 : 0.22;
+      rect(
+        ctx,
+        x + (cel % 4),
+        y + Math.floor(cel / 8),
+        cel < 8 ? 4 : 2,
+        1,
+        "#d5fbef",
+      );
+    });
     // Sparse individual pollen/dust pixels leave the environment painting legible.
     for (let i = 0; i < 8; i++) {
       const x = (93 + i * 79 + Math.floor(frame / 7)) % W;
@@ -269,6 +321,7 @@ const guildGame = (() => {
     dialogueBox.hidden = true;
     prompt.hidden = true;
     menu.hidden = true;
+    hideTrading();
     cancelPortraitMotion();
     gameAudio.stopVoice();
     clearTimeout(typingTimer);
@@ -568,17 +621,150 @@ const guildGame = (() => {
   function actor(id, x, y, dir = "down") {
     return { id, x, y, dir, moving: false };
   }
+  function guildPeople() {
+    return [
+      actor("lucy", 360, 100),
+      actor("bran", 552, 230),
+      actor("mia", 208, 222),
+      actor("nara", 83, 330, "right"),
+      actor("tobin", 620, 268, "left"),
+      actor("leon", 592, 404, "up"),
+    ];
+  }
+  function fieldPeople(region) {
+    return (fieldWorld.maps[region].npcs || []).map((person) =>
+      actor(...person),
+    );
+  }
+  function visitCity(fromGuild = true) {
+    travelTo(
+      "city",
+      () => {
+        player = actor(
+          "hero",
+          fromGuild ? 140 : 568,
+          fromGuild ? 239 : 266,
+          "down",
+        );
+        npcs = fieldPeople("city");
+      },
+      () => notify("길드 · 잡화점 · 광장 · 마차  /  가까이에서 E"),
+    );
+  }
+  function visitGuild() {
+    travelTo("guild", () => {
+      player = actor("hero", 360, 408, "up");
+      npcs = guildPeople();
+    });
+  }
+  function visitGrove() {
+    travelTo(
+      "grove",
+      () => {
+        player = actor("hero", 395, 420, "up");
+        npcs = fieldPeople("grove");
+      },
+      () => notify("다리 너머 강가와 약초점을 둘러보자."),
+    );
+  }
+  function returnGate() {
+    travelTo("gate", () => {
+      player = actor("hero", 360, 326, "down");
+      npcs = [actor("scout", 442, 312, "left")];
+    });
+  }
+  function enterShop() {
+    shopOrigin = location;
+    travelTo("shop", () => {
+      player = actor("hero", 360, 375, "up");
+      npcs = [actor(fieldWorld.shops[shopOrigin].merchant, 360, 106)];
+    });
+  }
+  function exitShop() {
+    if (shopOrigin === "city") visitCity(false);
+    else
+      travelTo("grove", () => {
+        player = actor("hero", 529, 211, "down");
+        npcs = fieldPeople("grove");
+      });
+  }
+  function giveItem(id) {
+    const found = inventory.find((item) => item.id === id);
+    if (found) found.count++;
+    else inventory.push({ id, ...fieldWorld.items[id], count: 1 });
+  }
+  function hideTrading() {
+    shopView.hide();
+    root.classList.remove("is-shopping");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function trade() {
+    phase = "shop";
+    root.dataset.phase = phase;
+    keys.clear();
+    root.classList.add("is-shopping");
+    document.querySelector(".world-viewport").inert = true;
+    shopView.show({
+      region: shopOrigin,
+      snapshot: () => ({
+        coins,
+        stock: shopStocks[shopOrigin],
+        owned: Object.fromEntries(
+          inventory.map((item) => [item.id, item.count]),
+        ),
+      }),
+      buy: (id) => {
+        const product = fieldWorld.shops[shopOrigin].stock.find(
+          (item) => item.id === id,
+        );
+        if (!product || shopStocks[shopOrigin][id] <= 0)
+          return { ok: false, message: "이 물건은 모두 팔렸어요." };
+        if (coins < product.price)
+          return {
+            ok: false,
+            message: "금화가 부족해요. 다른 물건을 골라 보세요.",
+          };
+        coins -= product.price;
+        shopStocks[shopOrigin][id]--;
+        giveItem(id);
+        return {
+          ok: true,
+          message:
+            fieldWorld.items[id].name +
+            " 1개를 챙겼다. (-" +
+            product.price +
+            " G)",
+        };
+      },
+      close: () => {
+        hideTrading();
+        phase = "free";
+        root.dataset.phase = phase;
+        keys.clear();
+        gameAudio.sfx("menuClose");
+        canvas.focus({ preventScroll: true });
+      },
+    });
+  }
   function updateObjective() {
     objective.textContent =
-      location === "carriage"
-        ? "여정 · 동쪽 숲을 지나 성역으로"
-        : location === "checkpoint"
-          ? "카니아에게 모험가증을 보여 주자."
-          : location === "gate"
-            ? "어머니 나무의 품 아래, 그린스토아에 도착했다."
-            : questAccepted
-              ? "길드 출입문으로 나가 기사단의 마차에 타자."
-              : "루시에게 그린스토아행 의뢰를 확인하자.";
+      location === "city"
+        ? questAccepted
+          ? "광장의 마차에 타기 전에 여행 준비를 하자."
+          : "길드에서 의뢰를 받고, 광장을 둘러보자."
+        : location === "grove"
+          ? "이슬잎 숲길 · 다리 너머 강가와 약초점을 둘러보자."
+          : location === "shop"
+            ? "주인에게 E · 물건 구입  /  C · 소지품 확인"
+            : location === "carriage"
+              ? "여정 · 동쪽 숲을 지나 성역으로"
+              : location === "checkpoint"
+                ? "카니아에게 모험가증을 보여 주자."
+                : location === "gate"
+                  ? "정문에 다가가 E · 그린스토아 입구 숲길로"
+                  : questAccepted
+                    ? "길드 출입문으로 나가 기사단의 마차에 타자."
+                    : "루시에게 그린스토아행 의뢰를 확인하자.";
   }
   function notify(text) {
     const toast = document.querySelector("#game-toast");
@@ -667,7 +853,17 @@ const guildGame = (() => {
         poses: { neutral: 0, boasting: 1, offended: 2, embarrassed: 3 },
       },
     };
-    const sheet = sheets[kind] || { image: "cast", columns: 3, rows: 2 };
+    const sheet =
+      sheets[kind] ||
+      (cast[kind].fieldPortrait
+        ? {
+            image: "fieldCast",
+            columns: 2,
+            rows: 2,
+            columnEdges: [0, 800, 1536],
+            rowEdges: [0, 519, 1024],
+          }
+        : { image: "cast", columns: 3, rows: 2 });
     const image = pictures[sheet.image],
       index = sheet.poses
         ? (sheet.poses[expression] ?? 0)
@@ -680,6 +876,11 @@ const guildGame = (() => {
       const column = index % sheet.columns;
       sx = sheet.columnEdges[column];
       cw = sheet.columnEdges[column + 1] - sx;
+    }
+    if (sheet.rowEdges) {
+      const row = Math.floor(index / sheet.columns);
+      sy = sheet.rowEdges[row];
+      ch = sheet.rowEdges[row + 1] - sy;
     }
     portrait.dataset.sheet = sheet.image;
     portrait.dataset.frame = String(index);
@@ -984,10 +1185,34 @@ const guildGame = (() => {
     );
   }
   function leaveGuild() {
+    if (questAccepted && !fieldFlags.lucyFarewell) {
+      fieldFlags.lucyFarewell = true;
+      speak(
+        [
+          {
+            kind: "lucy",
+            expression: "concerned",
+            text: "…나 참, 위험하다는 말을 해줘도.\n……멀쩡히 돌아오기나 하세요.",
+          },
+        ],
+        visitCity,
+      );
+    } else visitCity();
+  }
+  function boardCarriage() {
+    if (!questAccepted) {
+      speak([
+        {
+          kind: "edan",
+          text: "그린스토아로 가는 기사단 파견 마차입니다.\n길드에서 의뢰를 접수하신 뒤에 모험가증과 함께 와 주세요.",
+        },
+      ]);
+      return;
+    }
     speak(
       [
         {
-          text: "길드 문밖에 기사단의 인장이 찍힌 마차가 기다리고 있다.\n그린스토아로 출발할까?",
+          text: "기사단의 인장이 찍힌 마차가 기다리고 있다.\n준비를 마치고 그린스토아로 출발할까?",
         },
       ],
       null,
@@ -996,30 +1221,20 @@ const guildGame = (() => {
           label: "그린스토아로 출발한다",
           action: () => {
             storyStep = "departure";
-            speak(
-              [
-                {
-                  kind: "lucy",
-                  expression: "concerned",
-                  text: "…나 참, 위험하다는 말을 해줘도.\n……멀쩡히 돌아오기나 하세요.",
-                },
-              ],
-              () =>
-                showEvent("departure", {
-                  destination: "carriage",
-                  setup: () => {
-                    player = actor("hero", 250, 326, "right");
-                    npcs = [actor("rogue", 466, 326, "left")];
-                    storyStep = "carriage";
-                  },
-                  after: carriageConversation,
-                }),
-            );
+            showEvent("departure", {
+              destination: "carriage",
+              setup: () => {
+                player = actor("hero", 250, 326, "right");
+                npcs = [actor("rogue", 466, 326, "left")];
+                storyStep = "carriage";
+              },
+              after: carriageConversation,
+            });
           },
         },
         {
-          label: "아직 준비가 덜 됐다",
-          action: () => notify("필요한 준비를 마치고 다시 오자."),
+          label: "조금 더 둘러본다",
+          action: () => notify("광장을 둘러보고 준비가 되면 마차로 돌아오자."),
         },
       ],
     );
@@ -1172,6 +1387,7 @@ const guildGame = (() => {
                 showVista("sanctuary", () =>
                   resumeWorld(() => {
                     storyStep = "arrived";
+                    npcs = [actor("scout", 442, 312, "left")];
                     updateObjective();
                     notify("그린스토아에 도착했다.");
                   }),
@@ -1182,6 +1398,17 @@ const guildGame = (() => {
   }
 
   function npcTalk(id) {
+    if (id === "rose" || id === "rael") {
+      speak(
+        fieldWorld.shops[shopOrigin].greeting.map((text) => ({
+          kind: id,
+          text,
+        })),
+        trade,
+      );
+      return;
+    }
+
     if (id === "scout") {
       if (location === "checkpoint") showCredentials();
       else
@@ -1199,6 +1426,14 @@ const guildGame = (() => {
       return;
     }
     const texts = {
+      edan: [
+        "길드 앞이 늘 붐비는 건 아니에요. 마차가 나가는 시간이라 그렇죠.\n출발 전에 오른쪽 잡화점에서 필요한 걸 챙기셔도 좋습니다.",
+        "그린스토아행 마차는 광장 오른쪽 아래에 있습니다.\n기사단의 조사 의뢰를 받은 분만 타실 수 있어요.",
+      ],
+      sena: [
+        "처음 오셨어요? 저는 새나예요. 다리 건너 약초점은 라엘 씨 가게고요.\n여긴 앉아서 물소리를 듣기만 해도 시간이 잘 가요.",
+        "저기 작은 샘은 마셔도 괜찮아요. 긴 여행 뒤엔 잠깐 쉬어 가세요.\n강가에 떨어진 잎도 하나쯤은 기념으로 가져가셔도 돼요.",
+      ],
       bran: [
         "아까는 아주 곤히 서 있더군. 후드 덕에 티는 덜 났지만.\n먼 길에서 온 모양이지?",
         "그린스토아로 간다고? 숲에서는 길보다 소리를 잘 듣게.\n조용하던 새들이 갑자기 날아오르면, 대개 이유가 있거든.",
@@ -1229,9 +1464,22 @@ const guildGame = (() => {
       id: n.id,
       name: cast[n.id].name,
       x: n.x,
-      y: n.id === "lucy" ? 176 : n.y,
+      y:
+        location === "guild" && n.id === "lucy"
+          ? 176
+          : location === "shop"
+            ? 190
+            : n.y,
       kind: "npc",
     }));
+    if (fieldWorld.maps[location])
+      return [
+        ...people,
+        ...fieldWorld.maps[location].targets.map((target) => ({
+          ...target,
+          kind: "prop",
+        })),
+      ];
     if (location === "guild")
       return [
         ...people,
@@ -1289,21 +1537,65 @@ const guildGame = (() => {
           text: "약초 채집, 호위, 분실물 수색…\n여러 의뢰서가 겹겹이 붙어 있다. 그린스토아 사전 조사 의뢰에는 제르디아 기사단의 인장이 찍혀 있다.",
         },
       ]);
-    if (target.id === "door") {
-      if (questAccepted) leaveGuild();
-      else
+    if (target.id === "door") leaveGuild();
+    if (target.id === "guild-entry") visitGuild();
+    if (target.id === "shop-entry") enterShop();
+    if (target.id === "shop-exit") exitShop();
+    if (target.id === "carriage-stop") boardCarriage();
+    if (target.id === "gate-return") returnGate();
+    if (target.id === "gate" && storyStep === "arrived") visitGrove();
+    if (target.id === "city-board")
+      speak([
+        {
+          text: "‘동쪽 숲길의 통행은 기사단 파견 마차를 이용해 주십시오.’\n그 아래에 로제의 잡화점 전단이 조그맣게 붙어 있다. ‘따끈한 빵, 오늘도 구웠어요.’",
+        },
+      ]);
+    if (target.id === "fountain") {
+      gameAudio.sfx("water");
+      speak([
+        {
+          text: "맑은 물이 돌그릇을 타고 쏟아진다.\n물속에는 소원을 빌며 던진 동전이 몇 개 반짝인다.",
+        },
+      ]);
+    }
+    if (target.id === "grove-sign")
+      speak([
+        {
+          text: "‘이슬잎 숲길 — 강 건너 쉼터, 동쪽에 약초점.’\n낯선 종족의 글자 아래에 공용어가 한 줄 더 적혀 있다.",
+        },
+      ]);
+    if (target.id === "river-leaf") {
+      if (!fieldFlags.leafTaken) {
+        fieldFlags.leafTaken = true;
+        giveItem("riverLeaf");
+        gameAudio.sfx("registered");
         speak([
           {
-            text: "문밖으로 제르디아의 분주한 거리가 보인다.\n그린스토아행 의뢰부터 접수원에게 확인해야겠다.",
+            text: "작은 잎 하나가 물가에 내려앉았다.\n손바닥에 올리니 숲의 향이 희미하게 남는다.\n[강가의 잎 ×1을 챙겼다.]",
+          },
+        ]);
+      } else
+        speak([
+          {
+            text: "물은 계속 흘러간다.\n주워 든 잎은 여행 가방 안에서 바스락거린다.",
           },
         ]);
     }
-    if (target.id === "gate")
-      speak([
-        {
-          text: "열린 문 너머로 잎사귀 스치는 소리가 들려온다.\n어머니 나무의 그늘 아래, 새로운 이야기가 기다리고 있다.",
-        },
-      ]);
+    if (target.id === "spring") {
+      let text =
+        "맑은 샘물이 바위 틈으로 흘러나온다.\n손을 담그자 기분 좋은 서늘함이 번진다.";
+      if (!fieldFlags.springUsed && hp < 24) {
+        const amount = 24 - hp;
+        hp = 24;
+        fieldFlags.springUsed = true;
+        gameAudio.sfx("water");
+        text =
+          "샘물을 한 모금 마시고 잠시 쉬었다.\n숲바람에 먼 길의 피로가 풀린다. [체력 +" +
+          amount +
+          "]";
+      }
+      speak([{ text }]);
+    }
     if (target.id === "sign")
       speak([
         {
@@ -1332,12 +1624,14 @@ const guildGame = (() => {
       box.y < r.y + r.h &&
       box.y + box.h > r.y;
     return (
-      (location === "guild" ? guildCollisions : fieldCollisions[location]).some(
-        overlap,
-      ) ||
+      (
+        fieldWorld.maps[location]?.collisions ||
+        (location === "guild" ? guildCollisions : fieldCollisions[location])
+      ).some(overlap) ||
       npcs.some(
         (n) =>
-          n.id !== "lucy" && overlap({ x: n.x - 7, y: n.y - 5, w: 14, h: 9 }),
+          !(location === "guild" && n.id === "lucy") &&
+          overlap({ x: n.x - 7, y: n.y - 5, w: 14, h: 9 }),
       )
     );
   }
@@ -1362,10 +1656,15 @@ const guildGame = (() => {
       gameAudio.sfx("footstep", location);
     }
   }
+  function counterFor(a) {
+    if (location === "guild" && a.id === "lucy") return { shift: 30, edge: 98 };
+    if (location === "shop" && a.id !== "hero") return { shift: 30, edge: 104 };
+    return null;
+  }
   function drawActor(a) {
     const x = Math.round(a.x),
-      receptionist = location === "guild" && a.id === "lucy",
-      y = Math.round(a.y + (receptionist ? 30 : 0));
+      receptionist = counterFor(a),
+      y = Math.round(a.y + (receptionist?.shift || 0));
     // A low, warm contact shadow ties the shared foot anchor to each floor.
     if (!receptionist) {
       rect(ctx, x - 6, y - 1, 12, 3, "#303b324a");
@@ -1379,7 +1678,7 @@ const guildGame = (() => {
     if (receptionist) {
       // The desk's back edge covers her lower body while she is at reception.
       ctx.beginPath();
-      ctx.rect(0, 0, W, 98);
+      ctx.rect(0, 0, W, receptionist.edge);
       ctx.clip();
     }
     ctx.drawImage(
@@ -1417,10 +1716,7 @@ const guildGame = (() => {
           y = person
             ? Math.max(
                 2,
-                Math.round(
-                  person.y +
-                    (location === "guild" && person.id === "lucy" ? 30 : 0),
-                ) -
+                Math.round(person.y + (counterFor(person)?.shift || 0)) -
                   fieldSprites.bodyHeight(person.id) -
                   18,
               )
@@ -1474,12 +1770,11 @@ const guildGame = (() => {
         itemDetail.textContent = item.description;
         const action = document.querySelector("#guild-item-action");
         action.hidden = false;
-        action.textContent =
-          item.id === "bread"
-            ? "먹기 · E"
-            : item.id === "map"
-              ? "지도 펼치기 · E"
-              : "살펴보기 · E";
+        action.textContent = fieldWorld.items[item.id]?.heal
+          ? "사용 · E"
+          : item.id === "map"
+            ? "지도 펼치기 · E"
+            : "살펴보기 · E";
       }
     } else if (menuTab === "quest") {
       const h = document.createElement("p");
@@ -1489,7 +1784,7 @@ const guildGame = (() => {
         : "아직 수락한 의뢰가 없다.";
       itemList.append(h);
       itemDetail.textContent = questAccepted
-        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${location === "guild" ? "길드 앞 마차로 출발하자." : location === "gate" ? "그린스토아 도착 · 정문 통과 허가" : "그린스토아로 이동 중이다."}`
+        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 입구 숲길과 주민을 조사하자." : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
@@ -1524,18 +1819,20 @@ const guildGame = (() => {
       showEvent("map", { after: openMenu });
       return;
     }
-    if (item.id === "bread") {
+    const healing = fieldWorld.items[item.id]?.heal;
+    if (healing) {
       if (hp === 24) {
-        itemDetail.textContent =
-          "아직 배가 고프지 않다. 빵은 길 위에서 먹도록 하자.";
+        itemDetail.textContent = "체력이 가득하다. 필요할 때 사용하자.";
         return;
       }
-      hp = Math.min(24, hp + 6);
-      gameAudio.sfx("eat");
+      const restored = Math.min(24 - hp, healing);
+      hp += restored;
+      gameAudio.sfx(item.id === "bread" ? "eat" : "drink");
       item.count--;
       if (!item.count) inventory.splice(selectedItem, 1);
       renderMenu();
-      itemDetail.textContent = "마른 빵을 천천히 먹었다.\n체력이 6 회복되었다.";
+      itemDetail.textContent =
+        item.name + "을(를) 사용했다.\n체력이 " + restored + " 회복되었다.";
     } else {
       gameAudio.sfx("paper");
       itemDetail.textContent = item.description;
@@ -1555,6 +1852,31 @@ const guildGame = (() => {
     // Let the native sound button handle its own Enter activation.
     if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "shop") {
+      // Preserve native keyboard activation for the focused shop buttons.
+      if (
+        ["Enter", "Space"].includes(code) &&
+        event.target.closest?.("#field-shop button")
+      )
+        return;
+      if (
+        [
+          "Tab",
+          "KeyW",
+          "KeyS",
+          "KeyE",
+          "KeyC",
+          "Escape",
+          "Enter",
+          "ArrowUp",
+          "ArrowDown",
+        ].includes(code)
+      ) {
+        event.preventDefault();
+        shopView.handle(code, event.repeat, event.shiftKey);
+      }
+      return;
+    }
     if (phase === "event" && code === "Tab") {
       event.preventDefault();
       const button = document.querySelector(
@@ -1748,7 +2070,8 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "event") eventScenes.finish();
+        if (phase === "shop") shopView.handle("KeyE");
+        else if (phase === "event") eventScenes.finish();
         else if (phase === "vista") finishVista();
         else if (phase === "dialogue") advanceDialogue();
         else if (phase === "free") interact();
@@ -1771,6 +2094,10 @@ const guildGame = (() => {
     footDistance = 0;
     location = "guild";
     storyStep = "lucy";
+    shopOrigin = "city";
+    shopStocks = fieldWorld.freshStock();
+    fieldFlags = { lucyFarewell: false, leafTaken: false, springUsed: false };
+    visited.clear();
     buildMap();
     questAccepted = false;
     hp = 18;
@@ -1798,14 +2125,7 @@ const guildGame = (() => {
         "제르디아 모험가 길드에 등록된 증명서.\n성역에 들어가려면 정문에서 제시해야 한다.",
     });
     player = actor("hero", 360, 188, "up");
-    npcs = [
-      actor("lucy", 360, 100),
-      actor("bran", 552, 230),
-      actor("mia", 208, 222),
-      actor("nara", 83, 330, "right"),
-      actor("tobin", 620, 268, "left"),
-      actor("leon", 592, 404, "up"),
-    ];
+    npcs = guildPeople();
     root.hidden = false;
     menu.hidden = true;
     document.querySelector("#game-toast").hidden = true;
@@ -1823,6 +2143,7 @@ const guildGame = (() => {
     cancelPortraitMotion();
     hideVista();
     hideEvent();
+    hideTrading();
     gameAudio.stopTransient();
     gameAudio.scene("title");
     cancelAnimationFrame(request);
@@ -1865,6 +2186,13 @@ const guildGame = (() => {
           : null,
         questAccepted,
         hp,
+        coins,
+        shop: shopView.active ? shopOrigin : null,
+        stock: Object.fromEntries(
+          Object.entries(shopStocks).map(([key, value]) => [key, { ...value }]),
+        ),
+        visited: [...visited],
+        fieldFlags: { ...fieldFlags },
         items: inventory.map((i) => ({ id: i.id, count: i.count })),
         npcs: npcs.map((n) => ({ id: n.id, x: n.x, y: n.y })),
         speaker: dialogue ? dialogue.lines[dialogue.index].kind : null,

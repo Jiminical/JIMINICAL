@@ -1049,3 +1049,299 @@
     font-size: 11px;
   }
 }
+
+#field-shop[hidden] {
+  display: none;
+}
+.field-shop {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #091518cf;
+}
+.shop-panel {
+  width: min(760px, 100%);
+  max-height: 100%;
+  overflow: auto;
+  padding: 24px;
+  color: #e5dfc8;
+  background: #20332f;
+}
+.shop-panel > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 2px solid #71806a;
+  padding-bottom: 18px;
+}
+.shop-kicker {
+  margin: 0 0 6px;
+  color: #a7b497;
+  font-size: 11px;
+}
+#shop-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 400;
+}
+#shop-note {
+  margin: 8px 0 0;
+  color: #adbca3;
+  font-size: 11px;
+}
+.shop-purse {
+  flex: 0 0 auto;
+  text-align: right;
+}
+.shop-purse span {
+  display: block;
+  font-size: 10px;
+  color: #b0b99d;
+}
+#shop-coins {
+  display: block;
+  margin-top: 8px;
+  color: #f1d68f;
+  font-size: 24px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.shop-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 24px;
+  padding: 22px 0;
+}
+#shop-stock {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+#field-shop .shop-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 10px;
+  min-height: 46px;
+  text-align: left;
+  color: #bac5ae;
+  background: transparent;
+  border: 1px solid transparent;
+  font-size: 14px;
+}
+#field-shop .shop-row.is-current {
+  color: #f3e7bd;
+  background: #354a3d;
+  border-color: #8e9b75;
+}
+.shop-row > span:last-child {
+  white-space: nowrap;
+  color: #d5c792;
+  font-size: 12px;
+}
+.shop-details {
+  border-left: 1px solid #526a56;
+  padding-left: 22px;
+}
+#shop-item-title {
+  margin: 5px 0 12px;
+  color: #f0e3b4;
+  font-size: 16px;
+  font-weight: 400;
+}
+#shop-description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.9;
+  white-space: pre-line;
+  word-break: keep-all;
+}
+#shop-item-count {
+  color: #9fb29a;
+  font-size: 11px;
+  margin: 16px 0 0;
+}
+#shop-status {
+  min-height: 2.8em;
+  margin: 0;
+  color: #d7d4ad;
+  line-height: 1.6;
+  font-size: 12px;
+}
+.shop-panel > footer {
+  border-top: 1px solid #61745e;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.shop-panel > footer > span {
+  color: #9caf98;
+  font-size: 10px;
+}
+.shop-panel > footer > div {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+#field-shop .guild-button {
+  border: 1px solid #8c9b7c;
+  min-height: 40px;
+  background: #1b2d29;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+#field-shop .guild-button:disabled {
+  color: #86927d;
+  border-color: #52624c;
+}
+.game-screen.is-shopping > .game-hud,
+.game-screen.is-shopping > .game-objective,
+.game-screen.is-shopping > .game-touch,
+.game-screen.is-shopping > .game-controls {
+  visibility: hidden;
+}
+.game-screen.is-shopping .game-audio-toggle {
+  right: 20px;
+}
+@media (max-width: 600px) {
+  .field-shop {
+    padding: 12px;
+  }
+  .shop-panel {
+    padding: 16px;
+  }
+  .shop-panel > header {
+    gap: 12px;
+    padding-bottom: 14px;
+  }
+  #shop-title {
+    font-size: 18px;
+  }
+  #shop-coins {
+    font-size: 20px;
+  }
+  #shop-note {
+    max-width: 210px;
+    font-size: 10px;
+  }
+  .shop-body {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 0;
+  }
+  #field-shop .shop-row {
+    padding: 9px 8px;
+  }
+  .shop-details {
+    border-left: 0;
+    border-top: 1px solid #526a56;
+    padding: 12px 0 0;
+  }
+  #shop-item-title {
+    margin: 0 0 8px;
+    font-size: 14px;
+  }
+  #shop-item-count {
+    margin-top: 10px;
+  }
+  .shop-panel > footer {
+    gap: 10px;
+    padding-top: 12px;
+  }
+}
+@media (max-height: 500px) and (min-width: 601px) {
+  .field-shop {
+    padding: 12px;
+  }
+  .shop-panel {
+    padding: 14px 18px;
+  }
+  .shop-panel > header {
+    padding-bottom: 10px;
+    padding-right: 84px;
+  }
+  #shop-title {
+    font-size: 18px;
+  }
+  #shop-note {
+    margin-top: 5px;
+  }
+  .shop-body {
+    padding: 12px 0;
+  }
+  #field-shop .shop-row {
+    min-height: 35px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  #shop-status {
+    min-height: 1.7em;
+  }
+  .shop-panel > footer {
+    padding-top: 10px;
+  }
+}
+@media (max-height: 360px) and (min-width: 601px) {
+  .field-shop {
+    padding: 6px;
+  }
+  .shop-panel {
+    padding: 10px 14px;
+  }
+  .shop-panel > header {
+    padding-bottom: 6px;
+  }
+  .shop-kicker,
+  #shop-note,
+  .shop-purse > span {
+    display: none;
+  }
+  #shop-title {
+    font-size: 16px;
+  }
+  #shop-coins {
+    font-size: 18px;
+    margin: 0;
+  }
+  .shop-body {
+    padding: 8px 0;
+    gap: 16px;
+  }
+  #field-shop .shop-row {
+    min-height: 30px;
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  #shop-item-title {
+    margin: 0 0 4px;
+    font-size: 13px;
+  }
+  #shop-description {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  #shop-item-count {
+    margin-top: 6px;
+  }
+  #shop-status {
+    min-height: 1.6em;
+    font-size: 11px;
+  }
+  .shop-panel > footer {
+    padding-top: 6px;
+    gap: 6px;
+  }
+  #field-shop .guild-button {
+    min-height: 32px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}

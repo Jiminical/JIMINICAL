@@ -47,6 +47,28 @@ const gameAudio = (() => {
     nara: { hz: 556, wave: "square", filter: 2200, length: 0.035, level: 0.06 },
     tobin: { hz: 96, wave: "triangle", filter: 640, length: 0.07, level: 0.21 },
     leon: { hz: 286, wave: "sine", filter: 2100, length: 0.059, level: 0.18 },
+    rose: {
+      hz: 268,
+      wave: "triangle",
+      filter: 1500,
+      length: 0.059,
+      level: 0.16,
+    },
+    rael: { hz: 410, wave: "sine", filter: 2100, length: 0.061, level: 0.17 },
+    edan: {
+      hz: 142,
+      wave: "square",
+      filter: 1000,
+      length: 0.052,
+      level: 0.085,
+    },
+    sena: {
+      hz: 470,
+      wave: "triangle",
+      filter: 2300,
+      length: 0.047,
+      level: 0.13,
+    },
     guide: { hz: 512, wave: "sine", filter: 2600, length: 0.06, level: 0.13 },
   };
   function usable() {
@@ -94,12 +116,16 @@ const gameAudio = (() => {
     );
   }
   function ambientLevel() {
-    return place === "guild" ? 0.055 : place === "carriage" ? 0.11 : 0.15;
+    return ["guild", "shop"].includes(place)
+      ? 0.055
+      : place === "carriage"
+        ? 0.11
+        : 0.15;
   }
   function scene(next) {
     place = next;
     if (!ambience) return;
-    const indoor = next === "guild";
+    const indoor = ["guild", "shop"].includes(next);
     ambience.gain.setTargetAtTime(ambientLevel(), context.currentTime, 0.7);
     ambienceFilter.frequency.setTargetAtTime(
       indoor ? 420 : next === "carriage" ? 260 : 1100,
@@ -333,13 +359,36 @@ const gameAudio = (() => {
         noise(0.12, 0.3, 1500);
         noise(0.09, 0.24, 1100, 0.14);
         break;
+      case "purchase":
+        [784, 988, 1175].forEach((hz, i) =>
+          tone(hz, 0.095, { wave: "triangle", level: 0.12, delay: i * 0.045 }),
+        );
+        break;
+      case "drink":
+        tone(340, 0.13, { wave: "sine", level: 0.11, end: 510 });
+        noise(0.09, 0.16, 1100, 0.08);
+        break;
+      case "water":
+        noise(0.45, 0.2, 1600);
+        [660, 880, 740].forEach((hz, i) =>
+          tone(hz, 0.1, { wave: "sine", level: 0.055, delay: i * 0.09 }),
+        );
+        break;
       case "footstep":
-        tone(variant === "guild" || variant === "carriage" ? 115 : 175, 0.047, {
-          level: 0.09,
-          end: 65,
-          filter: 750,
-        });
-        noise(0.045, 0.13, variant === "guild" ? 370 : 1000);
+        tone(
+          ["guild", "carriage", "shop"].includes(variant)
+            ? 115
+            : variant === "city"
+              ? 215
+              : 175,
+          0.047,
+          {
+            level: 0.09,
+            end: 65,
+            filter: 750,
+          },
+        );
+        noise(0.045, 0.13, ["guild", "shop"].includes(variant) ? 370 : 1000);
         break;
       case "sanctuary":
         [196, 294, 392, 588].forEach((hz, i) =>

@@ -14,6 +14,10 @@ const fieldSprites = (() => {
     mia: { sheet: "guild", row: 1, height: 70 },
     nara: { sheet: "guild", row: 2, height: 72 },
     tobin: { sheet: "guild", row: 3, height: 60 },
+    rose: { sheet: "field", row: 0, height: 70 },
+    rael: { sheet: "field", row: 1, height: 70 },
+    edan: { sheet: "field", row: 2, height: 72 },
+    sena: { sheet: "field", row: 3, height: 70 },
   };
   const directions = ["down", "left", "right", "up"];
   const cache = new Map(),

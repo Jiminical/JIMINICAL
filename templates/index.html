@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="CSS/game.css" />
     <script src="JS/audio.js" defer></script>
     <script src="JS/events.js" defer></script>
+    <script src="JS/fields.js" defer></script>
+    <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
     <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
@@ -309,6 +311,11 @@
           data-sd-hero-src="assets/sd-hero.webp"
           data-sd-guild-src="assets/sd-guild.webp"
           data-sd-leads-src="assets/sd-leads.webp"
+          data-city-src="assets/map-city.webp"
+          data-grove-src="assets/map-grove.webp"
+          data-shop-src="assets/map-shop.webp"
+          data-field-cast-src="assets/ld-fields.webp"
+          data-sd-field-src="assets/sd-fields.webp"
           hidden
         ></div>
         <button
@@ -536,6 +543,45 @@
             </div>
             <button id="event-next" class="guild-button">E · 넘기기</button>
           </footer>
+        </section>
+        <section
+          id="field-shop"
+          class="field-shop"
+          role="dialog"
+          aria-labelledby="shop-title"
+          aria-describedby="shop-note"
+          hidden
+        >
+          <div class="shop-panel game-window">
+            <header>
+              <div>
+                <p class="shop-kicker">여행 준비</p>
+                <h2 id="shop-title"></h2>
+                <p id="shop-note"></p>
+              </div>
+              <div class="shop-purse">
+                <span>소지 금화</span><strong id="shop-coins"></strong>
+              </div>
+            </header>
+            <div class="shop-body">
+              <div id="shop-stock" aria-label="상점 물건"></div>
+              <div class="shop-details">
+                <h3 id="shop-item-title"></h3>
+                <p id="shop-description"></p>
+                <p id="shop-item-count"></p>
+              </div>
+            </div>
+            <p id="shop-status" role="status" aria-live="polite"></p>
+            <footer>
+              <span>W/S 선택 · E 구매 · C 돌아가기</span>
+              <div>
+                <button id="shop-buy" class="guild-button">구매</button
+                ><button id="shop-close" class="guild-button">
+                  돌아가기 <kbd>C</kbd>
+                </button>
+              </div>
+            </footer>
+          </div>
         </section>
         <div id="game-transition" aria-hidden="true" hidden></div>
         <section
