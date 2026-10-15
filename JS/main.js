@@ -90,14 +90,22 @@ const spriteAnimation = (() => {
       for (let x = 0; x < width; x++) {
         const nx = (x - inset) / contentWidth;
         const ny = y / height;
-        // Hair roots, head, face, collar and torso remain anchored.
+        // Keep the face anchored; let the shoulders rise gently from the torso.
         const hair =
           smooth(0.58, 0.88, nx) *
           smooth(0.4, 0.58, ny) *
           (1 - smooth(0.78, 0.9, ny));
         const cloth = smooth(0.68, 0.94, nx) * smooth(0.78, 1, ny);
-        if (hair + cloth > 0)
-          movingPixels.push({ x, y, index: y * width + x, hair, cloth });
+        const breath = smooth(0.4, 0.58, ny) * (1 - smooth(0.7, 1, ny));
+        if (hair + cloth + breath > 0)
+          movingPixels.push({
+            x,
+            y,
+            index: y * width + x,
+            hair,
+            cloth,
+            breath,
+          });
       }
     }
 
@@ -126,13 +134,18 @@ const spriteAnimation = (() => {
     const phase = (frame / frameCount) * Math.PI * 2;
     const breeze = Math.sin(phase);
     const ripple = Math.sin(phase * 2);
+    // A quiet 3.2-second inhale/exhale, capped at two source pixels.
+    const inhale = (1 - Math.cos(phase * 2)) / 2;
     outputPixels.set(stillPixels);
 
     for (const pixel of movingPixels) {
       const dx =
         pixel.hair * (2.3 * breeze + 0.45 * ripple) +
         pixel.cloth * 0.8 * Math.sin(phase * 2);
-      const dy = pixel.hair * 1.2 * breeze + pixel.cloth * 0.7 * breeze;
+      const dy =
+        pixel.hair * 1.2 * breeze +
+        pixel.cloth * 0.7 * breeze -
+        pixel.breath * 1.8 * inhale;
       const sx = Math.round(pixel.x - dx);
       const sy = Math.round(pixel.y - dy);
       outputPixels[pixel.index] =
