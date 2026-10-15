@@ -187,20 +187,22 @@ const storyJourney = (() => {
     art.height = Math.round(bounds.height * density);
     const tileWidth = artwork.naturalWidth / 2;
     const tileHeight = artwork.naturalHeight / 3;
-    const scale = Math.max(art.width / tileWidth, art.height / tileHeight);
-    const cropWidth = art.width / scale;
-    const cropHeight = art.height / scale;
+    // Fit the entire panel uniformly; no crop or independent X/Y stretching.
+    const scale = Math.min(art.width / tileWidth, art.height / tileHeight);
+    const drawWidth = tileWidth * scale;
+    const drawHeight = tileHeight * scale;
     artContext.imageSmoothingEnabled = false;
+    artContext.clearRect(0, 0, art.width, art.height);
     artContext.drawImage(
       artwork,
-      (index % 2) * tileWidth + (tileWidth - cropWidth) / 2,
-      Math.floor(index / 2) * tileHeight + (tileHeight - cropHeight) / 2,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      art.width,
-      art.height,
+      (index % 2) * tileWidth,
+      Math.floor(index / 2) * tileHeight,
+      tileWidth,
+      tileHeight,
+      (art.width - drawWidth) / 2,
+      (art.height - drawHeight) / 2,
+      drawWidth,
+      drawHeight,
     );
   }
   function showPage(nextPhase) {

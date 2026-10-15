@@ -935,6 +935,34 @@ input[type="range"]::-moz-range-thumb {
     bottom: 18px;
   }
 }
+/* Keep the first visible title frame complete, even with a cold image cache. */
+.is-loading body {
+  background: #000;
+}
+.is-loading .scene {
+  visibility: hidden;
+}
+#boot-status {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: #000;
+  color: #d8dece;
+}
+#boot-status[hidden] {
+  display: none;
+}
+body:has(.scene.is-story-active) {
+  background: #000;
+}
+.scene.is-story-active {
+  background: #000;
+  box-shadow: none;
+}
 /* Chronicle: ink on parchment, then a quiet page for the player's name. */
 #title-screen {
   display: contents;
@@ -967,12 +995,8 @@ input[type="range"]::-moz-range-thumb {
   padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: radial-gradient(
-    ellipse at 50% 32%,
-    #27261b 0%,
-    #151711 48%,
-    #0e120f 100%
-  );
+  container-type: size;
+  background: #000;
   color: #e8dfc3;
 }
 .story-header,
@@ -1036,18 +1060,20 @@ input[type="range"]::-moz-range-thumb {
   padding: 0;
 }
 .story-page {
-  display: grid;
-  grid-template-rows: 52% 48%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   height: 100%;
   min-height: 0;
+  padding: clamp(64px, 15cqh, 140px) 32px 16px;
   text-align: center;
 }
 #scene-curtain {
   position: absolute;
   inset: 0;
   z-index: 40;
-  background: #0e120f;
+  background: #000;
   opacity: 0;
   pointer-events: auto;
 }
@@ -1055,66 +1081,39 @@ input[type="range"]::-moz-range-thumb {
   display: none;
 }
 .story-screen[data-phase="prologue"] .story-header button {
-  background: #17231fe6;
-  color: #e3d6b3;
-  padding: 4px 12px;
+  background: transparent;
+  color: #879087;
 }
 .story-screen[data-phase="prologue"] .chronicle-label {
-  color: #3b392a;
-  background: #e6d2a3de;
-  padding: 4px 12px;
+  visibility: hidden;
 }
 .chronicle-art {
   display: block;
-  width: 100%;
-  height: 100%;
+  flex-shrink: 0;
+  width: min(64%, 800px, 100cqh);
+  height: auto;
+  aspect-ratio: 9 / 4;
   min-height: 0;
   margin: 0;
-  background: #c6a36c;
+  background: #000;
   image-rendering: pixelated;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 98%,
-    96% 98%,
-    96% 100%,
-    89% 100%,
-    89% 99%,
-    78% 99%,
-    78% 100%,
-    65% 100%,
-    65% 99%,
-    49% 99%,
-    49% 100%,
-    36% 100%,
-    36% 99%,
-    24% 99%,
-    24% 100%,
-    12% 100%,
-    12% 99%,
-    0 99%
-  );
 }
 .narration-block {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: safe center;
+  justify-content: flex-start;
+  width: 100%;
   min-height: 0;
-  padding: 20px 36px;
+  padding: 32px 0 0;
   overflow-y: auto;
-}
-.narration-mark {
-  display: block;
-  color: #ab9466;
-  font-size: 12px;
-  margin-bottom: 12px;
 }
 #story-narration {
   margin: 0;
   width: min(100%, 820px);
-  font-size: 18px;
+  font-size: 20px;
+  color: #f1f1ec;
   white-space: pre-line;
   line-height: 1.95;
   word-break: keep-all;
@@ -1269,11 +1268,12 @@ input[type="range"]::-moz-range-thumb {
   .story-footer {
     padding: 8px 12px 14px;
   }
-  .story-screen[data-phase="prologue"] .story-header button {
-    padding: 4px 6px;
+  .story-page {
+    padding: clamp(90px, 21svh, 180px) 24px 16px;
   }
-  .story-screen[data-phase="prologue"] .chronicle-label {
-    padding: 4px 6px;
+  .chronicle-art {
+    width: 100%;
+    max-width: 520px;
   }
   .story-header,
   .story-footer {
@@ -1289,10 +1289,7 @@ input[type="range"]::-moz-range-thumb {
     padding: 6px;
   }
   .narration-block {
-    padding: 16px 22px;
-  }
-  .narration-mark {
-    margin-bottom: 12px;
+    padding: 26px 0 0;
   }
   #story-narration {
     font-size: 15px;
@@ -1323,11 +1320,14 @@ input[type="range"]::-moz-range-thumb {
   .story-content {
     padding: 54px 26px 12px;
   }
-  .narration-block {
-    padding: 12px 32px;
+  .story-page {
+    padding-top: 70px;
   }
-  .narration-mark {
-    margin-bottom: 6px;
+  .chronicle-art {
+    width: min(64%, 600px);
+  }
+  .narration-block {
+    padding-top: 24px;
   }
   #story-narration {
     font-size: 16px;

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" class="is-loading">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -1043,6 +1043,34 @@ input[type="range"]::-moz-range-thumb {
     bottom: 18px;
   }
 }
+/* Keep the first visible title frame complete, even with a cold image cache. */
+.is-loading body {
+  background: #000;
+}
+.is-loading .scene {
+  visibility: hidden;
+}
+#boot-status {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: #000;
+  color: #d8dece;
+}
+#boot-status[hidden] {
+  display: none;
+}
+body:has(.scene.is-story-active) {
+  background: #000;
+}
+.scene.is-story-active {
+  background: #000;
+  box-shadow: none;
+}
 /* Chronicle: ink on parchment, then a quiet page for the player's name. */
 #title-screen {
   display: contents;
@@ -1075,12 +1103,8 @@ input[type="range"]::-moz-range-thumb {
   padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: radial-gradient(
-    ellipse at 50% 32%,
-    #27261b 0%,
-    #151711 48%,
-    #0e120f 100%
-  );
+  container-type: size;
+  background: #000;
   color: #e8dfc3;
 }
 .story-header,
@@ -1144,18 +1168,20 @@ input[type="range"]::-moz-range-thumb {
   padding: 0;
 }
 .story-page {
-  display: grid;
-  grid-template-rows: 52% 48%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   height: 100%;
   min-height: 0;
+  padding: clamp(64px, 15cqh, 140px) 32px 16px;
   text-align: center;
 }
 #scene-curtain {
   position: absolute;
   inset: 0;
   z-index: 40;
-  background: #0e120f;
+  background: #000;
   opacity: 0;
   pointer-events: auto;
 }
@@ -1163,66 +1189,39 @@ input[type="range"]::-moz-range-thumb {
   display: none;
 }
 .story-screen[data-phase="prologue"] .story-header button {
-  background: #17231fe6;
-  color: #e3d6b3;
-  padding: 4px 12px;
+  background: transparent;
+  color: #879087;
 }
 .story-screen[data-phase="prologue"] .chronicle-label {
-  color: #3b392a;
-  background: #e6d2a3de;
-  padding: 4px 12px;
+  visibility: hidden;
 }
 .chronicle-art {
   display: block;
-  width: 100%;
-  height: 100%;
+  flex-shrink: 0;
+  width: min(64%, 800px, 100cqh);
+  height: auto;
+  aspect-ratio: 9 / 4;
   min-height: 0;
   margin: 0;
-  background: #c6a36c;
+  background: #000;
   image-rendering: pixelated;
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 98%,
-    96% 98%,
-    96% 100%,
-    89% 100%,
-    89% 99%,
-    78% 99%,
-    78% 100%,
-    65% 100%,
-    65% 99%,
-    49% 99%,
-    49% 100%,
-    36% 100%,
-    36% 99%,
-    24% 99%,
-    24% 100%,
-    12% 100%,
-    12% 99%,
-    0 99%
-  );
 }
 .narration-block {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: safe center;
+  justify-content: flex-start;
+  width: 100%;
   min-height: 0;
-  padding: 20px 36px;
+  padding: 32px 0 0;
   overflow-y: auto;
-}
-.narration-mark {
-  display: block;
-  color: #ab9466;
-  font-size: 12px;
-  margin-bottom: 12px;
 }
 #story-narration {
   margin: 0;
   width: min(100%, 820px);
-  font-size: 18px;
+  font-size: 20px;
+  color: #f1f1ec;
   white-space: pre-line;
   line-height: 1.95;
   word-break: keep-all;
@@ -1377,11 +1376,12 @@ input[type="range"]::-moz-range-thumb {
   .story-footer {
     padding: 8px 12px 14px;
   }
-  .story-screen[data-phase="prologue"] .story-header button {
-    padding: 4px 6px;
+  .story-page {
+    padding: clamp(90px, 21svh, 180px) 24px 16px;
   }
-  .story-screen[data-phase="prologue"] .chronicle-label {
-    padding: 4px 6px;
+  .chronicle-art {
+    width: 100%;
+    max-width: 520px;
   }
   .story-header,
   .story-footer {
@@ -1397,10 +1397,7 @@ input[type="range"]::-moz-range-thumb {
     padding: 6px;
   }
   .narration-block {
-    padding: 16px 22px;
-  }
-  .narration-mark {
-    margin-bottom: 12px;
+    padding: 26px 0 0;
   }
   #story-narration {
     font-size: 15px;
@@ -1431,11 +1428,14 @@ input[type="range"]::-moz-range-thumb {
   .story-content {
     padding: 54px 26px 12px;
   }
-  .narration-block {
-    padding: 12px 32px;
+  .story-page {
+    padding-top: 70px;
   }
-  .narration-mark {
-    margin-bottom: 6px;
+  .chronicle-art {
+    width: min(64%, 600px);
+  }
+  .narration-block {
+    padding-top: 24px;
   }
   #story-narration {
     font-size: 16px;
@@ -1621,8 +1621,14 @@ button.is-pressed {
 </style>
   </head>
   <body>
+    <p id="boot-status" role="status" hidden></p>
     <div id="interaction-effects" popover="manual" aria-hidden="true"></div>
-    <main class="scene" aria-label="그린스토아 타이틀 화면">
+    <main
+      class="scene"
+      aria-label="그린스토아 타이틀 화면"
+      aria-busy="true"
+      inert
+    >
       <div id="title-screen">
         <div class="landscape" aria-hidden="true"></div>
         <canvas
@@ -1794,7 +1800,6 @@ button.is-pressed {
               role="img"
             ></canvas>
             <div class="narration-block">
-              <span class="narration-mark" aria-hidden="true">✦</span>
               <p id="story-narration" aria-hidden="true"></p>
               <p
                 id="story-narration-accessible"
@@ -2123,20 +2128,22 @@ const storyJourney = (() => {
     art.height = Math.round(bounds.height * density);
     const tileWidth = artwork.naturalWidth / 2;
     const tileHeight = artwork.naturalHeight / 3;
-    const scale = Math.max(art.width / tileWidth, art.height / tileHeight);
-    const cropWidth = art.width / scale;
-    const cropHeight = art.height / scale;
+    // Fit the entire panel uniformly; no crop or independent X/Y stretching.
+    const scale = Math.min(art.width / tileWidth, art.height / tileHeight);
+    const drawWidth = tileWidth * scale;
+    const drawHeight = tileHeight * scale;
     artContext.imageSmoothingEnabled = false;
+    artContext.clearRect(0, 0, art.width, art.height);
     artContext.drawImage(
       artwork,
-      (index % 2) * tileWidth + (tileWidth - cropWidth) / 2,
-      Math.floor(index / 2) * tileHeight + (tileHeight - cropHeight) / 2,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      art.width,
-      art.height,
+      (index % 2) * tileWidth,
+      Math.floor(index / 2) * tileHeight,
+      tileWidth,
+      tileHeight,
+      (art.width - drawWidth) / 2,
+      (art.height - drawHeight) / 2,
+      drawWidth,
+      drawHeight,
     );
   }
   function showPage(nextPhase) {
@@ -2445,6 +2452,11 @@ const spriteAnimation = (() => {
   let outputPixels;
   let closedPixels;
   let paintedFrame;
+  let resolveReady, rejectReady;
+  const ready = new Promise((resolve, reject) => {
+    resolveReady = resolve;
+    rejectReady = reject;
+  });
   const movingPixels = [];
   const eyePixels = [];
 
@@ -2606,11 +2618,18 @@ const spriteAnimation = (() => {
   }
 
   source.onload = () => {
-    prepare();
-    loaded = true;
-    canvas.dataset.ready = "true";
-    refresh();
+    try {
+      prepare();
+      loaded = true;
+      refresh();
+      canvas.dataset.ready = "true";
+      resolveReady();
+    } catch (error) {
+      rejectReady(error);
+    }
   };
+  source.onerror = () =>
+    rejectReady(new Error("Character artwork could not load."));
   source.src = canvas.dataset.spriteSrc;
   reducedMotion.addEventListener("change", refresh);
   document.addEventListener("visibilitychange", refresh);
@@ -2625,6 +2644,7 @@ const spriteAnimation = (() => {
     };
   }
   return {
+    ready,
     setEnabled(value) {
       if (enabled === value) return;
       enabled = value;
@@ -3047,6 +3067,28 @@ for (let i = 0; i < 18; i++) {
   particles.append(petal);
 }
 updateInterface();
+// Reveal one complete title frame: decoded background, painted character and fonts.
+(() => {
+  const landscape = new Image();
+  const background = getComputedStyle(
+    document.querySelector(".landscape"),
+  ).backgroundImage;
+  landscape.src = background.slice(4, -1).replace(/^["']|["']$/g, "");
+  Promise.all([spriteAnimation.ready, landscape.decode(), document.fonts.ready])
+    .then(() => {
+      requestAnimationFrame(() => {
+        const scene = document.querySelector(".scene");
+        scene.inert = false;
+        scene.setAttribute("aria-busy", "false");
+        document.documentElement.classList.remove("is-loading");
+      });
+    })
+    .catch(() => {
+      const status = document.querySelector("#boot-status");
+      status.textContent = "화면을 불러오지 못했어요. 새로고침해 주세요.";
+      status.hidden = false;
+    });
+})();
 
 </script>
 </body>

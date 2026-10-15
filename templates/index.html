@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" class="is-loading">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -14,8 +14,14 @@
     <script src="JS/main.js" defer></script>
   </head>
   <body>
+    <p id="boot-status" role="status" hidden></p>
     <div id="interaction-effects" popover="manual" aria-hidden="true"></div>
-    <main class="scene" aria-label="그린스토아 타이틀 화면">
+    <main
+      class="scene"
+      aria-label="그린스토아 타이틀 화면"
+      aria-busy="true"
+      inert
+    >
       <div id="title-screen">
         <div class="landscape" aria-hidden="true"></div>
         <canvas
@@ -187,7 +193,6 @@
               role="img"
             ></canvas>
             <div class="narration-block">
-              <span class="narration-mark" aria-hidden="true">✦</span>
               <p id="story-narration" aria-hidden="true"></p>
               <p
                 id="story-narration-accessible"

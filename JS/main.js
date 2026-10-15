@@ -85,6 +85,11 @@ const spriteAnimation = (() => {
   let outputPixels;
   let closedPixels;
   let paintedFrame;
+  let resolveReady, rejectReady;
+  const ready = new Promise((resolve, reject) => {
+    resolveReady = resolve;
+    rejectReady = reject;
+  });
   const movingPixels = [];
   const eyePixels = [];
 
@@ -246,11 +251,18 @@ const spriteAnimation = (() => {
   }
 
   source.onload = () => {
-    prepare();
-    loaded = true;
-    canvas.dataset.ready = "true";
-    refresh();
+    try {
+      prepare();
+      loaded = true;
+      refresh();
+      canvas.dataset.ready = "true";
+      resolveReady();
+    } catch (error) {
+      rejectReady(error);
+    }
   };
+  source.onerror = () =>
+    rejectReady(new Error("Character artwork could not load."));
   source.src = canvas.dataset.spriteSrc;
   reducedMotion.addEventListener("change", refresh);
   document.addEventListener("visibilitychange", refresh);
@@ -265,6 +277,7 @@ const spriteAnimation = (() => {
     };
   }
   return {
+    ready,
     setEnabled(value) {
       if (enabled === value) return;
       enabled = value;
@@ -687,3 +700,25 @@ for (let i = 0; i < 18; i++) {
   particles.append(petal);
 }
 updateInterface();
+// Reveal one complete title frame: decoded background, painted character and fonts.
+(() => {
+  const landscape = new Image();
+  const background = getComputedStyle(
+    document.querySelector(".landscape"),
+  ).backgroundImage;
+  landscape.src = background.slice(4, -1).replace(/^["']|["']$/g, "");
+  Promise.all([spriteAnimation.ready, landscape.decode(), document.fonts.ready])
+    .then(() => {
+      requestAnimationFrame(() => {
+        const scene = document.querySelector(".scene");
+        scene.inert = false;
+        scene.setAttribute("aria-busy", "false");
+        document.documentElement.classList.remove("is-loading");
+      });
+    })
+    .catch(() => {
+      const status = document.querySelector("#boot-status");
+      status.textContent = "화면을 불러오지 못했어요. 새로고침해 주세요.";
+      status.hidden = false;
+    });
+})();
