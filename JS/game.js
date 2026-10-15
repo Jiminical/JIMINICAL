@@ -137,9 +137,15 @@ const guildGame = (() => {
     loadPicture("cast", assets.dataset.castSrc),
     loadPicture("kania", assets.dataset.kaniaSrc),
     loadPicture("rogue", assets.dataset.rogueSrc),
-    ...["guild", "carriage", "checkpoint", "gate", "forest", "sanctuary"].map(
-      (key) => loadPicture(key, assets.dataset[key + "Src"]),
-    ),
+    ...[
+      "guild",
+      "carriage",
+      "checkpoint",
+      "gate",
+      "forest",
+      "sanctuary",
+      "events",
+    ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]);
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -168,6 +174,7 @@ const guildGame = (() => {
     selectedChoice = 0;
   let typingTimer = 0,
     toastTimer = 0;
+  let footDistance = 0;
   const background = document.createElement("canvas");
   background.width = W;
   background.height = H;
@@ -245,6 +252,7 @@ const guildGame = (() => {
     document.querySelector(".game-hud strong").textContent =
       placeNames[location][1];
     root.dataset.location = location;
+    gameAudio.scene(location);
     root.setAttribute("aria-label", placeNames[location].join(" · "));
     canvas.setAttribute(
       "aria-label",
@@ -289,6 +297,7 @@ const guildGame = (() => {
     prompt.hidden = true;
     menu.hidden = true;
     cancelPortraitMotion();
+    gameAudio.stopVoice();
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
     document.querySelector("#game-toast").hidden = true;
@@ -320,12 +329,50 @@ const guildGame = (() => {
   function travelTo(destination, setup, after) {
     return transitionTo(() => {
       hideVista();
+      hideEvent();
       location = destination;
       setup();
       buildMap();
       updateObjective();
       drawWorld();
     }, after);
+  }
+  function hideEvent() {
+    eventScenes.hide();
+    root.classList.remove("is-event");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function showEvent(kind, options = {}) {
+    return transitionTo(
+      () => {
+        hideVista();
+        root.classList.add("is-event");
+        document.querySelector(".world-viewport").inert = true;
+        eventScenes.prepare(kind, {
+          atlas: pictures.events,
+          name: playerName,
+          avatar: makeSprite("hero", "down", 0),
+          onImpact: options.onImpact,
+          onFinish: () => {
+            if (options.destination)
+              return travelTo(
+                options.destination,
+                options.setup,
+                options.after,
+              );
+            return transitionTo(() => {
+              hideEvent();
+              drawWorld();
+            }, options.after);
+          },
+        });
+      },
+      () => {
+        phase = "event";
+        root.dataset.phase = phase;
+        eventScenes.play();
+      },
+    );
   }
   const vistas = {
     forest: {
@@ -367,6 +414,7 @@ const guildGame = (() => {
         cinematic.started = elapsed;
         phase = "vista";
         root.dataset.phase = phase;
+        if (key === "sanctuary") gameAudio.sfx("sanctuary");
         document.querySelector("#vista-next").focus({ preventScroll: true });
       },
     );
@@ -974,6 +1022,9 @@ const guildGame = (() => {
       .slice(0, ++dialogue.shown)
       .join("");
     const last = dialogue.letters[dialogue.shown - 1];
+    const line = dialogue.lines[dialogue.index];
+    if (line.kind)
+      gameAudio.voice(line.kind, last, dialogue.shown - 1, line.expression);
     if (dialogue.shown % 16 === 0 && dialogue.pulses < 3) {
       dialogue.pulses++;
       reactPortrait(dialogue.lines[dialogue.index], true);
@@ -982,6 +1033,7 @@ const guildGame = (() => {
   }
   function paintLine() {
     clearTimeout(typingTimer);
+    gameAudio.stopVoice();
     choicesBox.replaceChildren();
     choicesBox.hidden = true;
     const line = dialogue.lines[dialogue.index];
@@ -1003,6 +1055,8 @@ const guildGame = (() => {
     dialogueText.textContent = "";
     dialogueLive.textContent = line.text;
     nextLabel.textContent = "E 모두 보기";
+    if (!inputLocked && !motion() && line.kind)
+      gameAudio.voice(line.kind, "가", 0, line.expression);
     if (!inputLocked) typeLetter();
     fitPortrait();
   }
@@ -1036,12 +1090,14 @@ const guildGame = (() => {
     )
       return;
     const action = dialogue.choices[index].action;
+    gameAudio.sfx("confirm");
     closeDialogue();
     action();
   }
   function closeDialogue() {
     cancelPortraitMotion();
     clearTimeout(typingTimer);
+    gameAudio.stopVoice();
     dialogue = null;
     dialogueBox.hidden = true;
     choicesBox.hidden = true;
@@ -1052,8 +1108,10 @@ const guildGame = (() => {
   }
   function advanceDialogue() {
     if (!dialogue) return;
+    gameAudio.sfx("next");
     if (dialogue.shown < dialogue.letters.length) {
       clearTimeout(typingTimer);
+      gameAudio.stopVoice();
       lineComplete();
       return;
     }
@@ -1088,6 +1146,18 @@ const guildGame = (() => {
       ],
       lucyConversation,
     );
+  }
+  function registerQuest() {
+    if (questAccepted) return;
+    questAccepted = true;
+    storyStep = "accepted";
+    inventory.push({
+      id: "dispatch",
+      name: "기사단 조사 의뢰서",
+      count: 1,
+      description:
+        "제르디아 기사단 직속 파견 의뢰.\n목적: 성역 그린스토아의 이상 징후 사전 조사.\n정문 검문소에 제시할 수 있도록 기사단 인장이 찍혀 있다.",
+    });
   }
   function lucyConversation() {
     if (questAccepted) {
@@ -1130,16 +1200,7 @@ const guildGame = (() => {
       [
         {
           label: "조사 의뢰를 맡는다",
-          action: () => {
-            questAccepted = true;
-            storyStep = "accepted";
-            inventory.push({
-              id: "dispatch",
-              name: "기사단 조사 의뢰서",
-              count: 1,
-              description:
-                "제르디아 기사단 직속 파견 의뢰.\n목적: 성역 그린스토아의 이상 징후 사전 조사.\n정문 검문소에 제시할 수 있도록 기사단 인장이 찍혀 있다.",
-            });
+          action: () =>
             speak(
               [
                 {
@@ -1147,23 +1208,31 @@ const guildGame = (() => {
                   expression: "incredulous",
                   text: "…하신다고요?\n…….",
                 },
-                {
-                  kind: "lucy",
-                  expression: "reading",
-                  text: `${playerName} 님. 수주 완료되었습니다.\n기사단 직속 의뢰이니, 예정된 시간에 마차가 직접 올 거예요.`,
-                },
-                {
-                  kind: "lucy",
-                  expression: "soft",
-                  text: "의뢰서는 챙겨 두세요. 모험가증도 잃어버리지 마시고.\n…가시기 전에 빵이라도 드세요. 빈속에 떠나지 마시고.",
-                },
               ],
-              () => {
-                updateObjective();
-                notify("의뢰 수락 · 성역의 이상 징후 사전 조사");
-              },
-            );
-          },
+              () =>
+                showEvent("stamp", {
+                  onImpact: registerQuest,
+                  after: () =>
+                    speak(
+                      [
+                        {
+                          kind: "lucy",
+                          expression: "reading",
+                          text: `${playerName} 님. 수주 완료되었습니다.\n기사단 직속 의뢰이니, 예정된 시간에 마차가 직접 올 거예요.`,
+                        },
+                        {
+                          kind: "lucy",
+                          expression: "soft",
+                          text: "의뢰서는 챙겨 두세요. 모험가증도 잃어버리지 마시고.\n…가시기 전에 빵이라도 드세요. 빈속에 떠나지 마시고.",
+                        },
+                      ],
+                      () => {
+                        updateObjective();
+                        notify("의뢰 수락 · 성역의 이상 징후 사전 조사");
+                      },
+                    ),
+                }),
+            ),
         },
         {
           label: "조금 더 둘러본다",
@@ -1201,15 +1270,15 @@ const guildGame = (() => {
                 },
               ],
               () =>
-                travelTo(
-                  "carriage",
-                  () => {
+                showEvent("departure", {
+                  destination: "carriage",
+                  setup: () => {
                     player = actor("hero", 250, 326, "right");
                     npcs = [actor("rogue", 466, 326, "left")];
                     storyStep = "carriage";
                   },
-                  carriageConversation,
-                ),
+                  after: carriageConversation,
+                }),
             );
           },
         },
@@ -1314,6 +1383,13 @@ const guildGame = (() => {
           kind: "hero",
           text: "제르디아에서 조사 의뢰를 받고 왔어.\n모험가증과 기사단 의뢰서야.",
         },
+      ],
+      () => showEvent("credentials", { after: admitCredentials }),
+    );
+  }
+  function admitCredentials() {
+    speak(
+      [
         {
           kind: "scout",
           expression: "skeptical",
@@ -1467,6 +1543,7 @@ const guildGame = (() => {
       notify("이야기할 사람이나 물건 가까이에서 E");
       return;
     }
+    gameAudio.sfx(target.kind === "npc" ? "next" : "paper");
     if (target.kind === "npc") {
       npcTalk(target.id);
       return;
@@ -1530,6 +1607,8 @@ const guildGame = (() => {
     );
   }
   function movePlayer(dt) {
+    const oldX = player.x,
+      oldY = player.y;
     let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
       dy = (keys.has("KeyS") ? 1 : 0) - (keys.has("KeyW") ? 1 : 0);
     player.moving = !!(dx || dy);
@@ -1542,6 +1621,11 @@ const guildGame = (() => {
     dy = (dy / length) * speed * dt;
     if (!blocked(player.x + dx, player.y)) player.x += dx;
     if (!blocked(player.x, player.y + dy)) player.y += dy;
+    footDistance += Math.hypot(player.x - oldX, player.y - oldY);
+    if (footDistance >= (keys.has("ShiftLeft") ? 24 : 22)) {
+      footDistance = 0;
+      gameAudio.sfx("footstep", location);
+    }
   }
   function drawActor(a) {
     const x = Math.round(a.x),
@@ -1615,6 +1699,7 @@ const guildGame = (() => {
         b.textContent = `${i === selectedItem ? "▸" : "　"} ${item.name}  ×${item.count}`;
         b.className = i === selectedItem ? "is-current" : "";
         b.addEventListener("click", () => {
+          gameAudio.sfx("select");
           selectedItem = i;
           renderMenu();
         });
@@ -1625,7 +1710,12 @@ const guildGame = (() => {
         itemDetail.textContent = item.description;
         const action = document.querySelector("#guild-item-action");
         action.hidden = false;
-        action.textContent = item.id === "bread" ? "먹기 · E" : "살펴보기 · E";
+        action.textContent =
+          item.id === "bread"
+            ? "먹기 · E"
+            : item.id === "map"
+              ? "지도 펼치기 · E"
+              : "살펴보기 · E";
       }
     } else if (menuTab === "quest") {
       const h = document.createElement("p");
@@ -1644,6 +1734,7 @@ const guildGame = (() => {
   }
   function openMenu() {
     if (phase !== "free") return;
+    gameAudio.sfx("menuOpen");
     phase = "menu";
     root.dataset.phase = phase;
     keys.clear();
@@ -1654,6 +1745,7 @@ const guildGame = (() => {
     document.querySelector("#guild-menu-close").focus({ preventScroll: true });
   }
   function closeMenu() {
+    gameAudio.sfx("menuClose");
     menu.hidden = true;
     phase = "free";
     root.dataset.phase = phase;
@@ -1664,6 +1756,10 @@ const guildGame = (() => {
     if (menuTab !== "items") return;
     const item = inventory[selectedItem];
     if (!item) return;
+    if (item.id === "map") {
+      showEvent("map", { after: openMenu });
+      return;
+    }
     if (item.id === "bread") {
       if (hp === 24) {
         itemDetail.textContent =
@@ -1671,11 +1767,15 @@ const guildGame = (() => {
         return;
       }
       hp = Math.min(24, hp + 6);
+      gameAudio.sfx("eat");
       item.count--;
       if (!item.count) inventory.splice(selectedItem, 1);
       renderMenu();
       itemDetail.textContent = "마른 빵을 천천히 먹었다.\n체력이 6 회복되었다.";
-    } else itemDetail.textContent = item.description;
+    } else {
+      gameAudio.sfx("paper");
+      itemDetail.textContent = item.description;
+    }
   }
   function handleKey(event) {
     if (
@@ -1688,6 +1788,19 @@ const guildGame = (() => {
     )
       return;
     const code = event.code;
+    // Let the native sound button handle its own Enter activation.
+    if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
+      return;
+    if (phase === "event" && code === "Tab") {
+      event.preventDefault();
+      const button = document.querySelector(
+        document.activeElement.id === "event-next"
+          ? "#game-sound-toggle"
+          : "#event-next",
+      );
+      button.focus({ preventScroll: true });
+      return;
+    }
     if (phase === "menu" && code === "Tab") {
       const focusable = [
         ...menu.querySelectorAll("button:not([disabled])"),
@@ -1719,6 +1832,11 @@ const guildGame = (() => {
     )
       return;
     event.preventDefault();
+    if (phase === "event") {
+      if (!event.repeat && ["KeyE", "Enter", "Escape"].includes(code))
+        eventScenes.finish();
+      return;
+    }
     if (phase === "menu") {
       if (event.repeat) return;
       if (code === "KeyC" || code === "Escape") {
@@ -1734,6 +1852,7 @@ const guildGame = (() => {
         const tabs = ["items", "quest", "controls"],
           offset = code === "KeyA" || code === "ArrowLeft" ? -1 : 1;
         menuTab = tabs[(tabs.indexOf(menuTab) + offset + 3) % 3];
+        gameAudio.sfx("select");
         renderMenu();
       } else if (
         code === "KeyW" ||
@@ -1744,6 +1863,7 @@ const guildGame = (() => {
         const offset = code === "KeyW" || code === "ArrowUp" ? -1 : 1;
         selectedItem =
           (selectedItem + offset + inventory.length) % inventory.length;
+        gameAudio.sfx("select");
         renderMenu();
       } else if (code === "KeyE" || code === "Enter") useItem();
       return;
@@ -1759,6 +1879,7 @@ const guildGame = (() => {
           code === "ArrowDown")
       ) {
         selectedChoice = (selectedChoice + 1) % dialogue.choices.length;
+        gameAudio.sfx("select");
         renderChoices();
       } else if (code === "KeyE" || code === "Enter") advanceDialogue();
       return;
@@ -1816,6 +1937,7 @@ const guildGame = (() => {
   });
   for (const b of document.querySelectorAll("[data-menu-tab]"))
     b.addEventListener("click", () => {
+      gameAudio.sfx("select");
       menuTab = b.dataset.menuTab;
       renderMenu();
     });
@@ -1862,7 +1984,8 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "vista") finishVista();
+        if (phase === "event") eventScenes.finish();
+        else if (phase === "vista") finishVista();
         else if (phase === "dialogue") advanceDialogue();
         else if (phase === "free") interact();
       } else if (phase === "free") keys.add(code);
@@ -1881,6 +2004,7 @@ const guildGame = (() => {
     active = true;
     phase = "dialogue";
     elapsed = 0;
+    footDistance = 0;
     location = "guild";
     storyStep = "lucy";
     buildMap();
@@ -1934,6 +2058,9 @@ const guildGame = (() => {
     transition.hidden = true;
     cancelPortraitMotion();
     hideVista();
+    hideEvent();
+    gameAudio.stopTransient();
+    gameAudio.scene("title");
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
@@ -1949,6 +2076,7 @@ const guildGame = (() => {
     canvas.focus({ preventScroll: true });
     if (dialogue) {
       reactPortrait(dialogue.lines[dialogue.index]);
+      if (!motion()) gameAudio.voice(dialogue.lines[dialogue.index].kind, "가");
       typeLetter();
     }
   }
@@ -1965,6 +2093,7 @@ const guildGame = (() => {
         phase,
         location,
         storyStep,
+        event: eventScenes.kind,
         vista: cinematic?.key || null,
         expression: dialogue?.lines[dialogue.index].expression || "neutral",
         player: player

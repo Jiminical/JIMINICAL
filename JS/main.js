@@ -359,6 +359,8 @@ const characterSpeech = (() => {
   function nextLine() {
     dialogueIndex = (dialogueIndex + 1) % dialogues.length;
     line.textContent = dialogues[dialogueIndex];
+    gameAudio.stopVoice();
+    gameAudio.voice("guide", "가", dialogueIndex);
   }
 
   function close(returnFocus = false) {
@@ -434,7 +436,6 @@ const characterSpeech = (() => {
   document.fonts.ready.then(position);
   return { close };
 })();
-let audioContext, masterGain;
 let audioUnlocked = false;
 function saveSettings() {
   try {
@@ -442,12 +443,11 @@ function saveSettings() {
   } catch {}
 }
 function updateInterface() {
+  gameAudio.configure({ enabled: settings.sound, volume: settings.volume });
+  audioUnlocked = gameAudio.unlocked;
   const playing = settings.sound && audioUnlocked;
   soundButton.setAttribute("aria-pressed", String(playing));
-  soundButton.setAttribute(
-    "aria-label",
-    playing ? "자연 소리 끄기" : "자연 소리 켜기",
-  );
+  soundButton.setAttribute("aria-label", playing ? "소리 끄기" : "소리 켜기");
   soundButton.querySelector("span").textContent = playing
     ? "소리 켜짐"
     : "소리 꺼짐";
@@ -457,60 +457,34 @@ function updateInterface() {
   volumeLabel.textContent = settings.volume + "%";
   document.body.classList.toggle("no-motion", !settings.motion);
   spriteAnimation.setEnabled(settings.motion && !storyJourney.active);
-  if (masterGain)
-    masterGain.gain.setTargetAtTime(
-      playing ? (settings.volume / 100) * 0.12 : 0,
-      audioContext.currentTime,
-      0.35,
-    );
-}
-async function activateAudio() {
-  if (!settings.sound) {
-    updateInterface();
-    return;
+  for (const button of document.querySelectorAll("[data-audio-toggle]")) {
+    button.setAttribute("aria-pressed", String(playing));
+    button.setAttribute("aria-label", playing ? "소리 끄기" : "소리 켜기");
+    button.querySelector("span").textContent = playing ? "켜짐" : "꺼짐";
   }
-  try {
-    if (!audioContext) {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      masterGain = audioContext.createGain();
-      masterGain.gain.value = 0;
-      masterGain.connect(audioContext.destination);
-      // Filtered brown noise provides a quiet wind and flowing water ambience.
-      const buffer = audioContext.createBuffer(
-        1,
-        audioContext.sampleRate * 6,
-        audioContext.sampleRate,
-      );
-      const samples = buffer.getChannelData(0);
-      let previous = 0;
-      for (let i = 0; i < samples.length; i++) {
-        previous = (previous + (Math.random() * 2 - 1) * 0.025) / 1.025;
-        samples[i] = previous * 3.5;
-      }
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      const filter = audioContext.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 1100;
-      source.connect(filter);
-      filter.connect(masterGain);
-      source.start();
-    }
-    await audioContext.resume();
-    audioUnlocked = audioContext.state === "running";
-  } catch {
+}
+
+async function activateAudio() {
+  updateInterface();
+  if (!settings.sound) return;
+  audioUnlocked = await gameAudio.unlock();
+  if (!audioUnlocked) {
     settings.sound = false;
-    audioUnlocked = false;
     saveSettings();
   }
   updateInterface();
 }
-soundButton.addEventListener("click", async () => {
-  settings.sound = !(settings.sound && audioUnlocked);
-  saveSettings();
-  await activateAudio();
-});
+for (const button of [
+  soundButton,
+  ...document.querySelectorAll("[data-audio-toggle]"),
+]) {
+  button.addEventListener("click", async () => {
+    settings.sound = !(settings.sound && audioUnlocked);
+    saveSettings();
+    await activateAudio();
+    if (settings.sound) gameAudio.sfx("confirm");
+  });
+}
 soundSwitch.addEventListener("change", async () => {
   settings.sound = soundSwitch.checked;
   saveSettings();
@@ -536,6 +510,7 @@ document.querySelector("#start-button").addEventListener("click", () => {
   storyJourney.start();
 });
 document.addEventListener("greenstoa:storychange", updateInterface);
+document.addEventListener("greenstoa:audiochange", updateInterface);
 for (const dialog of [optionsDialog]) {
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
@@ -552,6 +527,7 @@ for (const dialog of [optionsDialog]) {
 const menuButtons = [...document.querySelectorAll(".main-menu button")];
 let selectedMenuIndex = 0;
 function selectMenu(index) {
+  if (selectedMenuIndex !== index) gameAudio.sfx("select");
   selectedMenuIndex = index;
   menuButtons.forEach((button, i) => {
     button.classList.toggle("is-selected", i === index);
@@ -600,6 +576,16 @@ document.addEventListener(
   },
   { once: true },
 );
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("button");
+  if (!button || button.closest("#game-screen") || button === soundButton)
+    return;
+  gameAudio.sfx(
+    button.matches(".close-button,#story-return,#name-edit,#name-rewrite")
+      ? "cancel"
+      : "confirm",
+  );
+});
 // A temporary top-layer overlay also renders above native settings dialogs.
 (() => {
   const layer = document.querySelector("#interaction-effects");
