@@ -13,22 +13,15 @@ ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text() + "\n" + (ROOT / "CSS/game.css").read_text()
 script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("game.js", "story.js", "main.js"))
-for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-prologue.png", "lucy-portrait.png", "guild-portraits.png", "lucy-expressions.png"):
-    background = base64.b64encode(
-        (ROOT / "assets" / asset_name).read_bytes()
-    ).decode("ascii")
-    styles = styles.replace("../assets/" + asset_name, "data:image/png;base64," + background)
-    if asset_name == "greenstoa-elf-idle.png":
-        page = re.sub(
-            r'data-sprite-src="[^"]*"',
-            lambda _: 'data-sprite-src="data:image/png;base64,' + background + '"',
-            page,
-        )
-    if asset_name == "greenstoa-prologue.png":
-        page = re.sub(r'data-art-src="[^"]*"', lambda _: 'data-art-src="data:image/png;base64,' + background + '"', page)
-    for filename, attribute in (("lucy-portrait.png", "data-lucy-src"), ("guild-portraits.png", "data-cast-src"), ("lucy-expressions.png", "data-expressions-src")):
-        if asset_name == filename:
-            page = re.sub(attribute + r'="[^"]*"', lambda _: attribute + '="data:image/png;base64,' + background + '"', page)
+# All image references are embedded, including the game maps and scenic interludes.
+image_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp)", page + "\n" + styles)))
+for ref in image_refs:
+    asset_path = ROOT / ref.removeprefix("../")
+    mime = "image/webp" if asset_path.suffix == ".webp" else "image/png"
+    encoded = base64.b64encode(asset_path.read_bytes()).decode("ascii")
+    data_uri = "data:" + mime + ";base64," + encoded
+    page = page.replace(ref, data_uri)
+    styles = styles.replace(ref, data_uri)
 for font_name in ("Galmuri11.woff2", "Galmuri11-Bold.woff2"):
     encoded = base64.b64encode((ROOT / "assets/fonts" / font_name).read_bytes()).decode("ascii")
     styles = styles.replace("../assets/fonts/" + font_name, "data:font/woff2;base64," + encoded)
@@ -64,7 +57,9 @@ assert 'data-sprite-src="data:image/png;base64,' in page
 assert 'data-art-src="data:image/png;base64,' in page
 assert 'data-lucy-src="data:image/png;base64,' in page
 assert 'data-cast-src="data:image/png;base64,' in page
-assert 'data-expressions-src="data:image/png;base64,' in page
+assert 'data-expressions-src="data:image/webp;base64,' in page
+for attribute in ('featured', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary'):
+    assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles
 (ROOT / "index.html").write_text(page)

@@ -293,7 +293,14 @@
           id="guild-assets"
           data-lucy-src="assets/lucy-portrait.png"
           data-cast-src="assets/guild-portraits.png"
-          data-expressions-src="assets/lucy-expressions.png"
+          data-expressions-src="assets/lucy-expressions.webp"
+          data-featured-src="assets/featured-portraits.webp"
+          data-guild-src="assets/map-guild.webp"
+          data-carriage-src="assets/map-carriage.webp"
+          data-checkpoint-src="assets/map-checkpoint.webp"
+          data-gate-src="assets/map-gate.webp"
+          data-forest-src="assets/vista-forest.webp"
+          data-sanctuary-src="assets/vista-sanctuary.webp"
           hidden
         ></div>
         <header class="game-hud">
@@ -373,6 +380,29 @@
           ></p>
           <div id="game-choices" class="game-choices" hidden></div>
           <button id="game-dialogue-next" class="guild-button">E 다음</button>
+        </section>
+        <section
+          id="game-vista"
+          class="game-vista"
+          role="dialog"
+          aria-labelledby="vista-title"
+          aria-describedby="vista-caption"
+          hidden
+        >
+          <div class="vista-image">
+            <canvas
+              id="vista-art"
+              width="1536"
+              height="1024"
+              aria-hidden="true"
+            ></canvas>
+          </div>
+          <div class="vista-copy">
+            <p class="vista-kicker" id="vista-kicker"></p>
+            <h2 id="vista-title"></h2>
+            <p id="vista-caption" aria-live="polite"></p>
+            <button id="vista-next" class="guild-button">E · 계속</button>
+          </div>
         </section>
         <div id="game-transition" aria-hidden="true" hidden></div>
         <section

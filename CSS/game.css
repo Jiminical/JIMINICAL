@@ -22,6 +22,7 @@
 }
 .scene.is-game-active {
   background: #11151c;
+  min-height: 0;
 }
 .game-hud {
   position: absolute;
@@ -520,5 +521,113 @@
   }
   .guild-menu-body {
     min-height: 170px;
+  }
+}
+
+/* Scenic interludes let the journey breathe; artwork keeps its native ratio. */
+.game-vista[hidden] {
+  display: none;
+}
+.game-vista {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  padding: 20px 0;
+  background: #080e12;
+  text-align: center;
+}
+.vista-image {
+  width: min(100%, calc((100cqh - 205px) * var(--vista-ratio, 1.5)));
+  aspect-ratio: var(--vista-ratio, 1.5);
+  flex: 0 0 auto;
+  min-height: 0;
+  margin: 0 auto;
+  overflow: hidden;
+}
+#vista-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.vista-copy {
+  padding: 0 20px;
+  flex: 0 0 auto;
+}
+.vista-kicker {
+  margin: 0 0 8px;
+  color: #9eae91;
+  font-size: 10px;
+  letter-spacing: 3px;
+}
+.vista-copy h2 {
+  margin: 0 0 10px;
+  font-size: clamp(20px, 3cqw, 30px);
+  font-weight: 400;
+  color: #eadfc3;
+}
+#vista-caption {
+  margin: 0;
+  color: #bbc5b3;
+  font-size: 13px;
+  line-height: 1.9;
+  white-space: pre-line;
+}
+#vista-next {
+  margin: 12px auto 0;
+  border-bottom: 1px solid #58685b;
+  padding: 4px 12px;
+  color: #ddd3b4;
+}
+.game-screen.is-vista > .game-hud,
+.game-screen.is-vista > .game-objective,
+.game-screen.is-vista > .game-touch,
+.game-screen.is-vista > .game-controls {
+  visibility: hidden;
+}
+.no-motion #dialogue-portrait {
+  transform: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  #dialogue-portrait {
+    transform: none !important;
+  }
+}
+@media (max-width: 700px) {
+  .game-vista {
+    gap: 24px;
+  }
+  #vista-caption {
+    font-size: 12px;
+  }
+  .vista-copy {
+    padding: 0 24px;
+  }
+}
+@media (max-height: 500px) {
+  .game-vista {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+  }
+  .vista-image {
+    width: min(65%, calc((100cqh - 32px) * var(--vista-ratio, 1.5)));
+    max-height: none;
+    flex: 0 0 auto;
+  }
+  .vista-copy {
+    width: 33%;
+    padding: 0 8px;
+  }
+  .vista-copy h2 {
+    font-size: 16px;
+  }
+  #vista-caption {
+    font-size: 11px;
   }
 }

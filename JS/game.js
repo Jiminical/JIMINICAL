@@ -11,6 +11,11 @@ const guildGame = (() => {
   const dialogueLive = document.querySelector("#game-dialogue-live");
   const speakerLabel = document.querySelector("#game-speaker");
   const nextLabel = document.querySelector("#game-dialogue-next");
+  const vista = document.querySelector("#game-vista");
+  const vistaArt = document.querySelector("#vista-art");
+  const vistaContext = vistaArt.getContext("2d");
+  let cinematic = null,
+    portraitAnimation;
   const choicesBox = document.querySelector("#game-choices");
   const menu = document.querySelector("#guild-menu");
   const itemList = document.querySelector("#guild-item-list");
@@ -23,26 +28,26 @@ const guildGame = (() => {
     H = 480;
   let wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
   const guildCollisions = [
-    { x: 224, y: 130, w: 304, h: 40 },
-    { x: 24, y: 174, w: 38, h: 100 },
-    { x: 100, y: 294, w: 112, h: 50 },
-    { x: 62, y: 394, w: 134, h: 25 },
-    { x: 548, y: 326, w: 102, h: 48 },
-    { x: 648, y: 178, w: 48, h: 89 },
-    { x: 660, y: 310, w: 35, h: 96 },
+    { x: 0, y: 422, w: 300, h: 58 },
+    { x: 414, y: 422, w: 306, h: 58 },
+    { x: 230, y: 123, w: 260, h: 36 },
+    { x: 10, y: 132, w: 47, h: 92 },
+    { x: 84, y: 250, w: 151, h: 58 },
+    { x: 90, y: 394, w: 82, h: 20 },
+    { x: 510, y: 269, w: 98, h: 61 },
+    { x: 650, y: 145, w: 55, h: 89 },
+    { x: 662, y: 253, w: 43, h: 92 },
     ...[
-      [115, 268],
-      [171, 268],
-      [116, 356],
-      [171, 356],
-      [564, 301],
-      [610, 301],
-      [564, 386],
-      [610, 386],
-    ].map(([x, y]) => ({ x, y: y + 8, w: 18, h: 16 })),
-    ...[210, 242, 274].flatMap((y) => [
-      { x: 319, y, w: 5, h: 7 },
-      { x: 407, y, w: 5, h: 7 },
+      [108, 228],
+      [173, 228],
+      [108, 326],
+      [179, 326],
+      [545, 263],
+      [545, 344],
+    ].map(([x, y]) => ({ x, y, w: 22, h: 15 })),
+    ...[233, 295, 361].flatMap((y) => [
+      { x: 311, y, w: 6, h: 7 },
+      { x: 403, y, w: 6, h: 7 },
     ]),
   ];
   const cast = {
@@ -105,17 +110,17 @@ const guildGame = (() => {
     rogue: {
       name: "노란 머리 도적",
       portrait: 6,
-      coat: "#756047",
-      trim: "#b29865",
+      coat: "#30333d",
+      trim: "#8c929e",
       hair: "#ecd16e",
       skin: "#e1ac87",
     },
     scout: {
-      name: "정찰병 엘프",
+      name: "카니아",
       portrait: 7,
       coat: "#355e53",
       trim: "#b0b88c",
-      hair: "#b9c5ae",
+      hair: "#b9d79f",
       skin: "#edd3bc",
     },
   };
@@ -130,6 +135,15 @@ const guildGame = (() => {
     loadPicture("lucy", assets.dataset.lucySrc),
     loadPicture("cast", assets.dataset.castSrc),
     loadPicture("expressions", assets.dataset.expressionsSrc),
+    ...[
+      "featured",
+      "guild",
+      "carriage",
+      "checkpoint",
+      "gate",
+      "forest",
+      "sanctuary",
+    ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]);
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -180,203 +194,6 @@ const guildGame = (() => {
     rect(c, x + 2, y + 2, w - 4, h - 4, fill);
     rect(c, x + 3, y + 3, w - 6, 1, "#b88d5e");
   }
-  function shelf(x, y, w, h) {
-    panel(map, x, y, w, h, "#66472f");
-    for (let row = 0; row < h - 12; row += 22) {
-      rect(map, x + 4, y + 6 + row, w - 8, 16, "#352e2b");
-      for (let col = 0; col < w - 12; col += 7) {
-        const colors = ["#7a6b63", "#69516e", "#6a815c", "#ac8c5c"];
-        rect(map, x + 5 + col, y + 9 + row, 5, 12, colors[hash(col, row) % 4]);
-        rect(map, x + 6 + col, y + 11 + row, 3, 1, "#c9b788");
-      }
-      rect(map, x + 2, y + 23 + row, w - 4, 3, "#ad794b");
-    }
-  }
-  function chair(x, y) {
-    panel(map, x, y, 18, 19, "#795136");
-    rect(map, x + 2, y + 2, 14, 5, "#b98a58");
-    rect(map, x + 1, y + 17, 3, 7, "#362c2a");
-    rect(map, x + 14, y + 17, 3, 7, "#362c2a");
-  }
-  function table(x, y, w, h) {
-    rect(map, x + 6, y + h - 3, w - 10, 8, "#302b26");
-    panel(map, x, y, w, h, "#a3774b");
-    for (let i = 8; i < h - 5; i += 9)
-      rect(map, x + 4, y + i, w - 8, 1, "#805535");
-    rect(map, x + 8, y + 7, w - 16, 2, "#c89b66");
-  }
-  function cup(x, y) {
-    rect(map, x, y, 6, 7, "#352f31");
-    rect(map, x + 1, y + 1, 4, 4, "#b99e72");
-    rect(map, x + 6, y + 2, 2, 3, "#98865e");
-  }
-  function plant(x, y) {
-    rect(map, x + 3, y + 12, 14, 10, "#473b36");
-    rect(map, x + 4, y + 12, 12, 4, "#bb7850");
-    rect(map, x + 9, y, 3, 14, "#546a3b");
-    rect(map, x, y + 3, 8, 5, "#758c4c");
-    rect(map, x + 11, y + 1, 10, 6, "#859c53");
-    rect(map, x + 4, y + 7, 8, 5, "#47623b");
-    rect(map, x + 12, y + 8, 9, 5, "#607d40");
-  }
-  function banner(x, y) {
-    rect(map, x - 2, y - 3, 32, 4, "#b29764");
-    rect(map, x, y, 28, 52, "#302a42");
-    rect(map, x + 3, y, 22, 45, "#64516f");
-    rect(map, x + 5, y + 5, 18, 2, "#bba679");
-    rect(map, x + 12, y + 15, 4, 20, "#d5c28c");
-    rect(map, x + 7, y + 22, 14, 4, "#d5c28c");
-    rect(map, x + 7, y + 41, 14, 5, "#807087");
-    rect(map, x + 10, y + 46, 8, 5, "#64516f");
-  }
-  function buildGuildMap() {
-    rect(map, 0, 0, W, H, "#171b25");
-    for (let y = 120; y < 480; y += 24)
-      for (let x = 0; x < 720; x += 48) {
-        const offset = (Math.floor(y / 24) % 2) * 24,
-          xx = x - offset;
-        rect(
-          map,
-          xx,
-          y,
-          47,
-          23,
-          ["#87633f", "#89633f", "#916d46"][hash(x, y) % 3],
-        );
-        rect(map, xx + 2, y + 2, 43, 1, "#ab8256");
-        rect(map, xx + 3, y + 19, 40, 1, "#765337");
-        rect(map, xx + 6 + hash(x, y), y + 8, 16, 1, "#7b593a");
-        rect(map, xx + 35, y + 5, 1, 2, "#654c35");
-      }
-    // Stone back wall with wooden beams and a raised reception floor.
-    rect(map, 18, 12, 684, 112, "#4a4650");
-    for (let y = 16; y < 116; y += 18)
-      for (let x = 22; x < 700; x += 40) {
-        const dx = ((y / 18) % 2) * 16;
-        rect(
-          map,
-          x - dx,
-          y,
-          37,
-          15,
-          ["#57545d", "#625b61", "#59545b"][hash(x, y) % 3],
-        );
-        rect(map, x - dx + 2, y + 1, 33, 1, "#71686b");
-      }
-    rect(map, 18, 116, 684, 12, "#a0784e");
-    rect(map, 18, 128, 684, 5, "#392e2d");
-    for (const x of [18, 192, 516, 688]) {
-      rect(map, x, 12, 14, 122, "#3b302f");
-      rect(map, x + 3, 12, 4, 120, "#8d6548");
-    }
-    for (const x of [72, 582]) {
-      panel(map, x, 32, 60, 65, "#9daaa3");
-      rect(map, x + 5, 37, 50, 51, "#8aabb0");
-      rect(map, x + 8, 40, 18, 23, "#b4c3b9");
-      rect(map, x + 32, 40, 18, 23, "#aec7c4");
-      rect(map, x + 28, 35, 4, 57, "#524640");
-      rect(map, x + 3, 64, 54, 4, "#524640");
-      rect(map, x - 3, 96, 66, 5, "#b08a61");
-    }
-    banner(242, 35);
-    banner(454, 35);
-    panel(map, 318, 27, 84, 62, "#393344", "#b28f5d");
-    rect(map, 353, 37, 10, 35, "#c7b17c");
-    rect(map, 337, 50, 43, 7, "#c7b17c");
-    rect(map, 342, 43, 7, 23, "#7b6979");
-    rect(map, 369, 43, 7, 23, "#7b6979");
-    rect(map, 338, 78, 43, 2, "#918064");
-    // Woven red runner down the center aisle.
-    rect(map, 292, 167, 136, 276, "#46343a");
-    rect(map, 296, 169, 128, 272, "#8b5c56");
-    rect(map, 302, 170, 116, 270, "#75464a");
-    for (let y = 176; y < 438; y += 12) {
-      rect(map, 298, y, 2, 6, "#c3a477");
-      rect(map, 420, y, 2, 6, "#c3a477");
-    }
-    for (let y = 184; y < 436; y += 40) {
-      rect(map, 355, y, 10, 2, "#9d6d5b");
-      rect(map, 359, y - 4, 2, 10, "#9d6d5b");
-    }
-    // Reception counter: papers and a small brass bell.
-    table(224, 130, 304, 38);
-    rect(map, 229, 157, 294, 12, "#5b3c2e");
-    for (let x = 237; x < 520; x += 39) {
-      rect(map, x, 160, 31, 7, "#805536");
-      rect(map, x + 3, 161, 25, 1, "#a97948");
-    }
-    panel(map, 270, 137, 24, 14, "#ddd2ad", "#5e4b36");
-    rect(map, 275, 141, 14, 1, "#93816b");
-    rect(map, 275, 145, 11, 1, "#93816b");
-    panel(map, 440, 137, 28, 15, "#685c58");
-    rect(map, 444, 139, 20, 10, "#b9aa8b");
-    rect(map, 394, 142, 12, 5, "#725332");
-    rect(map, 397, 138, 6, 5, "#d9bd75");
-    rect(map, 399, 136, 2, 2, "#e5cd8d");
-    // Walls and tactile room props.
-    rect(map, 16, 132, 12, 336, "#332d2c");
-    rect(map, 692, 132, 12, 336, "#332d2c");
-    rect(map, 22, 132, 7, 336, "#a1764f");
-    rect(map, 692, 132, 6, 336, "#9c734c");
-    shelf(27, 174, 34, 100);
-    shelf(661, 310, 32, 96);
-    panel(map, 78, 135, 96, 50, "#785336");
-    for (const [x, y, a] of [
-      [85, 142, 0],
-      [107, 149, 1],
-      [134, 140, 0],
-      [150, 155, 1],
-    ]) {
-      rect(map, x, y, 15, 22, "#d1bb8c");
-      rect(map, x + 3, y + 6, 9, 1, "#927c58");
-      rect(map, x + 3, y + 10, 7, 1, "#927c58");
-      rect(map, x + 6, y + 2, 3, 3, a ? "#775b61" : "#7c805b");
-    }
-    table(100, 294, 112, 50);
-    chair(115, 268);
-    chair(171, 268);
-    chair(116, 356);
-    chair(171, 356);
-    cup(119, 310);
-    cup(181, 318);
-    rect(map, 145, 306, 21, 16, "#d3be93");
-    rect(map, 149, 311, 12, 1, "#9b8361");
-    table(548, 326, 102, 48);
-    chair(564, 301);
-    chair(610, 301);
-    chair(564, 386);
-    chair(610, 386);
-    cup(568, 341);
-    rect(map, 592, 340, 26, 17, "#625675");
-    rect(map, 596, 342, 21, 13, "#b9aa88");
-    table(62, 394, 134, 25);
-    plant(206, 144);
-    plant(604, 141);
-    plant(45, 426);
-    plant(648, 430);
-    // Fireplace at the east wall, with a fixed dark opening for animated fire.
-    panel(map, 647, 174, 50, 91, "#5a5450");
-    rect(map, 643, 174, 57, 8, "#8b8170");
-    rect(map, 653, 194, 37, 46, "#292727");
-    rect(map, 657, 199, 29, 36, "#17191f");
-    rect(map, 646, 244, 53, 10, "#a08966");
-    rect(map, 651, 254, 44, 6, "#504741");
-    rect(map, 660, 232, 24, 5, "#6c4434");
-    for (const y of [210, 242, 274])
-      for (const x of [319, 407]) {
-        rect(map, x - 1, y - 20, 7, 22, "#40352b");
-        rect(map, x, y - 20, 5, 3, "#d2b47b");
-        rect(map, x + 1, y - 16, 3, 18, "#a27a4b");
-        if (y !== 274) rect(map, x + 2, y - 11, 2, 32, "#655044");
-      }
-    // Front wall and open doorway.
-    rect(map, 18, 457, 684, 18, "#3a3030");
-    rect(map, 18, 457, 684, 4, "#b48956");
-    rect(map, 324, 449, 72, 26, "#302c2c");
-    rect(map, 330, 453, 60, 22, "#5b5149");
-    for (let i = 0; i < 3; i++) rect(map, 331, 456 + i * 6, 58, 2, "#ad9271");
-  }
-
   const placeNames = {
     guild: ["제르디아 왕국", "모험가 길드"],
     carriage: ["제르디아 기사단 파견 마차", "동쪽 숲길"],
@@ -389,155 +206,47 @@ const guildGame = (() => {
       { x: 520, y: 220, w: 110, h: 150 },
     ],
     checkpoint: [
-      { x: 68, y: 190, w: 150, h: 125 },
-      { x: 500, y: 180, w: 145, h: 134 },
+      { x: 0, y: 0, w: 136, h: 480 },
+      { x: 632, y: 0, w: 88, h: 480 },
+      { x: 100, y: 140, w: 155, h: 135 },
+      { x: 270, y: 115, w: 55, h: 148 },
+      { x: 540, y: 160, w: 140, h: 120 },
+      { x: 0, y: 416, w: 270, h: 64 },
+      { x: 455, y: 420, w: 265, h: 60 },
     ],
     gate: [
-      { x: 40, y: 130, w: 215, h: 160 },
-      { x: 465, y: 130, w: 215, h: 160 },
+      { x: 40, y: 130, w: 260, h: 115 },
+      { x: 430, y: 130, w: 250, h: 115 },
+      { x: 0, y: 416, w: 215, h: 64 },
+      { x: 510, y: 421, w: 210, h: 59 },
     ],
   };
-  function forest(c, x, y, size = 1) {
-    const leaf = (a, b, w, h, color) =>
-      rect(c, x + a * size, y + b * size, w * size, h * size, color);
-    leaf(13, 26, 8, 28, "#35463b");
-    leaf(15, 28, 3, 24, "#79765b");
-    leaf(9, 51, 16, 3, "#35463b");
-    leaf(19, 34, 6, 3, "#566349");
-    leaf(5, 7, 26, 31, "#213f3d");
-    leaf(-5, 19, 46, 15, "#213f3d");
-    leaf(10, 1, 17, 8, "#345e4e");
-    leaf(2, 9, 32, 14, "#3d7058");
-    leaf(-3, 21, 43, 9, "#315f4d");
-    leaf(2, 30, 33, 7, "#284f46");
-    leaf(6, 8, 11, 4, "#729569");
-    leaf(19, 5, 7, 3, "#5b875f");
-    leaf(1, 16, 9, 4, "#5a865f");
-    leaf(15, 14, 10, 5, "#527d59");
-    leaf(27, 13, 5, 5, "#426f53");
-    leaf(31, 22, 6, 4, "#527e59");
-    leaf(4, 25, 7, 3, "#436f52");
-    leaf(18, 26, 9, 4, "#3e6a50");
-    leaf(13, 19, 4, 2, "#7a9b6d");
-    leaf(26, 27, 3, 2, "#779564");
-    leaf(7, 34, 6, 2, "#3d654e");
-    leaf(23, 34, 5, 2, "#416c52");
-  }
   function buildMap() {
-    if (location === "guild") {
-      wallBounds = { left: 32, right: 688, top: 178, bottom: 446 };
-      buildGuildMap();
-    } else if (location === "carriage") {
-      wallBounds = { left: 210, right: 510, top: 252, bottom: 418 };
-      rect(map, 0, 0, W, H, "#121d26");
-      panel(map, 64, 36, 592, 402, "#7b583e", "#292b32");
-      for (let x = 72; x < 650; x += 24) {
-        rect(map, x, 42, 2, 392, "#473b33");
-        rect(map, x + 3, 42, 2, 386, "#ab8255");
-      }
-      for (const x of [96, 426]) {
-        panel(map, x, 78, 198, 130, "#243e42");
-        rect(map, x + 8, 86, 182, 110, "#71998a");
-        for (let n = 0; n < 7; n++) forest(map, x + 8 + n * 27, 126, 0.75);
-        rect(map, x, 75, 198, 7, "#cab282");
-        rect(map, x + 91, 80, 8, 126, "#564735");
-      }
-      rect(map, 292, 71, 134, 139, "#5b4534");
-      panel(map, 324, 91, 72, 90, "#4a4251", "#bd9f6a");
-      rect(map, 356, 108, 7, 48, "#c8b988");
-      rect(map, 342, 126, 35, 6, "#c8b988");
-      panel(map, 88, 244, 111, 135, "#68505a");
-      panel(map, 521, 244, 111, 135, "#68505a");
-      for (const x of [92, 525]) {
-        rect(map, x, 252, 103, 6, "#a47d6c");
-        rect(map, x, 310, 103, 4, "#433941");
-      }
-      rect(map, 208, 225, 304, 201, "#8f6d4a");
-      for (let y = 232; y < 425; y += 20) rect(map, 211, y, 296, 2, "#634d38");
-      panel(map, 300, 382, 120, 39, "#535448");
-      rect(map, 309, 389, 102, 2, "#aaa07a");
-    } else {
-      wallBounds = {
-        left: 45,
-        right: 675,
-        top: location === "gate" ? 276 : 204,
-        bottom: 446,
-      };
-      rect(map, 0, 0, W, H, "#3b6251");
-      for (let y = 0; y < H; y += 12)
-        for (let x = 0; x < W; x += 12) {
-          const n = hash(x / 12, y / 12);
-          rect(
-            map,
-            x,
-            y,
-            12,
-            12,
-            ["#3c6651", "#426c55", "#436b53", "#385d4e"][n % 4],
-          );
-          if (n < 4) rect(map, x + 3, y + 5, 2, 3, "#7c9570");
-        }
-      rect(map, 270, 128, 180, 352, "#b8ad85");
-      rect(map, 280, 130, 160, 350, "#d0c39d");
-      for (let y = 140; y < H; y += 19)
-        for (let x = 286; x < 433; x += 31) {
-          rect(map, x + (hash(x, y) % 5), y, 26, 15, "#bdb38f");
-          rect(map, x + 2, y + 1, 21, 1, "#e4d4ad");
-        }
-      for (const x of [20, 85, 149, 559, 623, 687])
-        for (const y of [15, 85, 165]) forest(map, x, y, 1.4);
-      if (location === "checkpoint") {
-        panel(map, 68, 183, 150, 112, "#7f775a");
-        rect(map, 60, 173, 166, 16, "#365c50");
-        rect(map, 75, 163, 136, 10, "#577b5e");
-        panel(map, 90, 200, 48, 50, "#314748");
-        rect(map, 112, 202, 3, 46, "#bfba8c");
-        panel(map, 160, 226, 38, 67, "#5c5944");
-        rect(map, 500, 184, 146, 112, "#6d735c");
-        for (let i = 0; i < 5; i++)
-          panel(map, 507 + i * 27, 193, 19, 88, "#a0a184");
-        rect(map, 258, 217, 8, 81, "#4d5140");
-        rect(map, 455, 217, 8, 81, "#4d5140");
-        rect(map, 260, 212, 200, 8, "#bfb485");
-        rect(map, 267, 215, 188, 2, "#ece0b4");
-        panel(map, 516, 325, 96, 47, "#394e48", "#a8b08e");
-        map.font = "12px Galmuri";
-        map.fillStyle = "#e8d6a7";
-        map.fillText("성역 검문소", 526, 351);
-      } else {
-        // A distant immense living tree, framed by the open stone gate.
-        rect(map, 0, 0, W, 130, "#8aa394");
-        forest(map, 283, -95, 5);
-        for (const x of [25, 122, 527, 620]) forest(map, x, 0, 1.6);
-        panel(map, 50, 128, 202, 157, "#7a8d7f", "#273f3d");
-        panel(map, 468, 128, 202, 157, "#7a8d7f", "#273f3d");
-        for (let y = 139; y < 280; y += 22)
-          for (const x of [60, 478])
-            for (let col = 0; col < 4; col++)
-              rect(map, x + col * 46, y, 43, 19, "#91a08a");
-        for (const x of [226, 463]) {
-          panel(map, x, 65, 32, 225, "#b0b69b", "#40594e");
-          rect(map, x + 7, 70, 5, 211, "#d5d5b3");
-          rect(map, x - 6, 58, 44, 12, "#c0c6a5");
-          rect(map, x + 8, 30, 16, 28, "#77ceb0");
-          rect(map, x + 13, 17, 6, 42, "#c4efd2");
-        }
-        rect(map, 247, 60, 226, 18, "#9baa92");
-        rect(map, 256, 64, 208, 3, "#dce0bd");
-        for (const x of [135, 552]) {
-          rect(map, x, 151, 27, 78, "#355f57");
-          rect(map, x + 12, 163, 3, 49, "#c7d2a2");
-          rect(map, x + 5, 181, 17, 3, "#c7d2a2");
-        }
-        plant(232, 345);
-        plant(468, 345);
-      }
-      for (const x of [65, 172, 536, 642])
-        for (const y of [340, 412]) {
-          rect(map, x, y, 3, 2, "#d7c38f");
-          rect(map, x + 7, y + 4, 2, 2, "#97b6a0");
-        }
-    }
+    const bounds = {
+      guild: { left: 32, right: 688, top: 178, bottom: 446 },
+      carriage: { left: 210, right: 510, top: 252, bottom: 418 },
+      checkpoint: { left: 136, right: 632, top: 204, bottom: 446 },
+      gate: { left: 135, right: 585, top: 258, bottom: 446 },
+    };
+    wallBounds = bounds[location];
+    const art = pictures[location];
+    map.imageSmoothingEnabled = false;
+    map.clearRect(0, 0, W, H);
+    // The map paintings share a 3:2 composition. Uniform fitting preserves every
+    // architectural proportion; actors and collisions use the same world coordinates.
+    const scale = Math.min(W / art.naturalWidth, H / art.naturalHeight);
+    rect(map, 0, 0, W, H, "#121d26");
+    map.drawImage(
+      art,
+      0,
+      0,
+      art.naturalWidth,
+      art.naturalHeight,
+      (W - art.naturalWidth * scale) / 2,
+      (H - art.naturalHeight * scale) / 2,
+      art.naturalWidth * scale,
+      art.naturalHeight * scale,
+    );
     document.querySelector(".game-place").textContent = placeNames[location][0];
     document.querySelector(".game-hud strong").textContent =
       placeNames[location][1];
@@ -550,32 +259,32 @@ const guildGame = (() => {
     );
   }
   function drawScenery() {
-    if (location === "carriage" && motion()) {
-      const shift = Math.floor(elapsed * 18) % 182;
-      for (const x of [104, 434]) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(x, 86, 182, 110);
-        ctx.clip();
-        for (let i = -1; i < 6; i++)
-          forest(ctx, x + i * 46 - (shift % 46), 129, 1);
-        ctx.restore();
-        rect(ctx, x + 83, 80, 8, 126, "#564735");
-      }
-      // Small integer-pixel carriage cels, with no continuous CSS bobbing.
-      const j = Math.floor(elapsed * 5) % 4 === 0 ? 1 : 0;
-      if (j) {
-        rect(ctx, 214, 427, 293, 1, "#c2a477");
-      }
+    if (!motion()) return;
+    const frame = Math.floor(elapsed * 8);
+    // Sparse individual pollen/dust pixels leave the environment painting legible.
+    for (let i = 0; i < 8; i++) {
+      const x = (93 + i * 79 + Math.floor(frame / 7)) % W;
+      const y = (147 + i * 43 - Math.floor(frame / 5) + H * 100) % H;
+      ctx.globalAlpha = 0.18 + ((frame + i * 5) % 24) / 100;
+      rect(
+        ctx,
+        x,
+        y,
+        i % 3 === 0 ? 2 : 1,
+        1,
+        location === "guild" ? "#f0cd91" : "#e4edbd",
+      );
     }
-    if (location === "gate") {
-      const n = motion() ? Math.floor(elapsed * 3) % 3 : 1;
-      for (const x of [241, 478]) {
-        rect(ctx, x - 1, 29 + n * 3, 3, 3, "#e1ffe0");
-      }
-    }
+    ctx.globalAlpha = 1;
   }
-  async function travelTo(destination, setup, after) {
+  function hideVista() {
+    cinematic = null;
+    vista.hidden = true;
+    root.classList.remove("is-vista");
+    delete root.dataset.vista;
+    document.querySelector(".world-viewport").inert = false;
+  }
+  async function transitionTo(prepare, after) {
     const token = ++transitionSerial;
     phase = "transition";
     root.dataset.phase = phase;
@@ -583,19 +292,20 @@ const guildGame = (() => {
     dialogueBox.hidden = true;
     prompt.hidden = true;
     menu.hidden = true;
+    cancelPortraitMotion();
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
     document.querySelector("#game-toast").hidden = true;
     dialogue = null;
     transition.hidden = false;
     const fade = async (from, to) => {
+      if (!motion()) {
+        transition.style.opacity = String(to);
+        return token === transitionSerial && active;
+      }
       transitionAnimation = transition.animate(
         [{ opacity: from }, { opacity: to }],
-        {
-          duration: motion() ? 460 : 0,
-          fill: "forwards",
-          easing: "ease-in-out",
-        },
+        { duration: 460, fill: "forwards", easing: "ease-in-out" },
       );
       await transitionAnimation.finished.catch(() => {});
       if (token !== transitionSerial || !active) return false;
@@ -604,16 +314,143 @@ const guildGame = (() => {
       return true;
     };
     if (!(await fade(0, 1))) return;
-    location = destination;
-    setup();
-    buildMap();
-    updateObjective();
-    drawWorld();
+    prepare();
     if (!(await fade(1, 0))) return;
     transition.hidden = true;
     phase = "free";
     root.dataset.phase = phase;
     if (after) after();
+  }
+  function travelTo(destination, setup, after) {
+    return transitionTo(() => {
+      hideVista();
+      location = destination;
+      setup();
+      buildMap();
+      updateObjective();
+      drawWorld();
+    }, after);
+  }
+  const vistas = {
+    forest: {
+      kicker: "제르디아 동쪽 · 성역으로 향하는 길",
+      title: "숲이 깊어질수록",
+      text: "바퀴 소리가 물소리에 묻혔다.\n끝을 가늠할 수 없는 나무들이 길 위로 그늘을 드리웠다.",
+    },
+    sanctuary: {
+      kicker: "어머니 나무의 품 아래",
+      title: "이종족연합국 그린스토아",
+      text: "강과 숲, 그리고 그 모든 것을 품은 어머니 나무.\n수많은 종족이 하나의 이름 아래 살아가는 제루스의 성역.",
+    },
+  };
+  function showVista(key, after) {
+    return transitionTo(
+      () => {
+        cinematic = { key, after, started: elapsed, frame: -1 };
+        const art = pictures[key],
+          ratio = art.naturalWidth / art.naturalHeight;
+        vistaArt.width = Math.min(960, art.naturalWidth);
+        vistaArt.height = Math.round(vistaArt.width / ratio);
+        vista.style.setProperty("--vista-ratio", String(ratio));
+        document.querySelector("#vista-kicker").textContent =
+          vistas[key].kicker;
+        document.querySelector("#vista-title").textContent = vistas[key].title;
+        document.querySelector("#vista-caption").textContent = vistas[key].text;
+        root.dataset.vista = key;
+        root.classList.add("is-vista");
+        vista.hidden = false;
+        document.querySelector(".world-viewport").inert = true;
+        fitVista();
+        drawVista();
+      },
+      () => {
+        phase = "vista";
+        root.dataset.phase = phase;
+        document.querySelector("#vista-next").focus({ preventScroll: true });
+      },
+    );
+  }
+  function fitVista() {
+    if (root.hidden || vista.hidden || !cinematic) return;
+    const style = getComputedStyle(vista),
+      copy = document.querySelector(".vista-copy");
+    const innerWidth =
+      vista.clientWidth -
+      parseFloat(style.paddingLeft) -
+      parseFloat(style.paddingRight);
+    const innerHeight =
+      vista.clientHeight -
+      parseFloat(style.paddingTop) -
+      parseFloat(style.paddingBottom);
+    const gap = parseFloat(style.gap),
+      row = style.flexDirection === "row";
+    const ratio =
+      pictures[cinematic.key].naturalWidth /
+      pictures[cinematic.key].naturalHeight;
+    const availableWidth = row
+      ? innerWidth - copy.getBoundingClientRect().width - gap
+      : innerWidth;
+    const availableHeight = row
+      ? innerHeight
+      : innerHeight - copy.getBoundingClientRect().height - gap;
+    const width = Math.max(
+      1,
+      Math.min(availableWidth, availableHeight * ratio),
+    );
+    const holder = document.querySelector(".vista-image");
+    holder.style.width = width + "px";
+    holder.style.height = width / ratio + "px";
+  }
+  function drawVista() {
+    if (!cinematic) return;
+    const seconds = Math.max(0, elapsed - cinematic.started),
+      frame = motion() ? Math.floor(seconds * 12) : 0;
+    if (frame === cinematic.frame) return;
+    cinematic.frame = frame;
+    const art = pictures[cinematic.key],
+      t = motion() ? Math.min(1, seconds / 18) : 0;
+    const zoom = motion() ? 1.025 : 1;
+    const sw = art.naturalWidth / zoom,
+      sh = art.naturalHeight / zoom;
+    vistaContext.imageSmoothingEnabled = false;
+    vistaContext.drawImage(
+      art,
+      Math.floor((art.naturalWidth - sw) * (0.2 + 0.6 * t)),
+      Math.floor((art.naturalHeight - sh) * (0.65 - 0.3 * t)),
+      sw,
+      sh,
+      0,
+      0,
+      vistaArt.width,
+      vistaArt.height,
+    );
+    if (motion())
+      for (let i = 0; i < 10; i++) {
+        const x = (i * 113 + Math.floor(frame / 3)) % vistaArt.width;
+        const y =
+          (i * 79 - Math.floor(frame / 5) + vistaArt.height * 100) %
+          vistaArt.height;
+        vistaContext.globalAlpha = 0.18 + ((frame + i * 7) % 28) / 100;
+        rect(vistaContext, x, y, 1 + (i % 2), 1, "#f0edbf");
+      }
+    vistaContext.globalAlpha = 1;
+  }
+  function finishVista() {
+    if (!active || inputLocked || phase !== "vista" || !cinematic) return;
+    keys.clear();
+    cinematic.after();
+  }
+  function resumeWorld(after) {
+    return transitionTo(
+      () => {
+        hideVista();
+        drawWorld();
+      },
+      () => {
+        canvas.focus({ preventScroll: true });
+        if (after) after();
+      },
+    );
   }
 
   // 44 × 60 SD cels add hair, cloth and equipment detail at a shared foot anchor.
@@ -786,23 +623,42 @@ const guildGame = (() => {
         q(26, 40, 8, 1, "#d2bb7d");
       }
       if (kind === "rogue") {
-        q(11, 3, 5, 7, p.hair);
-        q(23, 2, 5, 8, p.hair);
-        q(32, 6, 5, 6, p.hair);
-        q(13, 30, 18, 4, "#dbcbb0");
-        q(16, 35, 16, 2, "#b0945b");
-        q(24, 38, 2, 6, "#ddc778");
-        if (front) q(29 + side, 22, 1, 4, "#a47466");
+        q(9, 32, 8, 7, "#252832");
+        q(29, 32, 9, 7, "#252832");
+        for (const x of [8, 13, 30, 35]) q(x, 29, 2, 5, "#b4bbc4");
+        q(17, 29, 14, 3, "#171d28");
+        q(22, 31, 2, 2, "#bfc4ca");
+        q(10, 8, 9, 10, "#c39179");
+        q(11, 11, 2, 5, "#a67b6f");
+        q(18, 4, 14, 4, p.hair);
+        q(25, 7, 11, 5, p.hair);
+        q(30, 11, 6, 6, p.hair);
+        q(17, 3, 6, 2, "#fff0a4");
+        q(25, 6, 7, 1, "#fff0a4");
+        if (front) {
+          q(10 + side, 19, 2, 2, "#d6dadd");
+          q(11 + side, 23, 2, 1, "#e0e2e0");
+        }
+        q(15, 38, 2, 5, "#6f7280");
+        q(28, 43, 7, 2, "#191f2a");
       }
       if (kind === "scout") {
         q(6, 17, 7, 4, p.skin);
         q(32, 17, 8, 4, p.skin);
         q(5, 16, 4, 2, p.skin);
         q(37, 15, 4, 3, p.skin);
-        q(12, 29, 23, 5, "#537e69");
-        q(17, 31, 4, 14, "#84a087");
-        q(26, 32, 3, 3, "#dac78e");
-        q(31, 37, 3, 10, "#8f704d");
+        q(18, 1, 11, 5, p.hair);
+        q(20, 0, 7, 2, "#d9e5b8");
+        q(12, 29, 23, 5, "#315d4a");
+        q(17, 33, 14, 12, "#79604a");
+        q(17, 31, 4, 14, "#91b187");
+        q(25, 32, 4, 4, "#b5e2d4");
+        q(26, 33, 2, 2, "#3b9c8c");
+        q(30, 29, 8, 6, "#b8c9c6");
+        q(33, 31, 5, 5, "#718d91");
+        q(32, 30, 3, 2, "#e1e7d6");
+        q(8, 27, 3, 12, "#827455");
+        q(9, 23, 1, 8, "#dce5ca");
       }
     }
     // Cache a crisp dark contour with a restrained light rim for floor contrast.
@@ -834,7 +690,6 @@ const guildGame = (() => {
     spriteBank.set(key, outlined);
     return outlined;
   }
-  buildMap();
   for (const kind of Object.keys(cast))
     for (const dir of ["up", "down", "left", "right"])
       for (let f = 0; f < 4; f++) makeSprite(kind, dir, f);
@@ -847,7 +702,7 @@ const guildGame = (() => {
       location === "carriage"
         ? "여정 · 동쪽 숲을 지나 성역으로"
         : location === "checkpoint"
-          ? "정찰병에게 모험가증을 보여 주자."
+          ? "카니아에게 모험가증을 보여 주자."
           : location === "gate"
             ? "어머니 나무의 품 아래, 그린스토아에 도착했다."
             : questAccepted
@@ -862,6 +717,43 @@ const guildGame = (() => {
     toast.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => (toast.hidden = true), 2600);
+  }
+  function cancelPortraitMotion() {
+    portraitAnimation?.cancel();
+    portraitAnimation = undefined;
+  }
+  function reactPortrait(line, pulse = false) {
+    if (!line.kind || !motion() || inputLocked || portrait.hidden) return;
+    if (pulse && portraitAnimation?.playState === "running") return;
+    cancelPortraitMotion();
+    const height = pulse
+      ? 2
+      : line.kind === "rogue"
+        ? 7
+        : line.expression === "incredulous"
+          ? 5
+          : line.expression === "concerned"
+            ? 2
+            : 4;
+    const rebound = pulse ? 1 : Math.max(1, Math.floor(height / 3));
+    const cels = [
+      [0, 0],
+      [0.12, Math.ceil(height / 2)],
+      [0.25, height],
+      [0.4, Math.floor(height / 2)],
+      [0.55, 0],
+      [0.7, rebound],
+      [0.85, 0],
+      [1, 0],
+    ];
+    portraitAnimation = portrait.animate(
+      cels.map(([offset, y]) => ({
+        transform: `translate(0,-${y}px)`,
+        offset,
+        easing: "steps(1,end)",
+      })),
+      { duration: pulse ? 180 : 360, easing: "linear" },
+    );
   }
   function portraitFor(kind, expression = "neutral") {
     portraitContext.clearRect(0, 0, portrait.width, portrait.height);
@@ -880,15 +772,19 @@ const guildGame = (() => {
         image = pictures.expressions;
         columns = 3;
         index = poses[expression];
-        // These poses were drawn to the thighs; use a waist-up view like the
-        // original Lucy, without changing the source aspect or clipping her arms.
-        source = [
-          (index * image.naturalWidth) / 3,
-          (128 * image.naturalHeight) / 1024,
-          image.naturalWidth / 3,
-          (680 * image.naturalHeight) / 1024,
-        ];
       } else image = pictures.lucy;
+    } else if (kind === "scout" || kind === "rogue") {
+      image = pictures.featured;
+      columns = 2;
+      rows = 2;
+      index =
+        kind === "scout"
+          ? expression === "welcoming"
+            ? 1
+            : 0
+          : expression === "embarrassed"
+            ? 3
+            : 2;
     } else {
       image = pictures.cast;
       // The generated sheet has slightly unequal gutters. Use their actual empty
@@ -991,6 +887,10 @@ const guildGame = (() => {
       .slice(0, ++dialogue.shown)
       .join("");
     const last = dialogue.letters[dialogue.shown - 1];
+    if (dialogue.shown % 16 === 0 && dialogue.pulses < 3) {
+      dialogue.pulses++;
+      reactPortrait(dialogue.lines[dialogue.index], true);
+    }
     typingTimer = setTimeout(typeLetter, /[.!?…]/u.test(last) ? 190 : 30);
   }
   function paintLine() {
@@ -1009,6 +909,9 @@ const guildGame = (() => {
           ? "떠오르는 이야기"
           : placeNames[location][1];
     portraitFor(line.kind, line.expression);
+    cancelPortraitMotion();
+    dialogue.pulses = 0;
+    reactPortrait(line);
     dialogueText.parentElement.dataset.fullText = line.text;
     dialogue.letters = Array.from(line.text);
     dialogue.shown = 0;
@@ -1051,6 +954,7 @@ const guildGame = (() => {
     action();
   }
   function closeDialogue() {
+    cancelPortraitMotion();
     clearTimeout(typingTimer);
     dialogue = null;
     dialogueBox.hidden = true;
@@ -1090,8 +994,8 @@ const guildGame = (() => {
       mia = npcs.find((n) => n.id === "mia");
     bran.path = [
       { x: 448, y: 188 },
-      { x: 448, y: 267 },
-      { x: 552, y: 267 },
+      { x: 448, y: 230 },
+      { x: 552, y: 230 },
     ];
     bran.pathDelay = 0;
     mia.path = [
@@ -1335,18 +1239,20 @@ const guildGame = (() => {
           text: "지금 그린스토아에는 남자가 없다잖아…? 킥킥.\n미인 엘프들하고 한탕 거하게 놀아 볼 거라구~",
         },
         {
-          text: "대꾸하지 않자, 그는 혼자서도 한참을 떠들었다.\n숲은 점점 깊어졌고, 마침내 마차가 멈췄다.",
+          text: "대꾸하지 않자, 그는 혼자서도 한참을 떠들었다.\n숲은 점점 깊어졌다. 창밖으로 흐르는 강이 보였다.",
         },
       ],
       () =>
-        travelTo(
-          "checkpoint",
-          () => {
-            player = actor("hero", 343, 380, "up");
-            npcs = [actor("scout", 360, 261), actor("rogue", 414, 328, "up")];
-            storyStep = "checkpoint";
-          },
-          checkpointConversation,
+        showVista("forest", () =>
+          travelTo(
+            "checkpoint",
+            () => {
+              player = actor("hero", 343, 380, "up");
+              npcs = [actor("scout", 360, 261), actor("rogue", 414, 328, "up")];
+              storyStep = "checkpoint";
+            },
+            checkpointConversation,
+          ),
         ),
     );
   }
@@ -1367,14 +1273,18 @@ const guildGame = (() => {
           text: "그래서 마기와 음기를 철저히 단속하고 있지.\n너는 엄청난 음기를 뿜는 데다, 제대로 된 모험가증조차 없군.",
         },
         { kind: "scout", text: "네놈을 들일 수는 없다. 돌아가라." },
-        { kind: "rogue", text: "에…?\n……그, 그럴 수가……." },
+        {
+          kind: "rogue",
+          expression: "embarrassed",
+          text: "에…?\n……그, 그럴 수가…….",
+        },
         {
           text: "노란 머리 도적은 눈물을 훔치며 마차 쪽으로 돌아갔다.\n정찰병이 이쪽으로 시선을 돌린다.",
         },
       ],
       () => {
         npcs = npcs.filter((n) => n.id !== "rogue");
-        notify("정찰병에게 다가가 E · 모험가증 제시");
+        notify("카니아에게 다가가 E · 모험가증 제시");
       },
     );
   }
@@ -1387,14 +1297,17 @@ const guildGame = (() => {
         },
         {
           kind: "scout",
+          expression: "welcoming",
           text: `…${playerName}. 확인했다. 어서 와라.\n의뢰를 받아 왔겠지만, 당장 터질 위협이 있는 것은 아니다.`,
         },
         {
           kind: "scout",
+          expression: "welcoming",
           text: "의뢰 내용도 조사일 테고.\n그러니 있는 동안에는 서두르지 말고 편히 지내도 된다.",
         },
         {
           kind: "scout",
+          expression: "welcoming",
           text: "조사원이 편안한 것이 우리에게도 좋으니.\n따라와라. 정문까지 안내하지.",
         },
       ],
@@ -1411,19 +1324,24 @@ const guildGame = (() => {
               [
                 {
                   kind: "scout",
+                  expression: "welcoming",
                   text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
                 },
                 {
                   kind: "scout",
+                  expression: "welcoming",
                   text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
                 },
                 { text: "이종족연합국\n그린스토아." },
               ],
-              () => {
-                storyStep = "arrived";
-                updateObjective();
-                notify("그린스토아에 도착했다.");
-              },
+              () =>
+                showVista("sanctuary", () =>
+                  resumeWorld(() => {
+                    storyStep = "arrived";
+                    updateObjective();
+                    notify("그린스토아에 도착했다.");
+                  }),
+                ),
             ),
         ),
     );
@@ -1482,14 +1400,14 @@ const guildGame = (() => {
     if (location === "guild")
       return [
         ...people,
-        { id: "board", name: "의뢰 게시판", x: 125, y: 193, kind: "prop" },
+        { id: "board", name: "의뢰 게시판", x: 155, y: 174, kind: "prop" },
         { id: "door", name: "길드 출입문", x: 360, y: 442, kind: "prop" },
-        { id: "books", name: "길드 기록장", x: 650, y: 359, kind: "prop" },
+        { id: "books", name: "길드 기록장", x: 650, y: 327, kind: "prop" },
       ];
     if (location === "checkpoint")
       return [
         ...people,
-        { id: "sign", name: "성역 푯말", x: 560, y: 364, kind: "prop" },
+        { id: "sign", name: "성역 푯말", x: 559, y: 292, kind: "prop" },
       ];
     if (location === "gate")
       return [
@@ -1649,14 +1567,6 @@ const guildGame = (() => {
     if (location === "carriage" && motion())
       ctx.translate(0, [0, -1, 0, 1][Math.floor(elapsed * 5) % 4]);
     ctx.drawImage(background, 0, 0);
-    if (location === "guild") {
-      // Square fire cels; collision remains static.
-      const f = motion() ? Math.floor(elapsed * 5) % 3 : 1;
-      rect(ctx, 662, 220 - f * 2, 5, 12 + f * 2, "#c17b3d");
-      rect(ctx, 668, 214 + f, 7, 18 - f, "#e9ac53");
-      rect(ctx, 676, 221 - f, 5, 11 + f, "#d28e42");
-      rect(ctx, 671, 222, 3, 9, "#f3d17c");
-    }
     drawScenery();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
@@ -1696,6 +1606,7 @@ const guildGame = (() => {
       }
     }
     drawWorld();
+    drawVista();
     request = requestAnimationFrame(tick);
   }
   function renderMenu() {
@@ -1865,6 +1776,10 @@ const guildGame = (() => {
       } else if (code === "KeyE" || code === "Enter") advanceDialogue();
       return;
     }
+    if (phase === "vista") {
+      if (!event.repeat && (code === "KeyE" || code === "Enter")) finishVista();
+      return;
+    }
     if (phase !== "free") return;
     if (code === "KeyC" && !event.repeat) {
       openMenu();
@@ -1896,6 +1811,7 @@ const guildGame = (() => {
     )
       typeLetter();
   });
+  document.querySelector("#vista-next").addEventListener("click", finishVista);
   document
     .querySelector("#game-dialogue-next")
     .addEventListener("click", advanceDialogue);
@@ -1926,12 +1842,15 @@ const guildGame = (() => {
     const available =
       dialogueBox.getBoundingClientRect().top -
       root.getBoundingClientRect().top -
-      92;
+      104;
     portrait.style.maxHeight = Math.max(0, available) + "px";
   };
   const dialogueLayout = new ResizeObserver(fitPortrait);
   dialogueLayout.observe(dialogueBox);
   dialogueLayout.observe(root);
+  const vistaLayout = new ResizeObserver(fitVista);
+  vistaLayout.observe(root);
+  vistaLayout.observe(document.querySelector(".vista-copy"));
   for (const b of document.querySelectorAll("[data-game-key]")) {
     b.addEventListener("pointerdown", (event) => {
       event.preventDefault();
@@ -1939,7 +1858,8 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "dialogue") advanceDialogue();
+        if (phase === "vista") finishVista();
+        else if (phase === "dialogue") advanceDialogue();
         else if (phase === "free") interact();
       } else if (phase === "free") keys.add(code);
     });
@@ -1988,7 +1908,7 @@ const guildGame = (() => {
     });
     player = actor("hero", 360, 268, "up");
     npcs = [
-      actor("lucy", 360, 129),
+      actor("lucy", 360, 100),
       actor("bran", 360, 188),
       actor("mia", 360, 222),
       actor("nara", 83, 330, "right"),
@@ -2010,6 +1930,8 @@ const guildGame = (() => {
     transitionAnimation?.cancel();
     transition.hidden = true;
     root.classList.remove("is-recollection");
+    cancelPortraitMotion();
+    hideVista();
     queueActive = false;
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
@@ -2039,6 +1961,7 @@ const guildGame = (() => {
         phase,
         location,
         storyStep,
+        vista: cinematic?.key || null,
         expression: dialogue?.lines[dialogue.index].expression || "neutral",
         player: player
           ? { x: player.x, y: player.y, direction: player.dir }
