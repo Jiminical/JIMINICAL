@@ -20,7 +20,12 @@
         width="416"
         height="512"
         data-sprite-src="assets/greenstoa-elf-idle.png"
-        aria-hidden="true"
+        role="button"
+        tabindex="0"
+        aria-label="숲의 안내자와 대화하기"
+        aria-controls="character-speech"
+        aria-haspopup="dialog"
+        aria-expanded="false"
       ></canvas>
       <svg
         class="river-light"
@@ -59,7 +64,11 @@
         <h1 class="title-logo">
           <span class="title-prefix">이종족연합국</span>
           <span class="logo-wordmark">
-            <span class="title-name">그린스토아</span>
+            <span class="title-name"
+              >그린스토아<span class="logo-shine" aria-hidden="true"
+                >그린스토아</span
+              ></span
+            >
             <svg
               class="logo-sprig"
               viewBox="0 0 16 24"
@@ -122,6 +131,24 @@
           </button>
           <button class="menu-item" id="options-button">설정</button>
         </nav>
+      </section>
+
+      <section
+        id="character-speech"
+        class="character-speech game-window"
+        role="dialog"
+        aria-labelledby="speech-speaker"
+        aria-describedby="speech-line"
+        hidden
+      >
+        <div class="speech-header">
+          <span id="speech-speaker">숲의 안내자</span
+          ><button id="speech-close" aria-label="말풍선 닫기">×</button>
+        </div>
+        <p id="speech-line" role="status" aria-live="polite"></p>
+        <button id="speech-next" class="speech-next">
+          다음 대사 <span aria-hidden="true">▶</span>
+        </button>
       </section>
 
       <footer class="footer">

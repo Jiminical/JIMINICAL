@@ -202,13 +202,170 @@ const spriteAnimation = (() => {
   source.src = canvas.dataset.spriteSrc;
   reducedMotion.addEventListener("change", refresh);
   document.addEventListener("visibilitychange", refresh);
+  function paintedBounds() {
+    const bounds = canvas.getBoundingClientRect();
+    const scale = Math.min(bounds.width / width, bounds.height / height);
+    return {
+      left: bounds.left + (bounds.width - width * scale) / 2,
+      top: bounds.bottom - height * scale,
+      scale,
+      element: bounds,
+    };
+  }
   return {
     setEnabled(value) {
       if (enabled === value) return;
       enabled = value;
       refresh();
     },
+    hitTest(clientX, clientY) {
+      if (!loaded) return false;
+      const bounds = paintedBounds();
+      if (!bounds.scale) return false;
+      const x = Math.floor((clientX - bounds.left) / bounds.scale);
+      const y = Math.floor((clientY - bounds.top) / bounds.scale);
+      if (x < 0 || x >= width || y < 0 || y >= height) return false;
+      let alpha = output.data[(y * width + x) * 4 + 3];
+      if (getComputedStyle(canvas).maskImage !== "none") {
+        const relativeY =
+          (clientY - bounds.element.top) / bounds.element.height;
+        alpha *= Math.max(0, Math.min(1, (1 - relativeY) / 0.35));
+      }
+      return alpha >= 64;
+    },
+    anchorPoint() {
+      const bounds = paintedBounds();
+      return {
+        x: bounds.left + (inset + contentWidth * 0.43) * bounds.scale,
+        y: bounds.top + height * 0.36 * bounds.scale,
+      };
+    },
   };
+})();
+const characterSpeech = (() => {
+  const scene = document.querySelector(".scene");
+  const character = document.querySelector(".character-sprite");
+  const popup = document.querySelector("#character-speech");
+  const line = document.querySelector("#speech-line");
+  const nextButton = document.querySelector("#speech-next");
+  const dialogues = [
+    "처음 보는 얼굴이네요.\n그린스토아에 오신 걸 환영해요.",
+    "조금 쉬었다 가실래요?\n강물 소리를 듣고 있으면 마음이 편해져요.",
+    "이 숲엔 서로 다른 이들이 살아요.\n당신의 이야기도 궁금하네요.",
+    "길을 잃으셨나요?\n괜찮아요. 천천히 둘러보세요.",
+    "바람이 좋네요.\n이런 날엔 조금 멀리 걸어도 좋겠어요.",
+    "제 머리에 꽃이요?\n…오늘 아침에 꽂았어요.",
+    "계속 말을 걸어 주시네요.\n싫다는 뜻은 아니에요.",
+    "숲이 조용하다고요?\n귀를 기울여 보면 그렇지만도 않답니다.",
+  ];
+  let dialogueIndex = -1;
+  let anchor = { x: 0, y: 0 };
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+  function position() {
+    if (popup.hidden) return;
+    const bounds = scene.getBoundingClientRect();
+    const safe = {
+      left: Math.max(12, 12 - bounds.left),
+      right: Math.min(bounds.width - 12, innerWidth - bounds.left - 12),
+      top: Math.max(12, 12 - bounds.top),
+      bottom: Math.min(bounds.height - 12, innerHeight - bounds.top - 12),
+    };
+    const x = anchor.x - bounds.left;
+    const y = anchor.y - bounds.top;
+    const width = popup.offsetWidth;
+    const height = popup.offsetHeight;
+    const left = clamp(x - width * 0.66, safe.left, safe.right - width);
+    const below = y - height - 12 < safe.top && y + height + 12 <= safe.bottom;
+    const top = clamp(
+      below ? y + 12 : y - height - 12,
+      safe.top,
+      safe.bottom - height,
+    );
+    popup.style.left = Math.round(left) + "px";
+    popup.style.top = Math.round(top) + "px";
+    popup.style.setProperty(
+      "--tail-x",
+      Math.round(clamp(x - left - 7, 12, width - 26)) + "px",
+    );
+    popup.classList.toggle("speech-below", below);
+  }
+
+  function nextLine() {
+    dialogueIndex = (dialogueIndex + 1) % dialogues.length;
+    line.textContent = dialogues[dialogueIndex];
+  }
+
+  function close(returnFocus = false) {
+    if (popup.hidden) return;
+    popup.hidden = true;
+    character.setAttribute("aria-expanded", "false");
+    if (returnFocus) character.focus({ preventScroll: true });
+  }
+
+  function openAt(x, y, keyboard = false) {
+    if (character.dataset.ready !== "true") return;
+    anchor = { x, y };
+    nextLine();
+    popup.hidden = false;
+    character.setAttribute("aria-expanded", "true");
+    position();
+    popup.style.animation = "none";
+    void popup.offsetWidth;
+    popup.style.animation = "";
+    if (keyboard) nextButton.focus({ preventScroll: true });
+  }
+
+  character.addEventListener("pointermove", (event) => {
+    character.style.cursor = spriteAnimation.hitTest(
+      event.clientX,
+      event.clientY,
+    )
+      ? "pointer"
+      : "default";
+  });
+  character.addEventListener("click", (event) => {
+    if (event.detail === 0) {
+      const point = spriteAnimation.anchorPoint();
+      openAt(point.x, point.y, true);
+    } else if (spriteAnimation.hitTest(event.clientX, event.clientY)) {
+      openAt(event.clientX, event.clientY);
+    }
+  });
+  character.addEventListener("keydown", (event) => {
+    if (["Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!event.repeat) {
+        const point = spriteAnimation.anchorPoint();
+        openAt(point.x, point.y, true);
+      }
+    }
+  });
+  nextButton.addEventListener("click", () => {
+    nextLine();
+    position();
+  });
+  document
+    .querySelector("#speech-close")
+    .addEventListener("click", () => close(true));
+  document.addEventListener("pointerdown", (event) => {
+    if (popup.hidden || popup.contains(event.target)) return;
+    if (
+      event.target === character &&
+      spriteAnimation.hitTest(event.clientX, event.clientY)
+    )
+      return;
+    close();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !popup.hidden)
+      close(popup.contains(document.activeElement));
+  });
+  window.addEventListener("resize", () => close());
+  window.addEventListener("scroll", () => close(), { passive: true });
+  document.fonts.ready.then(position);
+  return { close };
 })();
 let audioContext, masterGain;
 let audioUnlocked = false;
@@ -302,10 +459,12 @@ motionSwitch.addEventListener("change", () => {
   saveSettings();
   updateInterface();
 });
-document
-  .querySelector("#options-button")
-  .addEventListener("click", () => optionsDialog.showModal());
+document.querySelector("#options-button").addEventListener("click", () => {
+  characterSpeech.close();
+  optionsDialog.showModal();
+});
 document.querySelector("#start-button").addEventListener("click", () => {
+  characterSpeech.close();
   activateAudio();
   journeyDialog.showModal();
 });
