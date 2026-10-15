@@ -6,6 +6,7 @@
 #game-interaction[hidden],
 #game-choices[hidden],
 #dialogue-portrait[hidden],
+#dialogue-portrait-frame[hidden],
 #guild-item-action[hidden] {
   display: none;
 }
@@ -203,7 +204,7 @@
   color: #adbaad;
   font-size: 11px;
 }
-#dialogue-portrait {
+#dialogue-portrait-frame {
   position: absolute;
   bottom: calc(100% + 2px);
   left: 4px;
@@ -211,6 +212,15 @@
   height: min(56cqh, 450px);
   max-width: none;
   aspect-ratio: 8/7;
+  overflow: hidden;
+  pointer-events: none;
+}
+#dialogue-portrait {
+  position: absolute;
+  left: 0;
+  bottom: -12px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
   pointer-events: none;
@@ -228,7 +238,7 @@
 .is-dialogue-compact .game-dialogue:has(#dialogue-portrait:not([hidden])) {
   padding-left: clamp(180px, 35cqw, 280px);
 }
-.is-dialogue-compact #dialogue-portrait {
+.is-dialogue-compact #dialogue-portrait-frame {
   left: 12px;
   bottom: 8px;
 }
@@ -255,15 +265,6 @@
 }
 #game-transition[hidden] {
   display: none;
-}
-.game-screen.is-recollection .world-viewport {
-  opacity: 0.24;
-}
-.game-screen.is-recollection .game-objective {
-  visibility: hidden;
-}
-.game-screen.is-recollection .game-dialogue {
-  background: #151e2a;
 }
 .game-choices {
   display: grid;
@@ -493,7 +494,7 @@
     min-height: 76px;
     line-height: 1.9;
   }
-  #dialogue-portrait {
+  #dialogue-portrait-frame {
     height: min(46cqh, 350px);
     max-width: none;
   }
@@ -553,7 +554,7 @@
     font-size: 16px;
     min-height: 55px;
   }
-  #dialogue-portrait {
+  #dialogue-portrait-frame {
     height: 36cqh;
   }
   .guild-menu-panel {
@@ -565,7 +566,7 @@
 }
 
 /* Scenic interludes let the journey breathe; artwork keeps its native ratio. */
-.game-vista[hidden] {
+#game-vista[hidden] {
   display: none;
 }
 .game-vista {
@@ -669,5 +670,80 @@
   }
   #vista-caption {
     font-size: 11px;
+  }
+}
+
+/* The arrival reveal fills the screen; the chronicle's framed layout stays in
+   the opening. One tall painting is revealed by a slow downward camera move. */
+.game-vista.is-sanctuary {
+  display: block;
+  padding: 0;
+  background: #143b33;
+  overflow: hidden;
+}
+.is-sanctuary .vista-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  margin: 0;
+}
+.is-sanctuary .vista-copy {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  padding: 24px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #031a1c16, #031a1c38 52%, #031a1c19);
+  pointer-events: none;
+}
+.is-sanctuary .vista-kicker,
+.is-sanctuary .vista-copy h2,
+.is-sanctuary #vista-caption {
+  grid-area: 1 / 1;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  color: #fff;
+  opacity: 0;
+  white-space: pre-line;
+  text-wrap: balance;
+  line-height: 1.8;
+  text-shadow:
+    0 2px 3px #153a3b,
+    0 0 12px #d9ffffb0,
+    0 0 32px #b7f5e78c;
+}
+.is-sanctuary .vista-kicker,
+.is-sanctuary #vista-caption {
+  font-size: clamp(15px, 2.4cqw, 28px);
+  letter-spacing: 0.12em;
+}
+.is-sanctuary .vista-copy h2 {
+  font-size: clamp(27px, 5.7cqw, 72px);
+  letter-spacing: 0.1em;
+  line-height: 1.6;
+}
+.is-sanctuary #vista-next {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid #dceee9aa;
+  color: #fff;
+  background: #14332cd4;
+  text-shadow: 0 0 8px #e2fff780;
+  pointer-events: auto;
+}
+@media (max-width: 700px) {
+  .is-sanctuary .vista-copy {
+    padding: 20px;
+  }
+  .is-sanctuary #vista-next {
+    right: 18px;
+    bottom: 20px;
   }
 }

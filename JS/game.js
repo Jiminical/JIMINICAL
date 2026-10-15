@@ -5,6 +5,7 @@ const guildGame = (() => {
   const ctx = canvas.getContext("2d");
   const assets = document.querySelector("#guild-assets");
   const portrait = document.querySelector("#dialogue-portrait");
+  const portraitFrame = document.querySelector("#dialogue-portrait-frame");
   const portraitContext = portrait.getContext("2d");
   const dialogueBox = document.querySelector("#game-dialogue");
   const dialogueText = document.querySelector("#game-dialogue-glyphs");
@@ -149,8 +150,7 @@ const guildGame = (() => {
     elapsed = 0;
   let inputLocked = true;
   let location = "guild",
-    storyStep = "recollection",
-    queueActive = false;
+    storyStep = "lucy";
   let transitionSerial = 0,
     transitionAnimation;
   const transition = document.querySelector("#game-transition");
@@ -158,8 +158,7 @@ const guildGame = (() => {
     npcs = [],
     playerName = "",
     onExit,
-    dialogue = null,
-    queueTime = 0;
+    dialogue = null;
   let questAccepted = false,
     inventory = [],
     hp = 18,
@@ -275,6 +274,8 @@ const guildGame = (() => {
   function hideVista() {
     cinematic = null;
     vista.hidden = true;
+    vista.classList.remove("is-sanctuary");
+    delete vista.dataset.pan;
     root.classList.remove("is-vista");
     delete root.dataset.vista;
     document.querySelector(".world-viewport").inert = false;
@@ -334,14 +335,15 @@ const guildGame = (() => {
     },
     sanctuary: {
       kicker: "어머니 나무의 품 아래",
-      title: "이종족연합국 그린스토아",
-      text: "강과 숲, 그리고 그 모든 것을 품은 어머니 나무.\n수많은 종족이 하나의 이름 아래 살아가는 제루스의 성역.",
+      title: "이종족연합국\n그린스토아",
+      text: "수없이 많은 종족이\n하나의 이름 아래 살아가는 성역",
     },
   };
   function showVista(key, after) {
     return transitionTo(
       () => {
-        cinematic = { key, after, started: elapsed, frame: -1 };
+        cinematic = { key, after, started: null, frame: -1, revealed: false };
+        vista.classList.toggle("is-sanctuary", key === "sanctuary");
         const art = pictures[key],
           ratio = art.naturalWidth / art.naturalHeight;
         vistaArt.width = Math.min(960, art.naturalWidth);
@@ -351,6 +353,9 @@ const guildGame = (() => {
           vistas[key].kicker;
         document.querySelector("#vista-title").textContent = vistas[key].title;
         document.querySelector("#vista-caption").textContent = vistas[key].text;
+        for (const id of ["vista-kicker", "vista-title", "vista-caption"])
+          document.querySelector("#" + id).style.removeProperty("opacity");
+        document.querySelector("#vista-next").textContent = "E · 계속";
         root.dataset.vista = key;
         root.classList.add("is-vista");
         vista.hidden = false;
@@ -359,6 +364,7 @@ const guildGame = (() => {
         drawVista();
       },
       () => {
+        cinematic.started = elapsed;
         phase = "vista";
         root.dataset.phase = phase;
         document.querySelector("#vista-next").focus({ preventScroll: true });
@@ -367,6 +373,28 @@ const guildGame = (() => {
   }
   function fitVista() {
     if (root.hidden || vista.hidden || !cinematic) return;
+    if (cinematic.key === "sanctuary") {
+      const holder = document.querySelector(".vista-image");
+      holder.style.width = "100%";
+      holder.style.height = "100%";
+      vistaArt.width = Math.max(
+        1,
+        Math.min(
+          1440,
+          Math.round(vista.clientWidth * Math.min(devicePixelRatio || 1, 1.5)),
+        ),
+      );
+      vistaArt.height = Math.max(
+        1,
+        Math.round(
+          (vistaArt.width * vista.clientHeight) /
+            Math.max(1, vista.clientWidth),
+        ),
+      );
+      cinematic.frame = -1;
+      drawVista();
+      return;
+    }
     const style = getComputedStyle(vista),
       copy = document.querySelector(".vista-copy");
     const innerWidth =
@@ -398,8 +426,13 @@ const guildGame = (() => {
   }
   function drawVista() {
     if (!cinematic) return;
-    const seconds = Math.max(0, elapsed - cinematic.started),
-      frame = motion() ? Math.floor(seconds * 12) : 0;
+    const seconds =
+      cinematic.started === null ? 0 : Math.max(0, elapsed - cinematic.started);
+    if (cinematic.key === "sanctuary") {
+      drawSanctuary(seconds);
+      return;
+    }
+    const frame = motion() ? Math.floor(seconds * 12) : 0;
     if (frame === cinematic.frame) return;
     cinematic.frame = frame;
     const art = pictures[cinematic.key],
@@ -430,9 +463,69 @@ const guildGame = (() => {
       }
     vistaContext.globalAlpha = 1;
   }
+  function drawSanctuary(seconds) {
+    if (!motion()) cinematic.revealed = true;
+    const complete = cinematic.revealed || seconds >= 32;
+    const frame = complete ? "complete" : Math.floor(seconds * 24);
+    if (frame === cinematic.frame) return;
+    cinematic.frame = frame;
+    const progress = complete ? 1 : Math.min(1, seconds / 32);
+    const ease = progress * progress * (3 - 2 * progress);
+    const art = pictures.sanctuary;
+    // One tall painting, uniformly scaled. Keep at least half a screen of vertical
+    // travel on portrait phones as well as on wide desktop displays.
+    const scale = Math.max(
+      vistaArt.width / art.naturalWidth,
+      (vistaArt.height * 1.5) / art.naturalHeight,
+    );
+    const sw = vistaArt.width / scale,
+      sh = vistaArt.height / scale;
+    vistaContext.imageSmoothingEnabled = false;
+    vistaContext.drawImage(
+      art,
+      (art.naturalWidth - sw) / 2,
+      Math.min(
+        art.naturalHeight - sh,
+        Math.round((art.naturalHeight - sh) * ease),
+      ),
+      sw,
+      sh,
+      0,
+      0,
+      vistaArt.width,
+      vistaArt.height,
+    );
+    vista.dataset.pan = progress.toFixed(3);
+    const cue = (start, end) =>
+      complete
+        ? 0
+        : Math.max(
+            0,
+            Math.min(1, (seconds - start) / 1.6, (end - seconds) / 1.6),
+          );
+    document.querySelector("#vista-kicker").style.opacity = String(cue(2, 10));
+    document.querySelector("#vista-caption").style.opacity = String(cue(9, 17));
+    document.querySelector("#vista-title").style.opacity = String(
+      complete ? 1 : Math.max(0, Math.min(1, (seconds - 17) / 2.5)),
+    );
+    document.querySelector("#vista-next").textContent = complete
+      ? "E · 성역으로"
+      : "E · 연출 모두 보기";
+  }
   function finishVista() {
     if (!active || inputLocked || phase !== "vista" || !cinematic) return;
     keys.clear();
+    if (
+      cinematic.key === "sanctuary" &&
+      motion() &&
+      !cinematic.revealed &&
+      elapsed - cinematic.started < 32
+    ) {
+      cinematic.revealed = true;
+      cinematic.frame = -1;
+      drawVista();
+      return;
+    }
     cinematic.after();
   }
   function resumeWorld(after) {
@@ -690,7 +783,7 @@ const guildGame = (() => {
       for (let f = 0; f < 4; f++) makeSprite(kind, dir, f);
 
   function actor(id, x, y, dir = "down") {
-    return { id, x, y, dir, moving: false, path: [], pathDelay: 0 };
+    return { id, x, y, dir, moving: false };
   }
   function updateObjective() {
     objective.textContent =
@@ -702,9 +795,7 @@ const guildGame = (() => {
             ? "어머니 나무의 품 아래, 그린스토아에 도착했다."
             : questAccepted
               ? "길드 출입문으로 나가 기사단의 마차에 타자."
-              : phase === "queue"
-                ? "접수 순서를 기다리자."
-                : "루시에게 그린스토아행 의뢰를 확인하자.";
+              : "루시에게 그린스토아행 의뢰를 확인하자.";
   }
   function notify(text) {
     const toast = document.querySelector("#game-toast");
@@ -753,6 +844,7 @@ const guildGame = (() => {
   function portraitFor(kind, expression = "neutral") {
     portraitContext.clearRect(0, 0, portrait.width, portrait.height);
     portrait.hidden = !kind;
+    portraitFrame.hidden = !kind;
     portrait.dataset.character = kind || "";
     portrait.dataset.expression = expression;
     if (!kind) return;
@@ -900,9 +992,7 @@ const guildGame = (() => {
         : person.name
       : line.voice
         ? "어디선가 들려오는 목소리"
-        : root.classList.contains("is-recollection")
-          ? "떠오르는 이야기"
-          : placeNames[location][1];
+        : placeNames[location][1];
     portraitFor(line.kind, line.expression);
     cancelPortraitMotion();
     dialogue.pulses = 0;
@@ -979,88 +1069,6 @@ const guildGame = (() => {
     const after = dialogue.after;
     closeDialogue();
     if (after) after();
-  }
-  function beginQueue() {
-    queueActive = true;
-    phase = "queue";
-    root.dataset.phase = phase;
-    queueTime = 0;
-    keys.clear();
-    const bran = npcs.find((n) => n.id === "bran"),
-      mia = npcs.find((n) => n.id === "mia");
-    bran.path = [
-      { x: 448, y: 188 },
-      { x: 448, y: 230 },
-      { x: 552, y: 230 },
-    ];
-    bran.pathDelay = 0;
-    mia.path = [
-      { x: 360, y: 188 },
-      { x: 448, y: 188 },
-      { x: 448, y: 244 },
-      { x: 208, y: 244 },
-      { x: 208, y: 222 },
-    ];
-    mia.pathDelay = 0.65;
-    player.path = [
-      { x: 360, y: 222 },
-      { x: 360, y: 188 },
-    ];
-    player.pathDelay = 1.4;
-    if (!motion())
-      for (const a of [bran, mia, player]) {
-        const end = a.path.at(-1);
-        a.x = end.x;
-        a.y = end.y;
-        a.path = [];
-        a.dir = a === player ? "up" : "down";
-      }
-    updateObjective();
-  }
-  function beginRecollection() {
-    storyStep = "recollection";
-    beginQueue();
-    root.classList.add("is-recollection");
-    speak(
-      [
-        {
-          text: "그린스토아.\n제루스 대륙의 허파이자, 수려한 대자연을 품은 이종족들의 연합국.",
-        },
-        {
-          text: "그 건국 전설의 중심에는 어머니 나무가 있었다.\n대륙이 제루스라 불리기 수천 년 전부터 존재해 온, 순수한 생명력의 집합체.",
-        },
-        {
-          text: "그 나무로부터 태어나 성역을 지키며 살아가는 이들을\n세상은 ‘엘프’라 불렀다.",
-        },
-        {
-          text: "하지만 고대의 엘프들조차 대륙의 혼란을 잠재우지는 못했다.\n마족과 악령이 들끓고, 국가조차 없어 약탈과 죽음이 끊이지 않던 시대.",
-        },
-        {
-          text: "마침내 국가의 필요성을 느낀 엘프들은 성역을 중심으로\n중립이자 개방 국가인 그린스토아를 세웠다.",
-        },
-        {
-          text: "인간들의 차별을 피해 자유를 갈망하던 이종족들이 모여들었다.\n그들은 평등과 보금자리에 보답하며, 시민이자 성역을 지키는 힘이 되었다.",
-        },
-        {
-          text: "그리고 최초의 용사, 제르가 나타났다.\n당대 최강의 인간들과 그린스토아는 동맹을 맺고 선대 마왕을 격퇴했다.",
-        },
-        {
-          text: "대륙은 하나로 이어졌고, 이 땅에는 긴 평화가 찾아왔다.\n시간이 흐른 지금, 그곳의 또 다른 이름은—",
-        },
-        { voice: true, text: "…님…" },
-        { text: "종족 불문, 신분 불문.\n모두가 평등한 중립 지대—" },
-        { voice: true, text: "…험가 님…" },
-        { text: "이종족연합국, 그린스토…" },
-        { voice: true, text: "모험가 님~" },
-      ],
-      () => {
-        root.classList.remove("is-recollection");
-        if (queueActive) {
-          phase = "queue";
-          root.dataset.phase = phase;
-        } else wakeAtCounter();
-      },
-    );
   }
   function wakeAtCounter() {
     storyStep = "lucy";
@@ -1343,7 +1351,11 @@ const guildGame = (() => {
                   expression: "welcoming",
                   text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
                 },
-                { text: "이종족연합국\n그린스토아." },
+                {
+                  kind: "scout",
+                  expression: "welcoming",
+                  text: "이종족연합국, 그린스토아다.",
+                },
               ],
               () =>
                 showVista("sanctuary", () =>
@@ -1531,34 +1543,6 @@ const guildGame = (() => {
     if (!blocked(player.x + dx, player.y)) player.x += dx;
     if (!blocked(player.x, player.y + dy)) player.y += dy;
   }
-  function followPath(a, dt, speed) {
-    if (queueTime < a.pathDelay || !a.path.length) {
-      a.moving = false;
-      return;
-    }
-    const goal = a.path[0],
-      dx = goal.x - a.x,
-      dy = goal.y - a.y,
-      d = Math.hypot(dx, dy);
-    a.moving = true;
-    a.dir =
-      Math.abs(dx) > Math.abs(dy)
-        ? dx < 0
-          ? "left"
-          : "right"
-        : dy < 0
-          ? "up"
-          : "down";
-    if (d <= speed * dt) {
-      a.x = goal.x;
-      a.y = goal.y;
-      a.path.shift();
-      a.moving = !!a.path.length;
-    } else {
-      a.x += (dx / d) * speed * dt;
-      a.y += (dy / d) * speed * dt;
-    }
-  }
   function drawActor(a) {
     const x = Math.round(a.x),
       y = Math.round(a.y);
@@ -1579,6 +1563,11 @@ const guildGame = (() => {
     if (location === "carriage" && motion())
       ctx.translate(0, [0, -1, 0, 1][Math.floor(elapsed * 5) % 4]);
     ctx.drawImage(background, 0, 0);
+    if (location === "carriage") {
+      // Extend the edge rows through the tiny carriage shake, with no bare rim.
+      ctx.drawImage(background, 0, 0, W, 1, 0, -2, W, 2);
+      ctx.drawImage(background, 0, H - 1, W, 1, 0, H, W, 2);
+    }
     drawScenery();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
@@ -1603,20 +1592,6 @@ const guildGame = (() => {
     elapsed += dt;
     if (phase === "free") movePlayer(dt);
     else player.moving = false;
-    if (queueActive) {
-      queueTime += dt;
-      for (const a of [
-        npcs.find((n) => n.id === "bran"),
-        npcs.find((n) => n.id === "mia"),
-        player,
-      ])
-        followPath(a, dt, 108);
-      if ([player, ...npcs].every((a) => !a.path.length)) {
-        queueActive = false;
-        player.dir = "up";
-        if (phase === "queue") wakeAtCounter();
-      }
-    }
     drawWorld();
     drawVista();
     request = requestAnimationFrame(tick);
@@ -1870,9 +1845,9 @@ const guildGame = (() => {
       : box.width * (mobile ? 0.96 : 0.54);
     const height = Math.min(available, desired, widthLimit / ratio);
     // Set both dimensions together so max-width never silently shrinks the bust.
-    portrait.style.height = height + "px";
-    portrait.style.width = height * ratio + "px";
-    portrait.style.maxHeight = "none";
+    portraitFrame.style.height = height + "px";
+    portraitFrame.style.width = height * ratio + "px";
+    portraitFrame.style.maxHeight = "none";
   }
   const dialogueLayout = new ResizeObserver(fitPortrait);
   dialogueLayout.observe(dialogueBox);
@@ -1907,8 +1882,7 @@ const guildGame = (() => {
     phase = "dialogue";
     elapsed = 0;
     location = "guild";
-    storyStep = "recollection";
-    queueActive = false;
+    storyStep = "lucy";
     buildMap();
     questAccepted = false;
     hp = 18;
@@ -1935,11 +1909,11 @@ const guildGame = (() => {
       description:
         "제르디아 모험가 길드에 등록된 증명서.\n성역에 들어가려면 정문에서 제시해야 한다.",
     });
-    player = actor("hero", 360, 268, "up");
+    player = actor("hero", 360, 188, "up");
     npcs = [
       actor("lucy", 360, 100),
-      actor("bran", 360, 188),
-      actor("mia", 360, 222),
+      actor("bran", 552, 230),
+      actor("mia", 208, 222),
       actor("nara", 83, 330, "right"),
       actor("tobin", 620, 268, "left"),
       actor("leon", 592, 404, "up"),
@@ -1951,17 +1925,15 @@ const guildGame = (() => {
     drawWorld();
     request = requestAnimationFrame(tick);
     canvas.focus({ preventScroll: true });
-    beginRecollection();
+    wakeAtCounter();
   }
   function stop() {
     active = false;
     ++transitionSerial;
     transitionAnimation?.cancel();
     transition.hidden = true;
-    root.classList.remove("is-recollection");
     cancelPortraitMotion();
     hideVista();
-    queueActive = false;
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
@@ -1975,7 +1947,10 @@ const guildGame = (() => {
     inputLocked = false;
     root.dataset.ready = "true";
     canvas.focus({ preventScroll: true });
-    if (dialogue) typeLetter();
+    if (dialogue) {
+      reactPortrait(dialogue.lines[dialogue.index]);
+      typeLetter();
+    }
   }
   return {
     ready,
