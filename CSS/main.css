@@ -156,12 +156,20 @@ h1 {
   position: relative;
 }
 .logo-leaf,
+.logo-sprig,
 .logo-spark,
 .logo-tails {
   position: absolute;
   pointer-events: none;
   shape-rendering: crispEdges;
   filter: drop-shadow(2px 2px 0 #132b30);
+}
+.logo-sprig {
+  left: -10px;
+  bottom: 6px;
+  width: 16px;
+  height: 24px;
+  opacity: 0.85;
 }
 .logo-leaf {
   left: calc(100% - 3px);
@@ -174,6 +182,7 @@ h1 {
   top: -2px;
   width: 8px;
   height: 16px;
+  animation: logo-star-glow 5.6s ease-in-out infinite;
 }
 .logo-tails {
   left: 0;
@@ -181,6 +190,102 @@ h1 {
   width: 100%;
   height: 12px;
   opacity: 0.7;
+}
+.logo-twinkles {
+  position: absolute;
+  inset: -8px -12px -6px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 3px #fff0c780);
+}
+.logo-twinkles i {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff9df;
+  opacity: 0;
+  clip-path: polygon(
+    3px 0,
+    5px 0,
+    5px 2px,
+    6px 2px,
+    6px 3px,
+    8px 3px,
+    8px 5px,
+    6px 5px,
+    6px 6px,
+    5px 6px,
+    5px 8px,
+    3px 8px,
+    3px 6px,
+    2px 6px,
+    2px 5px,
+    0 5px,
+    0 3px,
+    2px 3px,
+    2px 2px,
+    3px 2px
+  );
+  animation: logo-twinkle 5.2s ease-in-out infinite;
+}
+.logo-twinkles i:nth-child(1) {
+  left: 8%;
+  top: 40%;
+  animation-delay: -1.2s;
+}
+.logo-twinkles i:nth-child(2) {
+  left: 44%;
+  top: 78%;
+  animation-delay: -3.5s;
+  animation-duration: 6.4s;
+}
+.logo-twinkles i:nth-child(3) {
+  right: 6%;
+  top: 48%;
+  animation-delay: -2.3s;
+  animation-duration: 5.8s;
+}
+.logo-twinkles i:nth-child(4) {
+  left: 65%;
+  top: 16%;
+  animation-delay: -4.6s;
+  animation-duration: 7.2s;
+}
+@keyframes logo-twinkle {
+  0%,
+  48%,
+  82%,
+  100% {
+    opacity: 0;
+  }
+  57% {
+    opacity: 0.35;
+  }
+  64% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 0.3;
+  }
+}
+@keyframes logo-star-glow {
+  0%,
+  35%,
+  85%,
+  100% {
+    opacity: 0.75;
+    filter: drop-shadow(2px 2px 0 #132b30);
+  }
+  60% {
+    opacity: 1;
+    filter: drop-shadow(0 0 4px #fff0bdc0);
+  }
+}
+.no-motion .logo-spark {
+  animation: none;
+}
+.no-motion .logo-twinkles i {
+  animation: none;
+  opacity: 0;
 }
 .title-prefix {
   display: block;
