@@ -382,12 +382,14 @@ const characterSpeech = (() => {
   }
 
   character.addEventListener("pointermove", (event) => {
-    character.style.cursor = spriteAnimation.hitTest(
-      event.clientX,
-      event.clientY,
-    )
+    const hovering = spriteAnimation.hitTest(event.clientX, event.clientY);
+    character.classList.toggle("is-character-hovered", hovering);
+    character.style.cursor = hovering
       ? "var(--cursor-quill-active, pointer)"
       : "var(--cursor-quill, default)";
+  });
+  character.addEventListener("pointerleave", () => {
+    character.classList.remove("is-character-hovered");
   });
   character.addEventListener("click", (event) => {
     if (event.detail === 0) {

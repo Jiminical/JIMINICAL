@@ -196,6 +196,7 @@ input:focus-visible {
     linear-gradient(0deg, #071b258c, transparent 28%);
 }
 .character-sprite {
+  --character-outline: #ffffffe0;
   position: absolute;
   right: 1%;
   bottom: -2%;
@@ -206,6 +207,18 @@ input:focus-visible {
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
+  filter: drop-shadow(1px 0 0 var(--character-outline))
+    drop-shadow(-1px 0 0 var(--character-outline))
+    drop-shadow(0 1px 0 var(--character-outline))
+    drop-shadow(0 -1px 0 var(--character-outline));
+}
+.character-sprite.is-character-hovered,
+.character-sprite:focus-visible {
+  --character-outline: #fff;
+  filter: drop-shadow(2px 0 0 var(--character-outline))
+    drop-shadow(-2px 0 0 var(--character-outline))
+    drop-shadow(0 2px 0 var(--character-outline))
+    drop-shadow(0 -2px 0 var(--character-outline));
 }
 .sound-toggle {
   position: absolute;
@@ -1979,7 +1992,7 @@ const storyJourney = (() => {
       art: "어둠 속에서도 빛나는 성역을 지키는 거대한 어머니 나무.",
     },
     {
-      text: "어머니 나무의 힘을 나눠 받은 고대 엘프들조차 대륙의 혼란을 잠재우기에는 역부족이었다.\n마침내 그들은 나라의 필요성을 깨닫고, 평등과 자유를 기치로 성역 주변에 중립 국가를 세웠다.",
+      text: "하지만 어머니 나무의 힘을 나눠 받은 고대 엘프들조차 대륙의 혼란을 잠재우기에는 역부족이었다.\n마침내 그들은 나라의 필요성을 깨닫고, 평등과 자유를 기치로 성역 주변에 중립 국가를 세웠다.",
       art: "어머니 나무 아래에 모여 새로운 나라의 터를 닦는 고대 엘프들.",
     },
     {
@@ -2749,12 +2762,14 @@ const characterSpeech = (() => {
   }
 
   character.addEventListener("pointermove", (event) => {
-    character.style.cursor = spriteAnimation.hitTest(
-      event.clientX,
-      event.clientY,
-    )
+    const hovering = spriteAnimation.hitTest(event.clientX, event.clientY);
+    character.classList.toggle("is-character-hovered", hovering);
+    character.style.cursor = hovering
       ? "var(--cursor-quill-active, pointer)"
       : "var(--cursor-quill, default)";
+  });
+  character.addEventListener("pointerleave", () => {
+    character.classList.remove("is-character-hovered");
   });
   character.addEventListener("click", (event) => {
     if (event.detail === 0) {

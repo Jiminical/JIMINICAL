@@ -88,6 +88,7 @@ input:focus-visible {
     linear-gradient(0deg, #071b258c, transparent 28%);
 }
 .character-sprite {
+  --character-outline: #ffffffe0;
   position: absolute;
   right: 1%;
   bottom: -2%;
@@ -98,6 +99,18 @@ input:focus-visible {
   object-fit: contain;
   object-position: center bottom;
   image-rendering: pixelated;
+  filter: drop-shadow(1px 0 0 var(--character-outline))
+    drop-shadow(-1px 0 0 var(--character-outline))
+    drop-shadow(0 1px 0 var(--character-outline))
+    drop-shadow(0 -1px 0 var(--character-outline));
+}
+.character-sprite.is-character-hovered,
+.character-sprite:focus-visible {
+  --character-outline: #fff;
+  filter: drop-shadow(2px 0 0 var(--character-outline))
+    drop-shadow(-2px 0 0 var(--character-outline))
+    drop-shadow(0 2px 0 var(--character-outline))
+    drop-shadow(0 -2px 0 var(--character-outline));
 }
 .sound-toggle {
   position: absolute;
