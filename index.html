@@ -4139,6 +4139,323 @@ const eventScenes = (() => {
   };
 })();
 
+// Field art is authored on a 22 × 30 grid, enlarged exactly twice.
+// o: charcoal, h/j: hair, f/s: skin, c/v: cloth, a/g: identifying accents.
+const fieldSprites = (() => {
+  const palettes = {
+    hero: {
+      h: "#65778e",
+      j: "#43536e",
+      c: "#536781",
+      v: "#3b4964",
+      a: "#b49162",
+      g: "#d4bb83",
+      n: "#19252e",
+    },
+    lucy: {
+      h: "#c7cc9b",
+      j: "#939f7d",
+      c: "#eee6cf",
+      v: "#b9bcb6",
+      a: "#7b608a",
+      g: "#b5a078",
+      f: "#edc5ae",
+      s: "#c58e85",
+    },
+    bran: {
+      h: "#b96f50",
+      j: "#894f42",
+      c: "#8e715a",
+      v: "#655849",
+      a: "#aa514c",
+      g: "#c4aa77",
+      f: "#dbad8c",
+      s: "#b78070",
+    },
+    mia: {
+      h: "#947254",
+      j: "#6c5746",
+      c: "#738365",
+      v: "#4f6255",
+      a: "#e4d9bd",
+      g: "#bca26b",
+      f: "#e7bc99",
+      s: "#bb8974",
+    },
+    nara: {
+      h: "#e0dfcf",
+      j: "#adb7b9",
+      c: "#596d84",
+      v: "#424f68",
+      a: "#8ba6b6",
+      g: "#c2b182",
+      f: "#e7c7af",
+      s: "#c48e91",
+    },
+    tobin: {
+      h: "#b96b48",
+      j: "#85503d",
+      c: "#697b5f",
+      v: "#4e6050",
+      a: "#e1d6b9",
+      g: "#c7ad6f",
+      f: "#d9a383",
+      s: "#ad7767",
+    },
+    leon: {
+      h: "#4b526b",
+      j: "#393f56",
+      c: "#736781",
+      v: "#514c67",
+      a: "#ded6be",
+      g: "#b9a779",
+      f: "#e1bca2",
+      s: "#bc8d7c",
+    },
+    rogue: {
+      h: "#d9bc6b",
+      j: "#ad945c",
+      c: "#4c4e56",
+      v: "#353d46",
+      a: "#a9adb0",
+      g: "#c7a778",
+      f: "#d9ae8d",
+      s: "#ac7f70",
+    },
+    scout: {
+      h: "#c1d6a0",
+      j: "#8ea87f",
+      c: "#5c806d",
+      v: "#3f6057",
+      a: "#a48768",
+      g: "#c3d1bc",
+      f: "#e8c6aa",
+      s: "#c19185",
+      n: "#69bba4",
+    },
+  };
+  // Rows are separated by /. Profiles and rear heads are drawn separately.
+  const heads = {
+    hero: {
+      down: "......oo/.....ocoo/....ochcoo/...ochhccoo/..ochhccccoo/..ochhnnccco/.ochhnnnnccco/.ochhnnnnncco/.occhnnnnncco/..occnnnncco/..occcnnccco/...occcccco/....ovvvo",
+      up: "......oo/.....ocoo/....ochcoo/...ochhccoo/..ochhccccoo/..ochhcccccco/.ochhhccccccco/.ochhcccccccco/.occhcccccccco/..occccccccco/..occccccccco/...occcccco/....ovvvo",
+      side: "......oo/.....ocoo/....ochcoo/...ochhccoo/..ochhccccoo/..onnnhccccco/.onnnnhcccccco/.onnnnhcccccco/..onnnccccccco/...onncccccco/....occcccco/.....ovvvo",
+    },
+    lucy: {
+      down: ".....oooooo/...oohhhhhhoo/..ohhhhhhhhhho/.ohhhhjjhhhhhho/.ohhffhhfffhhho/.ohffhfffffhhho/.ohfoofffoofhho/.ohffffffffffho/.ohhffffffffhho/..ohhffffffhho/...ohhsssshhho/....oohhhhooo",
+      up: ".....oooooo/...oohhhhhhoo/..ohhhhhhhhhho/.ohhhhhhhhhhhho/.ohhhhhhhhhhhho/.ohhhhhhhhhhjho/.ohhhhhhhhhhjho/.ohhhhhhhhhjjho/.ohhhhhhhhjjhho/..ohhhhhhhjjho/..ohhhhhhhhho/...ohhhhhho",
+      side: ".....oooooo/....ohhhhhhoo/...ohhhhhhhhho/..ohhhhhhhhhho/..offhhhhhjjhho/.offfhhhhhhjhho/.offoffhhhhjhho/..offfffhhjjhho/...offfhhhjjho/....offhhhjho/.....oshhhho/......ohhho",
+    },
+    bran: {
+      down: ".....oo...oo/...oohhooohho/..ohhhhhhhhhhoo/.ohhhjjhhhhhhho/.ohhfffhhfffhho/..offfffhffffo/..ofoofffooffo/..offffffffffo/...offfffffso/....osfffsso/.....osffso/......oooo",
+      up: ".....oo...oo/...oohhooohho/..ohhhhhhhhhhoo/.ohhhhhhhhhhhho/.ohhhhhhhhhhhho/..ohhhhhhhhhho/..ohhhhhhhjjho/...ohhhhhjjho/....ohhhjjho/.....ohhjho/......ohho/.......oo",
+      side: ".......oo/.....oohhoo/....ohhhhhhhoo/...ohhhhhhhhho/..offhhhhhjjho/.offffhhhhhho/.offofffhhhhho/..offffffhhho/...osffffhho/....osfssoo/.....osso/......oo",
+    },
+    mia: {
+      down: ".....oooooo/...oohhhhhhoo/..ohhhhhhhhhhho/.ohhhhhhjjhhhho/.ohhffhhhfffhho/.ohfffffffffhho/.ohfoofffoofhho/.ohfffffffffhho/..ohfffffffhho/...ohfffffhho/....oossshhho/......ooohho",
+      up: ".....oooooo/...oohhhhhhoo/..ohhhhhhhhhhho/.ohhhhhhhhhhhho/.ohhhhhhhhhjhho/.ohhhhhhhjjhhho/.ohhhhhjjjhhhho/..ohhhjjhhhhho/...ohhhhhhho/....ohhhhho/.....ohhho/......ooo",
+      side: ".....oooooo/....ohhhhhhoo/...ohhhhhhhhho/..ohhhhhhhjjhho/..offhhhhhjjhho/.offffhhhhjjhho/.offoffhhhjjhho/..offffffhjjho/...offffhhjho/....offhhjho/.....oshhho/......ohho",
+    },
+    nara: {
+      down: "..oo........oo/..oho......oho/..ohho....ohho/..ohhhoooohhho/..ohhhhhhhhhho/.ohhhjjhhhhhho/.ohhffhhfffhhho/.ohfoofffoofhho/.ohfffffffffhho/.ohhfffffffhhho/..ohhfffffhhho/...ohhssshhho/....oohhhoo",
+      up: "..oo........oo/..oho......oho/..ohho....ohho/..ohhhoooohhho/..ohhhhhhhhhho/.ohhhhhhhhhhho/.ohhhhhhhhhhhho/.ohhhhhhhhhjjho/.ohhhhhhhhjjhho/.ohhhhhhhhjjhho/..ohhhhhhhjhho/...ohhhhhhho/....oohhhoo",
+      side: "....oo.....oo/....oho..ohho/....ohho.ohhho/...ohhhhhhhhho/..ohhhhhhhhjjho/..offhhhhhjjhho/.offffhhhhjjhho/.offoffhhhjjhho/..offfffhhjjho/...offfhhhjho/....oshhhjho/.....ohhhho/......ohho",
+    },
+    tobin: {
+      down: ".....oo...oo/...oohhooohhoo/..ohhhhhhhhhhhho/.ohhhjjjjjjhhhhho/.ohhffffffffhhho/.ohffoofffooffho/.ohfffffsfffffho/.ohhffhhhhffhhho/.ohhhhhffhhhhhho/..ohhhhjjhhhhho/...ohhhjjhhhho/....ohhhhhhho/.....ohhhhho/......oooo",
+      up: ".....oo...oo/...oohhooohhoo/..ohhhhhhhhhhhho/.ohhhhhhhhhhhhho/.ohhhhhhhhhhhhho/.ohhhhhhhhhhjjho/.ohhhhhhhhjjhhho/.ohhhhhhjjhhhhho/..ohhhhhhhhhho/...ohhhhhhhho/....ohhhhhho/.....ohhhho/......oooo",
+      side: "......ooooo/....oohhhhhhoo/...ohhhhhhhhhho/..ohhhhhhhhhjho/..offhhhhhhjjho/.offfofffhhjjho/.offfffffhjjjho/..ohhffhhhhhho/..ohhhhhhhhho/...ohhhhhhhho/....ohhjjhho/.....ohhhho/......oooo",
+    },
+    leon: {
+      down: ".......oo/.....oohhooo/...oohhhhhhhoo/..ohhhhhhhhhho/.ohhhhjjhhhhho/.ohhfffhhhffhho/..offffffhfffo/..oooofooooffo/..ofooofoofffo/...offfffffso/....offfffso/.....osssso/......oooo",
+      up: ".......oo/.....oohhooo/...oohhhhhhhoo/..ohhhhhhhhhho/.ohhhhhhhhhhhho/.ohhhhhhhhhhhho/..ohhhhhhhhjjho/..ohhhhhhhjjhho/...ohhhhhjjhho/....ohhhjjhho/.....ohhhho/......oooo",
+      side: ".......oo/.....oohhooo/....ohhhhhhhoo/...ohhhhhhhhhho/..ohhhhhhhhjjho/..offhhhhhhjjho/.oaaoaffhhhjjho/.oaoaofffhhjho/..offffffhjho/...offfffhho/....osffso/.....oooo",
+    },
+    rogue: {
+      down: ".......oo..o/......ohhoohho/.....ohhhhhhhhoo/....ohhhhhhhhhho/...offjjhhhhhhho/..offfffjjhhhhhho/..offffffffhhho/..ofoofffooffho/..offfffffffso/...offaooafso/....offaafso/.....osssso/......oooo",
+      up: ".......oo..o/......ohhoohho/.....ohhhhhhhhoo/....ohhhhhhhhhho/...ossjjhhhhhhho/..ossssjjhhhhhho/..osssssjhhhhhho/..osssssjjhhhhho/...ossssjjhhhho/....osssjjhhho/.....ossjjhho/......oooooo",
+      side: ".......oo..o/......ohhoohho/.....ohhhhhhhhoo/....ohhhhhhhhhho/...offjjhhhhhhho/..offffjjhhhjjho/.offofffjjhjjjho/..offffffjjjjho/...offfffjjjho/....offaassso/.....osssso/......oooo",
+    },
+    scout: {
+      down: "......oooo/.....ohhhho/......ojjo/....oohhhhoo/...ohhhhhhhhoo/..ohhhjjjhhhho/.ohhffhhfffhhho/ofhhffffffffhhfo/offhoofffoofhffo/.oshffffffffhso/..ohhffffffhho/...ohhffffhhho/....ohssshho/.....ohhhho",
+      up: "......oooo/.....ohhhho/......ojjo/....oohhhhoo/...ohhhhhhhhoo/..ohhhhhhhhhho/.ohhhhhhhhhhhho/ofhhhhhhhhhhhhfo/offhhhhhhhhhffo/.oshhhhhhhhhhso/..ohhhhhhhjhho/...ohhhhhhjhho/....ohhhhjjho/.....ohhhho",
+      side: "......oooo/.....ohhhho/......ojjo/....oohhhhoo/...ohhhhhhhhoo/..ohhhhhhhjjho/..offhhhhjjjho/.offffhhhjjfffoo/.offoffhhjjffffo/..offfffhhjjhho/...offfhhjjhho/....oshhhjhho/.....ohhhhho/......ohhho",
+    },
+  };
+  const bodies = {
+    cloak: {
+      down: "....oooooo/..ooccccccoo/.occcccgccccco/.ovccccccccvo/ovvcccccccvvvo/ovvcccccccvvvo/.ovcccccccvvo/..ovvcccvvvo/...ovvvvvo/....ooooo",
+      up: "....oooooo/..ooccccccoo/.occcccccccco/.ovccccccccvo/ovvcccccccvvvo/ovvcccccccvvvo/.ovvcccccvvvo/..ovvcccvvvo/...ovvvvvo/....ooooo",
+      side: ".....ooooo/....occccco/...occccccvo/..occcccccvvo/.ovcccccccvvo/.ovcccccccvvo/..ovccccccvvo/...ovccccvvo/....ovvvvo/.....oooo",
+    },
+    blouse: {
+      down: "....oooooo/...occaacco/..occcaacccco/.occcccccccco/.ovccccccccvo/.ovccccccccvo/..ovccccccvo/...obbbbbbo/...obbbbbbo/....oooooo",
+      up: "....oooooo/...occcccco/..occccccccco/.occcccccccco/.ovccccccccvo/.ovccccccccvo/..ovccccccvo/...obbbbbbo/...obbbbbbo/....oooooo",
+      side: ".....ooooo/....occccco/...occccccvo/..occcccccvvo/..ovccccccvvo/..ovccccccvvo/...ovccccvvo/....obbbbbo/....obbbbbo/.....ooooo",
+    },
+    jacket: {
+      down: "....oooooo/..oocaaaaccoo/.occcaaaacccco/.occccaaccccvo/.ovcccaacccvvo/.ovccccccccvvo/..ovccccccvvo/...ovvggvvvo/....ovvvvvo/.....ooooo",
+      up: "....oooooo/..oocaaaaccoo/.occccccccccco/.occcccccccvvo/.ovcccccccvvvo/.ovcccccccvvvo/..ovccccccvvo/...ovvvvvvvo/....ovvvvvo/.....ooooo",
+      side: ".....ooooo/...oocaaaco/..occcaaacvo/..occcccccvvo/..ovccccccvvo/..ovccccccvvo/...ovccccvvo/....ovggvvo/.....ovvvo/......ooo",
+    },
+    vest: {
+      down: "....oooooo/..ooaccccaaoo/.oaccccccccaao/.oaccvvvvccavo/.oaccvvvvccavo/..occvvvvccvo/..occvvvvccvo/...ocggcccco/....occccco/.....ooooo",
+      up: "....oooooo/..ooacccccaoo/.oaccccccccaao/.oaccccccccaao/.oaccccccccavo/..ovccccccvvo/..ovccccccvvo/...ovvvvvvvo/....ovvvvvo/.....ooooo",
+      side: ".....ooooo/...ooccccao/..occccccaao/..occcvvccavo/..occcvvccavo/...occvvccvo/...ovccccvvo/....ovggvvo/.....ovvvo/......ooo",
+    },
+  };
+  const cache = new Map();
+  function paint(c, pattern, x, y, palette) {
+    pattern.split("/").forEach((row, dy) => {
+      [...row].forEach((mark, dx) => {
+        if (mark === ".") return;
+        c.fillStyle = palette[mark];
+        c.fillRect(x + dx, y + dy, 1, 1);
+      });
+    });
+  }
+  function legs(c, kind, side, frame, p) {
+    const wide = kind === "tobin",
+      step = [0, 1, 0, -1][frame];
+    const leg = (x, end, toe = 0) => {
+      c.fillStyle = p.o;
+      c.fillRect(x, 23, 3, end - 22);
+      c.fillStyle = p.b;
+      c.fillRect(x + 1, 23, 1, end - 23);
+      c.fillStyle = p.o;
+      c.fillRect(x + toe, end, 4, 1);
+    };
+    if (side) {
+      leg(10 + step, frame % 2 ? 26 : 27, -1);
+      leg(9 - step, 27, frame === 2 ? -2 : -1);
+    } else {
+      leg(
+        (wide ? 6 : 7) - Math.max(0, step),
+        step < 0 ? 26 : 27,
+        frame === 2 ? -1 : 0,
+      );
+      leg(
+        (wide ? 13 : 12) + Math.max(0, -step),
+        step > 0 ? 26 : 27,
+        frame === 2 ? 1 : 0,
+      );
+    }
+  }
+  function make(kind, direction = "down", frame = 0) {
+    const key = kind + ":" + direction + ":" + frame;
+    if (cache.has(key)) return cache.get(key);
+    const p = { o: "#303438", b: "#38363d", ...palettes[kind] };
+    const native = document.createElement("canvas");
+    native.width = 22;
+    native.height = 30;
+    const c = native.getContext("2d"),
+      side = ["left", "right"].includes(direction);
+    const view = side ? "side" : direction,
+      bob = frame % 2;
+    if (direction === "right") {
+      c.translate(22, 0);
+      c.scale(-1, 1);
+    }
+    if (["lucy", "mia", "nara", "scout"].includes(kind))
+      paint(
+        c,
+        ".oooooooooooooo/ohjjjjjjjjjjjjho/ohjjjjjjjjjjjjho/ohjjjjjjjjjjjjho/ohjjjjjjjjjjjjho/ohjjjjjjjjjjjjho/ohhjjjjjjjjjjhho/.ohhjjjjjjjjhho/..ohhjjjjjjhho/...ooo..oooo",
+        3,
+        10 + bob,
+        p,
+      );
+    if (kind === "nara")
+      paint(
+        c,
+        "ho/hho/.hho/..hho/..hho/.hjho/ohjho/ohho/.oo",
+        2 + [0, 1, 0, -1][frame],
+        18,
+        p,
+      );
+    if (kind === "bran")
+      paint(c, "oo/ohho/ohho/.ohho/.ohho/..oo", 16, 9 + bob, p);
+    legs(c, kind, side, frame, p);
+    const type =
+      kind === "lucy"
+        ? "blouse"
+        : ["bran", "leon"].includes(kind)
+          ? "jacket"
+          : ["tobin", "rogue"].includes(kind)
+            ? "vest"
+            : "cloak";
+    const bodyY = kind === "tobin" ? 17 : 14;
+    let body = bodies[type][view];
+    if (kind === "tobin")
+      body =
+        body.split("/").slice(0, 6).join("/") +
+        (side ? "/...ovggvvo/....ooooo" : "/..ocggggccco/...ooooooo");
+    paint(c, body, 4, bodyY + bob, p);
+    if (kind === "lucy") {
+      // Long blouse sleeves end in her dark gloves, not a brown jacket.
+      paint(c, "bb/bb", side ? 8 : 5, 20 + bob, p);
+      if (!side) paint(c, "bb/bb", 16, 20 + bob, p);
+    }
+    if (kind === "hero") {
+      paint(c, "a/a/a/aa/.aa", side ? 8 : 9, 15 + bob, p);
+      paint(
+        c,
+        "ooo/aago/aaao/.oo",
+        direction === "up" ? 4 : side ? 13 : 16,
+        20 + bob,
+        p,
+      );
+    }
+    if (kind === "lucy" && direction !== "up")
+      paint(c, "a.a/.a/.a", side ? 7 : 10, 14 + bob, p);
+    if (kind === "mia") {
+      const braidX = side ? 14 : 16;
+      paint(c, "oho/hhho/ojho/hhho", braidX, 13 + bob, p);
+      paint(c, "ojho/hhho/ogo/.o", braidX + [0, 0, 0, -1][frame], 17 + bob, p);
+    }
+    if (kind === "leon")
+      paint(c, "ooooo/oaggo/oaaao/oaaao/ooooo", side ? 7 : 14, 20 + bob, p);
+    if (kind === "scout") {
+      if (!side) {
+        paint(c, "of/ffo/.so", 1, 7 + bob, p);
+        paint(c, "fo/off/os", 18, 7 + bob, p);
+      }
+      paint(c, "gggo/ggggo/.ggo", side ? 14 : 15, 15 + bob, p);
+      if (direction !== "up")
+        paint(
+          c,
+          "aaaaaaa/aaaaaaa/aaaaaaa/aaaaaaa/aaaaaaa/ovvvvvo",
+          side ? 9 : 8,
+          17 + bob,
+          p,
+        );
+      else paint(c, "a/.a/..a/...a", 9, 16 + bob, p);
+      if (direction !== "up") paint(c, ".g/gng/.g", side ? 7 : 10, 15 + bob, p);
+      if (direction === "up" || side)
+        paint(c, "g.g/aoa/aoa/aaa/aaa", 15, 12 + bob, p);
+    }
+    if (kind === "rogue")
+      paint(c, side ? "a/vo" : "a...a/ovvvo", side ? 7 : 5, 15 + bob, p);
+    const headY =
+      kind === "scout" || kind === "nara" ? 0 : kind === "tobin" ? 5 : 2;
+    let head = heads[kind][view];
+    if (kind === "rogue" && direction === "right")
+      head = head.replace(
+        "..offffjjhhhjjho/.offofffjjhjjjho",
+        "..offffsshhhjjho/.offofffsshhjjho",
+      );
+    paint(c, head, kind === "tobin" ? 2 : 3, headY + bob, p);
+    const image = document.createElement("canvas");
+    image.width = 44;
+    image.height = 60;
+    const out = image.getContext("2d");
+    out.imageSmoothingEnabled = false;
+    out.drawImage(native, 0, 0, 44, 60);
+    cache.set(key, image);
+    return image;
+  }
+  return { make };
+})();
+
 // A self-contained opening journey. Each room uses a 720 × 480 pixel world.
 const guildGame = (() => {
   const root = document.querySelector("#game-screen");
@@ -4196,74 +4513,38 @@ const guildGame = (() => {
     hero: {
       name: "",
       portrait: 0,
-      coat: "#465563",
-      trim: "#829398",
-      hair: "#303a45",
-      skin: "#000000",
     },
     lucy: {
       name: "루시",
       portrait: "lucy",
-      coat: "#eee9df",
-      trim: "#c4c7cf",
-      hair: "#bec58b",
-      skin: "#f3c9b1",
     },
     bran: {
       name: "브란",
       portrait: 1,
-      coat: "#795b43",
-      trim: "#b58d61",
-      hair: "#9a4f36",
-      skin: "#d6a380",
     },
     mia: {
       name: "미아",
       portrait: 2,
-      coat: "#526845",
-      trim: "#a2ae78",
-      hair: "#775038",
-      skin: "#ebbb93",
     },
     nara: {
       name: "나라",
       portrait: 3,
-      coat: "#414e68",
-      trim: "#9aabc0",
-      hair: "#ded7bd",
-      skin: "#e8c3a3",
     },
     tobin: {
       name: "토빈",
       portrait: 4,
-      coat: "#52624c",
-      trim: "#b2ac81",
-      hair: "#875038",
-      skin: "#d7a67e",
     },
     leon: {
       name: "레온",
       portrait: 5,
-      coat: "#4b4b6c",
-      trim: "#bca86c",
-      hair: "#353b53",
-      skin: "#e1bea3",
     },
     rogue: {
       name: "노란 머리 도적",
       portrait: 6,
-      coat: "#30333d",
-      trim: "#8c929e",
-      hair: "#ecd16e",
-      skin: "#e1ac87",
     },
     scout: {
       name: "카니아",
       portrait: 7,
-      coat: "#355e53",
-      trim: "#b0b88c",
-      hair: "#b9d79f",
-      skin: "#edd3bc",
     },
   };
   const pictures = {};
@@ -4321,7 +4602,6 @@ const guildGame = (() => {
   background.width = W;
   background.height = H;
   const map = background.getContext("2d");
-  const spriteBank = new Map();
   const portraitFrames = new Map();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const motion = () =>
@@ -4732,243 +5012,7 @@ const guildGame = (() => {
     );
   }
 
-  // 44 × 60 SD cels add hair, cloth and equipment detail at a shared foot anchor.
-  function makeSprite(kind, direction, frame) {
-    const key = kind + direction + frame;
-    if (spriteBank.has(key)) return spriteBank.get(key);
-    const image = document.createElement("canvas");
-    image.width = 44;
-    image.height = 60;
-    const c = image.getContext("2d"),
-      p = cast[kind];
-    const bob = frame % 2,
-      step = frame === 1 ? 2 : frame === 3 ? -2 : 0;
-    const q = (x, y, w, h, color) => rect(c, x, y + bob, w, h, color);
-    const side = direction === "left" ? -3 : direction === "right" ? 3 : 0;
-    const front = direction !== "up",
-      ink = "#232634";
-    // Separate feet and trousers keep the four walking cels legible.
-    for (const [x, offset] of [
-      [13, step],
-      [25, -step],
-    ]) {
-      rect(c, x, 46 + Math.max(0, offset), 7, 10 - Math.max(0, offset), ink);
-      rect(c, x + 1, 47 + Math.max(0, offset), 4, 5, "#4c4650");
-      rect(c, x - 1, 54 + Math.min(0, offset), 9, 3, "#332e32");
-      rect(c, x, 54 + Math.min(0, offset), 6, 1, "#957350");
-    }
-    if (kind === "hero") {
-      q(10, 23, 25, 25, "#243142");
-      q(7, 32, 31, 16, "#293b50");
-      q(10, 29, 25, 17, "#4d6375");
-      q(11, 31, 3, 13, "#80939c");
-      q(16, 31, 3, 16, "#3c5065");
-      q(28, 32, 4, 14, "#304355");
-      q(9, 45, 28, 3, "#1f2e3e");
-      q(11, 45, 5, 1, "#a7afa7");
-      q(13, 5, 19, 3, "#455969");
-      q(9, 8, 27, 20, "#354b5e");
-      q(11, 7, 23, 22, "#607788");
-      q(14, 7, 14, 2, "#91a5ac");
-      q(10, 13, 3, 13, "#41566b");
-      q(32, 13, 3, 12, "#2e4055");
-      if (front) {
-        q(14 + side, 12, 17, 15, "#14202b");
-        q(16 + side, 13, 12, 12, "#080e17");
-        q(13 + side, 12, 3, 11, "#99a6ab");
-        q(16 + side, 11, 12, 2, "#7c929d");
-      } else {
-        q(17, 10, 2, 13, "#7c919a");
-        q(19, 22, 11, 3, "#4b6177");
-      }
-      q(10, 27, 25, 4, "#81949c");
-      q(16, 29, 4, 10, "#566f7d");
-      q(22, 30, 3, 3, "#d9c189");
-      q(13, 34, 20, 2, "#967550");
-      q(29, 38, 9, 10, "#a58254");
-      q(30, 39, 7, 2, "#d6b37b");
-      q(32, 43, 3, 2, "#43352e");
-      q(8, 38, 4, 7, "#2b303b");
-    } else {
-      const longHair = ["lucy", "mia", "nara", "scout"].includes(kind);
-      if (longHair) {
-        q(9, 13, 27, 24, p.hair);
-        q(33, 20, 5, 21, p.hair);
-        q(35, 23, 2, 15, "#7e8c72");
-        q(10, 20, 2, 14, "#8e9874");
-      }
-      q(10, 29, 25, 19, ink);
-      q(11, 30, 23, 16, p.coat);
-      q(7, 32, 6, 14, p.coat);
-      q(32, 32, 6, 14, p.coat);
-      q(9, 32, 2, 11, p.trim);
-      q(33, 33, 2, 10, p.trim);
-      q(14, 30, 3, 15, p.trim);
-      q(28, 30, 2, 15, p.trim);
-      q(12, 46, 22, 2, "#302f3a");
-      q(7, 44, 5, 3, "#33313c");
-      q(34, 44, 5, 3, "#33313c");
-      // Stepped hair silhouette, highlights and individual bangs.
-      q(14, 5, 18, 3, p.hair);
-      q(10, 8, 26, 17, p.hair);
-      q(12, 7, 22, 3, kind === "lucy" ? "#d5d5a8" : p.trim);
-      q(16, 7, 10, 2, "#ded3ad");
-      if (front) {
-        q(13 + side, 12, 18, 15, p.skin);
-        q(15 + side, 25, 14, 3, p.skin);
-        q(13 + side, 11, 19, 5, p.hair);
-        q(12 + side, 13, 4, 10, p.hair);
-        q(20 + side, 14, 3, 3, p.hair);
-        q(28 + side, 13, 3, 6, p.hair);
-        const eyes =
-          kind === "lucy"
-            ? "#95537f"
-            : kind === "scout"
-              ? "#397c78"
-              : "#343644";
-        q(17 + side, 20, 3, 3, "#faf1df");
-        q(18 + side, 20, 2, 3, eyes);
-        q(17 + side, 19, 4, 1, ink);
-        if (direction === "down") {
-          q(27, 20, 3, 3, "#faf1df");
-          q(27, 20, 2, 3, eyes);
-          q(26, 19, 4, 1, ink);
-        }
-        q(23 + side, 24, 2, 1, "#cc9786");
-        q(21 + side, 27, 4, 1, "#ac786d");
-      } else {
-        q(16, 12, 2, 11, p.trim);
-        q(27, 14, 2, 10, p.trim);
-      }
-      if (kind === "lucy") {
-        q(19, 30, 8, 15, "#eee9dd");
-        q(19, 31, 3, 3, "#8c65a1");
-        q(24, 31, 4, 3, "#563e76");
-        q(22, 33, 3, 7, "#6e4d8b");
-        q(23, 40, 1, 1, "#9ea6b4");
-        q(23, 43, 1, 1, "#9ea6b4");
-        q(34, 30, 4, 9, p.hair);
-        q(33, 33, 2, 7, "#d6d5a9");
-        q(15, 43, 16, 5, "#5d423c");
-        q(16, 43, 14, 1, "#c6a477");
-      }
-      if (kind === "bran") {
-        q(12, 29, 23, 4, "#a65f50");
-        q(15, 32, 4, 8, "#c17d5e");
-        if (front) {
-          q(16 + side, 25, 4, 1, "#a97961");
-          q(26 + side, 25, 3, 1, "#a97961");
-        }
-      }
-      if (kind === "nara") {
-        q(9, 2, 6, 10, p.hair);
-        q(30, 2, 6, 10, p.hair);
-        q(11, 4, 2, 5, "#bd8a8c");
-        q(31, 4, 2, 5, "#bd8a8c");
-        q(14, 29, 20, 4, "#6b91ad");
-        q(18, 32, 4, 7, "#8bacbe");
-        q(29, 41, 8, 7, "#886d4b");
-      }
-      if (kind === "mia") {
-        for (let y = 17; y < 43; y += 4) {
-          q(32, y, 5, 4, p.hair);
-          q(33, y, 2, 1, "#ac8960");
-        }
-        q(33, 43, 3, 3, "#d6c183");
-        q(15, 33, 18, 2, "#9b825a");
-      }
-      if (kind === "tobin") {
-        q(9, 33, 28, 12, p.coat);
-        if (front) {
-          q(13, 23, 21, 12, p.hair);
-          q(17, 34, 13, 4, p.hair);
-          q(16, 24, 3, 8, "#b17650");
-          q(27, 25, 2, 9, "#a96c45");
-          q(18, 28, 11, 2, "#e0b98c");
-          q(18, 35, 3, 2, "#d7ba70");
-        }
-        q(16, 40, 16, 2, "#b4a174");
-      }
-      if (kind === "leon") {
-        if (front) {
-          q(14 + side, 18, 9, 7, "#d6cebb");
-          q(25 + side, 18, 9, 7, "#d6cebb");
-          q(16 + side, 19, 5, 4, "#4a576c");
-          q(27 + side, 19, 5, 4, "#4a576c");
-          q(23 + side, 20, 2, 1, "#c7bfa7");
-        }
-        q(18, 30, 9, 4, "#a194ba");
-        q(25, 39, 11, 8, "#60506f");
-        q(26, 40, 8, 1, "#d2bb7d");
-      }
-      if (kind === "rogue") {
-        q(9, 32, 8, 7, "#252832");
-        q(29, 32, 9, 7, "#252832");
-        for (const x of [8, 13, 30, 35]) q(x, 29, 2, 5, "#b4bbc4");
-        q(17, 29, 14, 3, "#171d28");
-        q(22, 31, 2, 2, "#bfc4ca");
-        q(10, 8, 9, 10, "#c39179");
-        q(11, 11, 2, 5, "#a67b6f");
-        q(18, 4, 14, 4, p.hair);
-        q(25, 7, 11, 5, p.hair);
-        q(30, 11, 6, 6, p.hair);
-        q(17, 3, 6, 2, "#fff0a4");
-        q(25, 6, 7, 1, "#fff0a4");
-        if (front) {
-          q(10 + side, 19, 2, 2, "#d6dadd");
-          q(11 + side, 23, 2, 1, "#e0e2e0");
-        }
-        q(15, 38, 2, 5, "#6f7280");
-        q(28, 43, 7, 2, "#191f2a");
-      }
-      if (kind === "scout") {
-        q(6, 17, 7, 4, p.skin);
-        q(32, 17, 8, 4, p.skin);
-        q(5, 16, 4, 2, p.skin);
-        q(37, 15, 4, 3, p.skin);
-        q(18, 1, 11, 5, p.hair);
-        q(20, 0, 7, 2, "#d9e5b8");
-        q(12, 29, 23, 5, "#315d4a");
-        q(17, 33, 14, 12, "#79604a");
-        q(17, 31, 4, 14, "#91b187");
-        q(25, 32, 4, 4, "#b5e2d4");
-        q(26, 33, 2, 2, "#3b9c8c");
-        q(30, 29, 8, 6, "#b8c9c6");
-        q(33, 31, 5, 5, "#718d91");
-        q(32, 30, 3, 2, "#e1e7d6");
-        q(8, 27, 3, 12, "#827455");
-        q(9, 23, 1, 8, "#dce5ca");
-      }
-    }
-    // Cache a crisp dark contour with a restrained light rim for floor contrast.
-    const mask = document.createElement("canvas");
-    mask.width = 44;
-    mask.height = 60;
-    const m = mask.getContext("2d");
-    m.drawImage(image, 0, 0);
-    m.globalCompositeOperation = "source-in";
-    m.fillStyle = "#e3d3ac";
-    m.fillRect(0, 0, 44, 60);
-    const outlined = document.createElement("canvas");
-    outlined.width = 44;
-    outlined.height = 60;
-    const o = outlined.getContext("2d");
-    o.globalAlpha = 0.55;
-    o.drawImage(mask, -1, -1);
-    o.globalAlpha = 1;
-    m.fillStyle = "#17202d";
-    m.fillRect(0, 0, 44, 60);
-    for (const [x, y] of [
-      [-1, 0],
-      [1, 0],
-      [0, -1],
-      [0, 1],
-    ])
-      o.drawImage(mask, x, y);
-    o.drawImage(image, 0, 0);
-    spriteBank.set(key, outlined);
-    return outlined;
-  }
+  const makeSprite = fieldSprites.make;
   for (const kind of Object.keys(cast))
     for (const dir of ["up", "down", "left", "right"])
       for (let f = 0; f < 4; f++) makeSprite(kind, dir, f);
@@ -5773,7 +5817,9 @@ const guildGame = (() => {
   function drawActor(a) {
     const x = Math.round(a.x),
       y = Math.round(a.y);
-    rect(ctx, x - 8, y - 1, 16, 3, "#352c2e80");
+    // A low, warm contact shadow ties the shared foot anchor to each floor.
+    rect(ctx, x - 6, y - 1, 12, 3, "#303b324a");
+    rect(ctx, x - 8, y, 16, 1, "#303b3233");
     const frame = a.moving
       ? Math.floor(elapsed * (a === player && keys.has("ShiftLeft") ? 12 : 8)) %
         4

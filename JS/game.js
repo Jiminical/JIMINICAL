@@ -55,74 +55,38 @@ const guildGame = (() => {
     hero: {
       name: "",
       portrait: 0,
-      coat: "#465563",
-      trim: "#829398",
-      hair: "#303a45",
-      skin: "#000000",
     },
     lucy: {
       name: "루시",
       portrait: "lucy",
-      coat: "#eee9df",
-      trim: "#c4c7cf",
-      hair: "#bec58b",
-      skin: "#f3c9b1",
     },
     bran: {
       name: "브란",
       portrait: 1,
-      coat: "#795b43",
-      trim: "#b58d61",
-      hair: "#9a4f36",
-      skin: "#d6a380",
     },
     mia: {
       name: "미아",
       portrait: 2,
-      coat: "#526845",
-      trim: "#a2ae78",
-      hair: "#775038",
-      skin: "#ebbb93",
     },
     nara: {
       name: "나라",
       portrait: 3,
-      coat: "#414e68",
-      trim: "#9aabc0",
-      hair: "#ded7bd",
-      skin: "#e8c3a3",
     },
     tobin: {
       name: "토빈",
       portrait: 4,
-      coat: "#52624c",
-      trim: "#b2ac81",
-      hair: "#875038",
-      skin: "#d7a67e",
     },
     leon: {
       name: "레온",
       portrait: 5,
-      coat: "#4b4b6c",
-      trim: "#bca86c",
-      hair: "#353b53",
-      skin: "#e1bea3",
     },
     rogue: {
       name: "노란 머리 도적",
       portrait: 6,
-      coat: "#30333d",
-      trim: "#8c929e",
-      hair: "#ecd16e",
-      skin: "#e1ac87",
     },
     scout: {
       name: "카니아",
       portrait: 7,
-      coat: "#355e53",
-      trim: "#b0b88c",
-      hair: "#b9d79f",
-      skin: "#edd3bc",
     },
   };
   const pictures = {};
@@ -180,7 +144,6 @@ const guildGame = (() => {
   background.width = W;
   background.height = H;
   const map = background.getContext("2d");
-  const spriteBank = new Map();
   const portraitFrames = new Map();
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const motion = () =>
@@ -591,243 +554,7 @@ const guildGame = (() => {
     );
   }
 
-  // 44 × 60 SD cels add hair, cloth and equipment detail at a shared foot anchor.
-  function makeSprite(kind, direction, frame) {
-    const key = kind + direction + frame;
-    if (spriteBank.has(key)) return spriteBank.get(key);
-    const image = document.createElement("canvas");
-    image.width = 44;
-    image.height = 60;
-    const c = image.getContext("2d"),
-      p = cast[kind];
-    const bob = frame % 2,
-      step = frame === 1 ? 2 : frame === 3 ? -2 : 0;
-    const q = (x, y, w, h, color) => rect(c, x, y + bob, w, h, color);
-    const side = direction === "left" ? -3 : direction === "right" ? 3 : 0;
-    const front = direction !== "up",
-      ink = "#232634";
-    // Separate feet and trousers keep the four walking cels legible.
-    for (const [x, offset] of [
-      [13, step],
-      [25, -step],
-    ]) {
-      rect(c, x, 46 + Math.max(0, offset), 7, 10 - Math.max(0, offset), ink);
-      rect(c, x + 1, 47 + Math.max(0, offset), 4, 5, "#4c4650");
-      rect(c, x - 1, 54 + Math.min(0, offset), 9, 3, "#332e32");
-      rect(c, x, 54 + Math.min(0, offset), 6, 1, "#957350");
-    }
-    if (kind === "hero") {
-      q(10, 23, 25, 25, "#243142");
-      q(7, 32, 31, 16, "#293b50");
-      q(10, 29, 25, 17, "#4d6375");
-      q(11, 31, 3, 13, "#80939c");
-      q(16, 31, 3, 16, "#3c5065");
-      q(28, 32, 4, 14, "#304355");
-      q(9, 45, 28, 3, "#1f2e3e");
-      q(11, 45, 5, 1, "#a7afa7");
-      q(13, 5, 19, 3, "#455969");
-      q(9, 8, 27, 20, "#354b5e");
-      q(11, 7, 23, 22, "#607788");
-      q(14, 7, 14, 2, "#91a5ac");
-      q(10, 13, 3, 13, "#41566b");
-      q(32, 13, 3, 12, "#2e4055");
-      if (front) {
-        q(14 + side, 12, 17, 15, "#14202b");
-        q(16 + side, 13, 12, 12, "#080e17");
-        q(13 + side, 12, 3, 11, "#99a6ab");
-        q(16 + side, 11, 12, 2, "#7c929d");
-      } else {
-        q(17, 10, 2, 13, "#7c919a");
-        q(19, 22, 11, 3, "#4b6177");
-      }
-      q(10, 27, 25, 4, "#81949c");
-      q(16, 29, 4, 10, "#566f7d");
-      q(22, 30, 3, 3, "#d9c189");
-      q(13, 34, 20, 2, "#967550");
-      q(29, 38, 9, 10, "#a58254");
-      q(30, 39, 7, 2, "#d6b37b");
-      q(32, 43, 3, 2, "#43352e");
-      q(8, 38, 4, 7, "#2b303b");
-    } else {
-      const longHair = ["lucy", "mia", "nara", "scout"].includes(kind);
-      if (longHair) {
-        q(9, 13, 27, 24, p.hair);
-        q(33, 20, 5, 21, p.hair);
-        q(35, 23, 2, 15, "#7e8c72");
-        q(10, 20, 2, 14, "#8e9874");
-      }
-      q(10, 29, 25, 19, ink);
-      q(11, 30, 23, 16, p.coat);
-      q(7, 32, 6, 14, p.coat);
-      q(32, 32, 6, 14, p.coat);
-      q(9, 32, 2, 11, p.trim);
-      q(33, 33, 2, 10, p.trim);
-      q(14, 30, 3, 15, p.trim);
-      q(28, 30, 2, 15, p.trim);
-      q(12, 46, 22, 2, "#302f3a");
-      q(7, 44, 5, 3, "#33313c");
-      q(34, 44, 5, 3, "#33313c");
-      // Stepped hair silhouette, highlights and individual bangs.
-      q(14, 5, 18, 3, p.hair);
-      q(10, 8, 26, 17, p.hair);
-      q(12, 7, 22, 3, kind === "lucy" ? "#d5d5a8" : p.trim);
-      q(16, 7, 10, 2, "#ded3ad");
-      if (front) {
-        q(13 + side, 12, 18, 15, p.skin);
-        q(15 + side, 25, 14, 3, p.skin);
-        q(13 + side, 11, 19, 5, p.hair);
-        q(12 + side, 13, 4, 10, p.hair);
-        q(20 + side, 14, 3, 3, p.hair);
-        q(28 + side, 13, 3, 6, p.hair);
-        const eyes =
-          kind === "lucy"
-            ? "#95537f"
-            : kind === "scout"
-              ? "#397c78"
-              : "#343644";
-        q(17 + side, 20, 3, 3, "#faf1df");
-        q(18 + side, 20, 2, 3, eyes);
-        q(17 + side, 19, 4, 1, ink);
-        if (direction === "down") {
-          q(27, 20, 3, 3, "#faf1df");
-          q(27, 20, 2, 3, eyes);
-          q(26, 19, 4, 1, ink);
-        }
-        q(23 + side, 24, 2, 1, "#cc9786");
-        q(21 + side, 27, 4, 1, "#ac786d");
-      } else {
-        q(16, 12, 2, 11, p.trim);
-        q(27, 14, 2, 10, p.trim);
-      }
-      if (kind === "lucy") {
-        q(19, 30, 8, 15, "#eee9dd");
-        q(19, 31, 3, 3, "#8c65a1");
-        q(24, 31, 4, 3, "#563e76");
-        q(22, 33, 3, 7, "#6e4d8b");
-        q(23, 40, 1, 1, "#9ea6b4");
-        q(23, 43, 1, 1, "#9ea6b4");
-        q(34, 30, 4, 9, p.hair);
-        q(33, 33, 2, 7, "#d6d5a9");
-        q(15, 43, 16, 5, "#5d423c");
-        q(16, 43, 14, 1, "#c6a477");
-      }
-      if (kind === "bran") {
-        q(12, 29, 23, 4, "#a65f50");
-        q(15, 32, 4, 8, "#c17d5e");
-        if (front) {
-          q(16 + side, 25, 4, 1, "#a97961");
-          q(26 + side, 25, 3, 1, "#a97961");
-        }
-      }
-      if (kind === "nara") {
-        q(9, 2, 6, 10, p.hair);
-        q(30, 2, 6, 10, p.hair);
-        q(11, 4, 2, 5, "#bd8a8c");
-        q(31, 4, 2, 5, "#bd8a8c");
-        q(14, 29, 20, 4, "#6b91ad");
-        q(18, 32, 4, 7, "#8bacbe");
-        q(29, 41, 8, 7, "#886d4b");
-      }
-      if (kind === "mia") {
-        for (let y = 17; y < 43; y += 4) {
-          q(32, y, 5, 4, p.hair);
-          q(33, y, 2, 1, "#ac8960");
-        }
-        q(33, 43, 3, 3, "#d6c183");
-        q(15, 33, 18, 2, "#9b825a");
-      }
-      if (kind === "tobin") {
-        q(9, 33, 28, 12, p.coat);
-        if (front) {
-          q(13, 23, 21, 12, p.hair);
-          q(17, 34, 13, 4, p.hair);
-          q(16, 24, 3, 8, "#b17650");
-          q(27, 25, 2, 9, "#a96c45");
-          q(18, 28, 11, 2, "#e0b98c");
-          q(18, 35, 3, 2, "#d7ba70");
-        }
-        q(16, 40, 16, 2, "#b4a174");
-      }
-      if (kind === "leon") {
-        if (front) {
-          q(14 + side, 18, 9, 7, "#d6cebb");
-          q(25 + side, 18, 9, 7, "#d6cebb");
-          q(16 + side, 19, 5, 4, "#4a576c");
-          q(27 + side, 19, 5, 4, "#4a576c");
-          q(23 + side, 20, 2, 1, "#c7bfa7");
-        }
-        q(18, 30, 9, 4, "#a194ba");
-        q(25, 39, 11, 8, "#60506f");
-        q(26, 40, 8, 1, "#d2bb7d");
-      }
-      if (kind === "rogue") {
-        q(9, 32, 8, 7, "#252832");
-        q(29, 32, 9, 7, "#252832");
-        for (const x of [8, 13, 30, 35]) q(x, 29, 2, 5, "#b4bbc4");
-        q(17, 29, 14, 3, "#171d28");
-        q(22, 31, 2, 2, "#bfc4ca");
-        q(10, 8, 9, 10, "#c39179");
-        q(11, 11, 2, 5, "#a67b6f");
-        q(18, 4, 14, 4, p.hair);
-        q(25, 7, 11, 5, p.hair);
-        q(30, 11, 6, 6, p.hair);
-        q(17, 3, 6, 2, "#fff0a4");
-        q(25, 6, 7, 1, "#fff0a4");
-        if (front) {
-          q(10 + side, 19, 2, 2, "#d6dadd");
-          q(11 + side, 23, 2, 1, "#e0e2e0");
-        }
-        q(15, 38, 2, 5, "#6f7280");
-        q(28, 43, 7, 2, "#191f2a");
-      }
-      if (kind === "scout") {
-        q(6, 17, 7, 4, p.skin);
-        q(32, 17, 8, 4, p.skin);
-        q(5, 16, 4, 2, p.skin);
-        q(37, 15, 4, 3, p.skin);
-        q(18, 1, 11, 5, p.hair);
-        q(20, 0, 7, 2, "#d9e5b8");
-        q(12, 29, 23, 5, "#315d4a");
-        q(17, 33, 14, 12, "#79604a");
-        q(17, 31, 4, 14, "#91b187");
-        q(25, 32, 4, 4, "#b5e2d4");
-        q(26, 33, 2, 2, "#3b9c8c");
-        q(30, 29, 8, 6, "#b8c9c6");
-        q(33, 31, 5, 5, "#718d91");
-        q(32, 30, 3, 2, "#e1e7d6");
-        q(8, 27, 3, 12, "#827455");
-        q(9, 23, 1, 8, "#dce5ca");
-      }
-    }
-    // Cache a crisp dark contour with a restrained light rim for floor contrast.
-    const mask = document.createElement("canvas");
-    mask.width = 44;
-    mask.height = 60;
-    const m = mask.getContext("2d");
-    m.drawImage(image, 0, 0);
-    m.globalCompositeOperation = "source-in";
-    m.fillStyle = "#e3d3ac";
-    m.fillRect(0, 0, 44, 60);
-    const outlined = document.createElement("canvas");
-    outlined.width = 44;
-    outlined.height = 60;
-    const o = outlined.getContext("2d");
-    o.globalAlpha = 0.55;
-    o.drawImage(mask, -1, -1);
-    o.globalAlpha = 1;
-    m.fillStyle = "#17202d";
-    m.fillRect(0, 0, 44, 60);
-    for (const [x, y] of [
-      [-1, 0],
-      [1, 0],
-      [0, -1],
-      [0, 1],
-    ])
-      o.drawImage(mask, x, y);
-    o.drawImage(image, 0, 0);
-    spriteBank.set(key, outlined);
-    return outlined;
-  }
+  const makeSprite = fieldSprites.make;
   for (const kind of Object.keys(cast))
     for (const dir of ["up", "down", "left", "right"])
       for (let f = 0; f < 4; f++) makeSprite(kind, dir, f);
@@ -1632,7 +1359,9 @@ const guildGame = (() => {
   function drawActor(a) {
     const x = Math.round(a.x),
       y = Math.round(a.y);
-    rect(ctx, x - 8, y - 1, 16, 3, "#352c2e80");
+    // A low, warm contact shadow ties the shared foot anchor to each floor.
+    rect(ctx, x - 6, y - 1, 12, 3, "#303b324a");
+    rect(ctx, x - 8, y, 16, 1, "#303b3233");
     const frame = a.moving
       ? Math.floor(elapsed * (a === player && keys.has("ShiftLeft") ? 12 : 8)) %
         4
