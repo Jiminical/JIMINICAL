@@ -13,11 +13,17 @@ ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "index.html").read_text()
 styles = (ROOT / "CSS/main.css").read_text()
 script = (ROOT / "JS/main.js").read_text()
-for asset_name in ("greenstoa-title.png", "greenstoa-elf.png"):
+for asset_name in ("greenstoa-title.png", "greenstoa-elf-atlas.png"):
     background = base64.b64encode(
         (ROOT / "assets" / asset_name).read_bytes()
     ).decode("ascii")
     styles = styles.replace("../assets/" + asset_name, "data:image/png;base64," + background)
+    if asset_name == "greenstoa-elf-atlas.png":
+        page = re.sub(
+            r'data-sprite-src="[^"]*"',
+            lambda _: 'data-sprite-src="data:image/png;base64,' + background + '"',
+            page,
+        )
 style_tag = '<style id="greenstoa-styles">\n' + styles + "\n</style>"
 script_tag = '<script id="greenstoa-script">\n' + script + "\n</script>"
 
@@ -39,5 +45,6 @@ else:
 assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
+assert 'data-sprite-src="data:image/png;base64,' in page
 (ROOT / "index.html").write_text(page)
 print("Updated standalone index.html with embedded styles, script and background.")

@@ -22,6 +22,76 @@ const volumeSlider = document.querySelector("#volume");
 const volumeLabel = document.querySelector("#volume-label");
 const optionsDialog = document.querySelector("#options-dialog");
 const journeyDialog = document.querySelector("#journey-dialog");
+// Draw registered sprite frames; the canvas itself never moves or scales.
+const spriteAnimation = (() => {
+  const canvas = document.querySelector(".character-sprite");
+  const context = canvas.getContext("2d");
+  const sheet = new Image();
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const durations = [1700, 180, 80, 100, 80, 220, 180, 400];
+  const loopDuration = durations.reduce((sum, duration) => sum + duration, 0);
+  let enabled = false;
+  let loaded = false;
+  let request = 0;
+  let started = 0;
+  let lastFrame = -1;
+
+  function draw(frame) {
+    if (!loaded || frame === lastFrame) return;
+    const frameWidth = sheet.naturalWidth / 4;
+    const frameHeight = sheet.naturalHeight / 2;
+    context.imageSmoothingEnabled = false;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(
+      sheet,
+      (frame % 4) * frameWidth,
+      Math.floor(frame / 4) * frameHeight,
+      frameWidth,
+      frameHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
+    lastFrame = frame;
+    canvas.dataset.frame = String(frame);
+  }
+
+  function tick(now) {
+    let elapsed = (now - started) % loopDuration;
+    let frame = 0;
+    while (frame < durations.length - 1 && elapsed >= durations[frame]) {
+      elapsed -= durations[frame++];
+    }
+    draw(frame);
+    request = requestAnimationFrame(tick);
+  }
+
+  function refresh() {
+    cancelAnimationFrame(request);
+    request = 0;
+    draw(0);
+    if (!loaded || !enabled || reducedMotion.matches || document.hidden) return;
+    started = performance.now();
+    request = requestAnimationFrame(tick);
+  }
+
+  sheet.onload = () => {
+    loaded = true;
+    canvas.dataset.ready = "true";
+    refresh();
+  };
+  sheet.src = canvas.dataset.spriteSrc;
+  reducedMotion.addEventListener("change", refresh);
+  document.addEventListener("visibilitychange", refresh);
+  return {
+    setEnabled(value) {
+      if (enabled === value) return;
+      enabled = value;
+      refresh();
+    },
+  };
+})();
 let audioContext, masterGain;
 let audioUnlocked = false;
 function saveSettings() {
@@ -44,6 +114,7 @@ function updateInterface() {
   volumeSlider.value = settings.volume;
   volumeLabel.textContent = settings.volume + "%";
   document.body.classList.toggle("no-motion", !settings.motion);
+  spriteAnimation.setEnabled(settings.motion);
   if (masterGain)
     masterGain.gain.setTargetAtTime(
       playing ? (settings.volume / 100) * 0.12 : 0,

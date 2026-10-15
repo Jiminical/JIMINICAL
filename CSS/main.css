@@ -78,47 +78,31 @@ a {
       rgba(10, 29, 28, 0.45)
     );
 }
-.character-float {
+.character-sprite {
   position: absolute;
-  right: -1%;
-  bottom: 1%;
-  width: 46%;
-  height: 90%;
+  right: -2%;
+  bottom: -2%;
+  width: 51%;
+  height: 100%;
   z-index: -2;
   pointer-events: none;
-  background: url("../assets/greenstoa-elf.png") center bottom / contain
-    no-repeat;
+  object-fit: contain;
+  object-position: center bottom;
   image-rendering: pixelated;
   filter: drop-shadow(0 12px 6px #082d2840);
-  animation: elf-idle 4.2s ease-in-out infinite;
-  will-change: transform;
-}
-@keyframes elf-idle {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-.no-motion .character-float {
-  animation: none;
-  transform: none;
-  will-change: auto;
 }
 @media (max-width: 1000px) {
-  .character-float {
-    width: 52%;
-    right: -4%;
+  .character-sprite {
+    width: 57%;
+    right: -5%;
   }
 }
 @media (max-width: 700px) {
-  .character-float {
-    width: 86%;
-    height: 68%;
-    right: -14%;
-    bottom: 25%;
+  .character-sprite {
+    width: 88%;
+    height: 71%;
+    right: -15%;
+    bottom: 35%;
   }
 }
 .frame {

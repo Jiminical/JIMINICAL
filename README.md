@@ -8,3 +8,8 @@
 `CSS/main.css`, `JS/main.js`, 배경 이미지를 수정한 뒤에는
 `python3 scripts/build-standalone.py`를 실행해 `index.html`에 반영하세요.
 문구와 화면 구조는 `index.html`에서 수정합니다.
+
+캐릭터는 `assets/greenstoa-elf-atlas.png`의 4열 × 2행 스프라이트를
+Canvas에 프레임별로 그립니다. 화면 요소의 위치를 움직이지 않고 눈과
+머리카락·망토의 픽셀이 바뀌며, 옵션이나 시스템의 움직임 감소 설정으로
+정지할 수 있습니다.
