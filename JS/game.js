@@ -145,6 +145,7 @@ const guildGame = (() => {
       "forest",
       "sanctuary",
       "events",
+      "eventProps",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]);
   // Attach rejection handling before a player chooses to enter the room.
@@ -350,6 +351,7 @@ const guildGame = (() => {
         document.querySelector(".world-viewport").inert = true;
         eventScenes.prepare(kind, {
           atlas: pictures.events,
+          props: pictures.eventProps,
           name: playerName,
           avatar: makeSprite("hero", "down", 0),
           onImpact: options.onImpact,

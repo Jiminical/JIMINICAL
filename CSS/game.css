@@ -782,6 +782,7 @@
   position: absolute;
   overflow: hidden;
   container-type: size;
+  isolation: isolate;
 }
 #event-art {
   display: block;
@@ -794,37 +795,52 @@
   left: 50%;
   top: 50%;
   translate: -50% -50%;
-  width: min(64%, 580px);
-  padding: clamp(12px, 3cqw, 28px);
+  width: min(76%, 660px);
+  aspect-ratio: 408 / 232;
   color: #493e35;
-  background: #eee0b6;
-  border: 3px solid #8d714b;
-  box-shadow:
-    0 0 0 3px #d1ba83,
-    7px 9px 0 #110d1566,
-    inset 0 0 0 4px #d6c28e;
   transform-origin: 50% 50%;
-  font-size: clamp(10px, 1.6cqw, 16px);
+  font-size: clamp(10px, 1.65cqw, 17px);
+  filter: drop-shadow(7px 12px 3px #100a1780);
+}
+#credential-paper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 .event-document > header {
+  position: absolute;
+  top: 18%;
+  left: 13%;
   font-size: 0.8em;
   letter-spacing: 0.12em;
   color: #7d6245;
 }
 .event-document h3 {
-  margin: 8px 0 14px;
-  font-size: 1.25em;
+  position: absolute;
+  top: 24%;
+  left: 10%;
+  right: 10%;
+  margin: 0;
+  font-size: 1.3em;
   font-weight: 400;
   border-bottom: 1px solid #b59d6c;
-  padding-bottom: 8px;
+  padding-bottom: 1.5%;
 }
 .credential-details {
+  position: absolute;
+  left: 10%;
+  top: 38%;
+  right: 29%;
+  height: 30%;
   display: flex;
   align-items: center;
   gap: 16px;
 }
 #credential-portrait {
-  width: clamp(30px, 8cqw, 68px);
+  width: 19%;
   height: auto;
   background: #d4c69f;
   border: 1px solid #8e805e;
@@ -833,7 +849,7 @@
 .credential-details dl {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 14px;
+  gap: 4px 12px;
   margin: 0;
   min-width: 0;
 }
@@ -847,58 +863,83 @@
   overflow-wrap: anywhere;
 }
 .event-document > footer {
-  margin-top: 18px;
-  padding-top: 8px;
-  border-top: 1px solid #b59d6c;
-  font-size: 0.75em;
+  position: absolute;
+  left: 10%;
+  bottom: 18%;
+  font-size: 0.66em;
+  line-height: 1.7;
+  color: #806a4b;
 }
 #credential-seal {
   position: absolute;
-  right: 7%;
-  bottom: 10%;
+  right: 11%;
+  bottom: 22%;
   width: 24%;
   aspect-ratio: 1;
-  border: 3px double currentColor;
-  display: grid;
-  place-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  flex-direction: column;
   text-align: center;
-  color: #a54b40;
+  color: #9b4436;
   opacity: 0;
-  background: #eee0b6c9;
+  mix-blend-mode: multiply;
 }
-#credential-seal span {
-  font-size: 1.7em;
-  line-height: 1;
+#credential-seal svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 #credential-seal small {
-  font-size: 0.7em;
+  padding-bottom: 13%;
+  font-size: 0.66em;
+  letter-spacing: 0.04em;
+}
+#event-stamp-shadow {
+  position: absolute;
+  right: 11%;
+  bottom: 39%;
+  width: 23%;
+  height: 4.5%;
+  background: #261f22;
+  opacity: 0;
+  filter: blur(3px);
+  transform-origin: 50% 50%;
 }
 #event-stamper {
   position: absolute;
-  right: 7%;
-  bottom: 10%;
-  width: 24%;
-  height: 72%;
+  right: 4%;
+  bottom: 36%;
+  width: 39%;
+  height: auto;
   pointer-events: none;
   transform-origin: 50% 100%;
   opacity: 0;
-}
-#event-stamper svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
+  image-rendering: pixelated;
+  filter: drop-shadow(3px 4px 0 #251e2140);
 }
 #event-scan-line {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 3px;
-  background: #c4ffe2;
-  box-shadow: 0 0 18px 8px #7defbd7d;
+  top: 16%;
+  bottom: 17%;
+  width: 2px;
+  background: #e8ffe6;
+  box-shadow: -5px 0 15px 5px #7defbd80;
   opacity: 0;
 }
 .game-event[data-kind="credentials"] #credential-seal {
   color: #317c68;
+}
+#event-fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 #event-impact {
   position: absolute;
@@ -954,8 +995,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  border-top: 1px solid #43564e;
-  background: #131e27;
+  border-top: 2px solid #6a7763;
+  background: #101b22;
+  box-shadow: inset 0 3px #283a3b;
 }
 .event-footer h2 {
   margin: 0;
@@ -987,10 +1029,11 @@
     padding-inline: 6px;
   }
   .event-document {
-    width: 86%;
+    width: 98%;
+    font-size: 12px;
   }
   .credential-details {
-    gap: 10px;
+    gap: 8px;
   }
   .credential-details dl {
     gap: 3px 8px;

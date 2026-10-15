@@ -304,6 +304,7 @@
           data-forest-src="assets/vista-forest.webp"
           data-sanctuary-src="assets/mother-tree.webp"
           data-events-src="assets/event-scenes.webp"
+          data-event-props-src="assets/event-props.webp"
           hidden
         ></div>
         <button
@@ -434,6 +435,12 @@
               aria-label="모험가증"
               hidden
             >
+              <canvas
+                id="credential-paper"
+                width="408"
+                height="232"
+                aria-hidden="true"
+              ></canvas>
               <header>제르디아 모험가 길드</header>
               <h3>모험가 등록증</h3>
               <div class="credential-details">
@@ -452,31 +459,53 @@
                   <dd>성역 그린스토아</dd>
                 </dl>
               </div>
-              <footer>제르디아 기사단 · 조사 파견</footer>
+              <footer>
+                제르디아 기사단 직속<br />성역의 이상 징후 · 사전 조사
+              </footer>
               <div id="credential-seal" aria-hidden="true">
-                <span>✦</span><small id="credential-seal-text">파견 승인</small>
-              </div>
-              <div id="event-stamper" aria-hidden="true">
                 <svg
-                  viewBox="0 0 40 64"
+                  viewBox="0 0 100 100"
                   fill="none"
                   shape-rendering="crispEdges"
                 >
-                  <path
-                    d="M12 1h16v3h5v17h-4v8h-5v10h4v3h9v6h3v13H0V48h3v-6h9v-3h4V29h-5v-8H7V4h5Z"
-                    fill="#1d2025"
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="46"
+                    stroke="currentColor"
+                    stroke-width="2"
                   />
-                  <path d="M12 4h16v3h3v12h-5v7H14v-7H9V7h3Z" fill="#794932" />
-                  <path d="M13 6h12v3H13zm-3 4h5v8h-5Z" fill="#bb8a52" />
-                  <path d="M17 26h6v16h-6Z" fill="#a87642" />
-                  <path d="M19 28h3v12h-3Z" fill="#e4bd76" />
-                  <path d="M5 44h30v5H5ZM3 49h34v8H3Z" fill="#b98b4a" />
-                  <path d="M5 50h28v2H5Z" fill="#f3ce85" />
-                  <path d="M4 57h32v3H4Z" fill="#4d2630" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="40"
+                    stroke="currentColor"
+                    stroke-width="1"
+                  />
+                  <path
+                    d="M30 22h40v31L50 66 30 53Z M38 30v18h24V30M50 27v33M38 40h24M20 45v17l17 14M80 45v17L63 76"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  />
+                  <path d="m44 21 6-8 6 8-6 7Z" fill="currentColor" />
                 </svg>
+                <small id="credential-seal-text">파견 승인</small>
               </div>
+              <div id="event-stamp-shadow" aria-hidden="true"></div>
+              <canvas
+                id="event-stamper"
+                width="160"
+                height="256"
+                aria-hidden="true"
+              ></canvas>
               <div id="event-scan-line" aria-hidden="true"></div>
             </article>
+            <canvas
+              id="event-fx"
+              width="960"
+              height="640"
+              aria-hidden="true"
+            ></canvas>
             <svg
               id="event-route"
               viewBox="0 0 1000 666"

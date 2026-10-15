@@ -1,6 +1,6 @@
 // All audio is synthesized locally. Nothing is fetched or started before a gesture.
 const gameAudio = (() => {
-  let context, master, ambience, ambienceFilter, noiseBuffer;
+  let context, master, voiceBus, ambience, ambienceFilter, noiseBuffer;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -74,7 +74,14 @@ const gameAudio = (() => {
       } catch {}
       playing.delete(entry);
     }
-    if (!group || group === "voice") lastVoice = -Infinity;
+    if (!group || group === "voice") {
+      lastVoice = -Infinity;
+      if (ambience) {
+        const now = context.currentTime;
+        ambience.gain.cancelScheduledValues(now);
+        ambience.gain.setTargetAtTime(ambientLevel(), now, 0.1);
+      }
+    }
   }
   function applyVolume() {
     if (!master) return;
@@ -86,15 +93,14 @@ const gameAudio = (() => {
       0.012,
     );
   }
+  function ambientLevel() {
+    return place === "guild" ? 0.055 : place === "carriage" ? 0.11 : 0.15;
+  }
   function scene(next) {
     place = next;
     if (!ambience) return;
     const indoor = next === "guild";
-    ambience.gain.setTargetAtTime(
-      indoor ? 0.055 : next === "carriage" ? 0.11 : 0.15,
-      context.currentTime,
-      0.7,
-    );
+    ambience.gain.setTargetAtTime(ambientLevel(), context.currentTime, 0.7);
     ambienceFilter.frequency.setTargetAtTime(
       indoor ? 420 : next === "carriage" ? 260 : 1100,
       context.currentTime,
@@ -109,6 +115,10 @@ const gameAudio = (() => {
         context = new Audio();
         master = context.createGain();
         master.gain.value = 0;
+        // Dialogue has its own +9 dB bus; UI and impact effects keep their mix.
+        voiceBus = context.createGain();
+        voiceBus.gain.value = 2.8;
+        voiceBus.connect(master);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -134,6 +144,7 @@ const gameAudio = (() => {
         ambienceFilter = context.createBiquadFilter();
         ambienceFilter.type = "lowpass";
         ambience = context.createGain();
+        ambience.gain.value = ambientLevel();
         wind.connect(ambienceFilter);
         ambienceFilter.connect(ambience);
         ambience.connect(master);
@@ -181,10 +192,11 @@ const gameAudio = (() => {
     lowpass.frequency.value = filter;
     gain.gain.setValueAtTime(0, at);
     gain.gain.linearRampToValueAtTime(level, at + 0.004);
+    if (group === "voice") gain.gain.setValueAtTime(level, at + 0.013);
     gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
     oscillator.connect(lowpass);
     lowpass.connect(gain);
-    gain.connect(master);
+    gain.connect(group === "voice" ? voiceBus : master);
     oscillator.start(at);
     oscillator.stop(at + length + 0.006);
     track(oscillator, group, gain);
@@ -222,6 +234,10 @@ const gameAudio = (() => {
     const profile = voices[kind];
     if (!profile || context.currentTime - lastVoice < 0.064) return;
     lastVoice = context.currentTime;
+    // Briefly make room for speech, then release smoothly between sentences.
+    ambience.gain.cancelScheduledValues(lastVoice);
+    ambience.gain.setTargetAtTime(ambientLevel() * 0.4, lastVoice, 0.018);
+    ambience.gain.setTargetAtTime(ambientLevel(), lastVoice + 0.13, 0.12);
     const mood = ["concerned", "weary", "embarrassed"].includes(expression)
       ? 0.92
       : ["boasting", "incredulous", "warning"].includes(expression)
