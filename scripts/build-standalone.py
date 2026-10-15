@@ -11,9 +11,9 @@ import re
 
 ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
-styles = (ROOT / "CSS/main.css").read_text()
-script = (ROOT / "JS/story.js").read_text() + "\n" + (ROOT / "JS/main.js").read_text()
-for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-prologue.png"):
+styles = (ROOT / "CSS/main.css").read_text() + "\n" + (ROOT / "CSS/game.css").read_text()
+script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("game.js", "story.js", "main.js"))
+for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-prologue.png", "lucy-portrait.png", "guild-portraits.png"):
     background = base64.b64encode(
         (ROOT / "assets" / asset_name).read_bytes()
     ).decode("ascii")
@@ -26,6 +26,9 @@ for asset_name in ("greenstoa-title.png", "greenstoa-elf-idle.png", "greenstoa-p
         )
     if asset_name == "greenstoa-prologue.png":
         page = re.sub(r'data-art-src="[^"]*"', lambda _: 'data-art-src="data:image/png;base64,' + background + '"', page)
+    for filename, attribute in (("lucy-portrait.png", "data-lucy-src"), ("guild-portraits.png", "data-cast-src")):
+        if asset_name == filename:
+            page = re.sub(attribute + r'="[^"]*"', lambda _: attribute + '="data:image/png;base64,' + background + '"', page)
 for font_name in ("Galmuri11.woff2", "Galmuri11-Bold.woff2"):
     encoded = base64.b64encode((ROOT / "assets/fonts" / font_name).read_bytes()).decode("ascii")
     styles = styles.replace("../assets/fonts/" + font_name, "data:font/woff2;base64," + encoded)
@@ -38,6 +41,7 @@ styles = "/* Galmuri font license:\n" + license_text + "\n*/\n" + styles
 style_tag = '<style id="greenstoa-styles">\n' + styles + "\n</style>"
 script_tag = '<script id="greenstoa-script">\n' + script + "\n</script>"
 
+page = re.sub(r'\s*<link rel="stylesheet" href="CSS/game.css"\s*/?>', "", page)
 if '<style id="greenstoa-styles">' in page:
     page = re.sub(
         r'<style id="greenstoa-styles">.*?</style>', lambda _: style_tag, page, flags=re.S
@@ -50,7 +54,7 @@ if '<script id="greenstoa-script">' in page:
         r'<script id="greenstoa-script">.*?</script>', lambda _: script_tag, page, flags=re.S
     )
 else:
-    page = re.sub(r'\s*<script src="JS/(?:story|main).js" defer></script>', "", page)
+    page = re.sub(r'\s*<script src="JS/(?:game|story|main).js" defer></script>', "", page)
     page = page.replace("</body>", script_tag + "\n</body>")
 
 assert '<style id="greenstoa-styles">' in page
@@ -58,6 +62,8 @@ assert '<script id="greenstoa-script">' in page
 assert "data:image/png;base64," in page
 assert 'data-sprite-src="data:image/png;base64,' in page
 assert 'data-art-src="data:image/png;base64,' in page
+assert 'data-lucy-src="data:image/png;base64,' in page
+assert 'data-cast-src="data:image/png;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles
 (ROOT / "index.html").write_text(page)

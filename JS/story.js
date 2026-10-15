@@ -290,6 +290,8 @@ const storyJourney = (() => {
     busy = true;
     curtain.hidden = false;
     if (!(await fade(curtain, 1, 360)) || token !== sequence) return;
+    guildGame.stop();
+    scene.classList.remove("is-game-active");
     screen.hidden = true;
     content.style.opacity = "1";
     content.classList.remove("is-fading");
@@ -342,6 +344,38 @@ const storyJourney = (() => {
     nextButton.focus({ preventScroll: true });
     startTyping();
   }
+  async function beginGame() {
+    if (busy || phase !== "complete") return;
+    const token = cancelWork();
+    busy = true;
+    phase = "game-opening";
+    curtain.hidden = false;
+    try {
+      await Promise.all([fade(curtain, 1, 420), guildGame.ready]);
+      if (token !== sequence) return;
+      screen.hidden = true;
+      scene.classList.add("is-game-active");
+      scene.setAttribute("aria-label", "제르디아 왕국 모험가 길드");
+      phase = "game";
+      await guildGame.start(draftName, returnToTitle);
+      notify();
+      if (!(await fade(curtain, 0, 620)) || token !== sequence) return;
+      curtain.hidden = true;
+      busy = false;
+      guildGame.unlock();
+    } catch {
+      if (token !== sequence) return;
+      guildGame.stop();
+      scene.classList.remove("is-game-active");
+      showPage("complete");
+      screen.hidden = false;
+      document.querySelector("#record-note").textContent =
+        "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";
+      await fade(curtain, 0, 240);
+      curtain.hidden = true;
+      busy = false;
+    }
+  }
   nextButton.addEventListener("click", next);
   skipButton.addEventListener("click", showName);
   document
@@ -350,6 +384,7 @@ const storyJourney = (() => {
   document
     .querySelector("#name-finish")
     .addEventListener("click", returnToTitle);
+  document.querySelector("#name-begin").addEventListener("click", beginGame);
   autoButton.addEventListener("click", () => {
     automatic = !automatic;
     autoButton.setAttribute("aria-pressed", String(automatic));

@@ -1,0 +1,496 @@
+/* The room remains a 720 × 480 pixel canvas; surrounding UI shares the title's font. */
+.game-screen[hidden],
+.game-dialogue[hidden],
+.guild-menu[hidden],
+#game-toast[hidden],
+#game-interaction[hidden],
+#game-choices[hidden],
+#dialogue-portrait[hidden],
+#guild-item-action[hidden] {
+  display: none;
+}
+.game-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  background: #11151c;
+  color: #e8e3cd;
+  container-type: size;
+  overflow: hidden;
+}
+.scene.is-game-active {
+  background: #11151c;
+}
+.game-hud {
+  position: absolute;
+  z-index: 2;
+  top: 18px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  pointer-events: none;
+}
+.game-hud > div {
+  text-shadow: 2px 2px #131821;
+}
+.game-place {
+  display: block;
+  font-size: 11px;
+  color: #a9b29b;
+  letter-spacing: 2px;
+}
+.game-hud strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 400;
+}
+.guild-button {
+  background: transparent;
+  color: #bfc6b6;
+  padding: 5px 10px;
+  font-size: 13px;
+  min-height: 34px;
+  pointer-events: auto;
+}
+.guild-button:hover,
+.guild-button:focus-visible {
+  color: #fff0be;
+  background: #34434c;
+}
+.guild-button:disabled {
+  opacity: 0.4;
+  cursor: var(--cursor-quill, default);
+}
+.game-screen kbd {
+  font: 11px var(--pixel);
+  border: 1px solid #80908c;
+  padding: 1px 4px;
+  color: #ddd9bc;
+}
+.game-objective {
+  position: absolute;
+  z-index: 2;
+  top: 64px;
+  left: 24px;
+  margin: 0;
+  font-size: 11px;
+  color: #d2c69d;
+  text-shadow: 2px 2px #172028;
+  pointer-events: none;
+}
+.world-viewport {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  padding: 92px 20px 44px;
+  min-height: 0;
+}
+#guild-world {
+  display: block;
+  width: min(100%, calc((100cqh - 136px) * 1.5));
+  height: auto;
+  max-height: 100%;
+  aspect-ratio: 3/2;
+  image-rendering: pixelated;
+  outline: none;
+  box-shadow:
+    0 0 0 2px #37363b,
+    0 10px 0 #090f1659;
+  touch-action: none;
+}
+#guild-world:focus-visible {
+  outline: 1px dashed #c7bea1;
+  outline-offset: 5px;
+}
+.game-controls {
+  position: absolute;
+  bottom: 13px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 26px;
+  align-items: center;
+  font-size: 11px;
+  color: #8f9d95;
+}
+.game-controls span {
+  white-space: nowrap;
+}
+.game-controls kbd {
+  border: 0;
+  color: #c6c9af;
+}
+.game-interaction {
+  position: absolute;
+  bottom: 53px;
+  left: 50%;
+  translate: -50% 0;
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: #1d2832eb;
+  border: 1px solid #8b9a90;
+  color: #e9dfb6;
+  pointer-events: none;
+}
+.game-toast {
+  position: absolute;
+  z-index: 11;
+  top: 92px;
+  left: 50%;
+  translate: -50% 0;
+  max-width: 90%;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 12px;
+  text-align: center;
+  background: #23333df5;
+  border: 2px solid #abae96;
+  box-shadow: 3px 3px #0b141b;
+}
+.game-dialogue {
+  position: absolute;
+  z-index: 6;
+  bottom: 48px;
+  left: 7%;
+  right: 7%;
+  padding: 18px 24px 12px;
+  min-height: 146px;
+  background: #202c39;
+}
+.game-dialogue h2 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  font-weight: 400;
+  color: #d2c08f;
+  line-height: 1.4;
+}
+#game-dialogue-text {
+  margin: 0;
+  white-space: pre-line;
+  min-height: 65px;
+  font-size: 18px;
+  line-height: 1.85;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+#game-dialogue-next {
+  display: block;
+  margin-left: auto;
+  margin-top: 2px;
+  color: #adbaad;
+  font-size: 11px;
+}
+#dialogue-portrait {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 4px;
+  width: auto;
+  height: min(43cqh, 340px);
+  max-width: 58%;
+  aspect-ratio: 384/420;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.game-choices {
+  display: grid;
+  gap: 5px;
+  width: min(100%, 380px);
+  margin: 12px 0 4px auto;
+}
+.game-choices button {
+  background: transparent;
+  padding: 6px 10px;
+  color: #b8c1b5;
+  text-align: left;
+  font-size: 15px;
+}
+.game-choices button.is-current {
+  color: #fff1c0;
+  background: #354453;
+}
+.guild-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #0a121bc9;
+}
+.guild-menu-panel {
+  width: min(740px, 100%);
+  padding: 24px;
+  background: #22313e;
+}
+.guild-menu-panel > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+.guild-menu-panel h2 {
+  margin: 0;
+  font-size: 13px;
+  color: #aeb99f;
+  font-weight: 400;
+}
+#guild-player-name {
+  margin: 8px 0 2px;
+  font-size: 24px;
+  color: #f0e2b9;
+  overflow-wrap: anywhere;
+}
+#guild-player-status {
+  margin: 0;
+  color: #b8bda8;
+  font-size: 12px;
+}
+.guild-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 2px solid #556771;
+  margin: 20px 0 0;
+  padding-bottom: 12px;
+}
+.guild-tabs button {
+  font-size: 15px;
+  padding: 3px 10px;
+  background: transparent;
+  color: #93a9a7;
+}
+.guild-tabs button.is-current {
+  color: #f0e5bc;
+  box-shadow: 0 2px #c9be96;
+}
+.guild-menu-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 215px;
+  gap: 22px;
+  padding: 22px 0;
+}
+#guild-item-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+#guild-item-list button {
+  font-size: 14px;
+  line-height: 1.8;
+  text-align: left;
+  padding: 5px 8px;
+  background: transparent;
+  color: #b4c0b4;
+}
+#guild-item-list button.is-current {
+  color: #f2e5bd;
+  background: #354752;
+}
+#guild-item-detail {
+  white-space: pre-line;
+  line-height: 1.9;
+  font-size: 13px;
+  margin: 0;
+  color: #c5cbb7;
+  word-break: keep-all;
+}
+#guild-item-action {
+  margin-top: 16px;
+  border: 1px solid #a3ad94;
+}
+.guild-menu-panel > footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #536670;
+  padding-top: 12px;
+  font-size: 10px;
+  color: #819993;
+}
+.quest-entry {
+  font-size: 14px;
+  color: #e0d5ad;
+  margin: 0;
+}
+.game-touch {
+  display: none;
+}
+@media (pointer: coarse) {
+  .game-touch {
+    position: absolute;
+    z-index: 4;
+    inset: auto 18px 18px;
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .game-touch button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #9aa995;
+    background: #1e2b35d9;
+    color: #e4dfc2;
+    font-size: 16px;
+    pointer-events: auto;
+    touch-action: none;
+    user-select: none;
+  }
+  .touch-directions {
+    display: grid;
+    grid-template-columns: repeat(3, 42px);
+    gap: 3px;
+  }
+  .touch-directions button:first-child {
+    grid-column: 2;
+  }
+  .touch-directions button:nth-child(2) {
+    grid-row: 2;
+  }
+  .touch-directions button:nth-child(3) {
+    grid-row: 2;
+  }
+  .touch-directions button:nth-child(4) {
+    grid-row: 2;
+  }
+  .game-touch .touch-run {
+    margin-left: auto;
+    width: 55px;
+    font-size: 11px;
+  }
+  .game-touch .touch-interact {
+    width: 52px;
+    height: 52px;
+  }
+  .game-controls {
+    display: none;
+  }
+  .game-dialogue {
+    bottom: 114px;
+  }
+  .game-interaction {
+    bottom: 116px;
+  }
+}
+@media (max-width: 700px) {
+  .game-hud {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+  }
+  .game-place {
+    font-size: 9px;
+  }
+  .game-hud strong {
+    font-size: 15px;
+  }
+  .game-objective {
+    top: 66px;
+    left: 14px;
+    right: 14px;
+    font-size: 10px;
+  }
+  .world-viewport {
+    padding: 95px 7px 90px;
+  }
+  #guild-world {
+    width: 100%;
+    max-height: 100%;
+  }
+  .game-controls {
+    gap: 8px;
+    font-size: 9px;
+    left: 10px;
+    right: 10px;
+  }
+  .game-dialogue {
+    left: 12px;
+    right: 12px;
+    padding: 14px 16px 8px;
+    min-height: 150px;
+  }
+  .game-dialogue h2 {
+    font-size: 14px;
+  }
+  #game-dialogue-text {
+    font-size: 14px;
+    min-height: 76px;
+    line-height: 1.9;
+  }
+  #dialogue-portrait {
+    height: min(34cqh, 260px);
+    max-width: 65%;
+  }
+  .game-choices button {
+    font-size: 13px;
+  }
+  .guild-menu {
+    padding: 14px;
+  }
+  .guild-menu-panel {
+    padding: 18px;
+    max-height: 94%;
+    overflow-y: auto;
+  }
+  .guild-menu-body {
+    grid-template-columns: 1fr;
+    min-height: 220px;
+    gap: 16px;
+    padding: 18px 0;
+  }
+  #guild-item-list button {
+    font-size: 12px;
+  }
+  #guild-item-detail {
+    font-size: 12px;
+  }
+  .guild-menu-panel > footer {
+    align-items: flex-start;
+  }
+}
+@media (max-height: 700px) and (min-width: 701px) {
+  .world-viewport {
+    padding-top: 82px;
+    padding-bottom: 34px;
+  }
+  #guild-world {
+    width: min(100%, calc((100cqh - 116px) * 1.5));
+  }
+  .game-hud {
+    top: 10px;
+  }
+  .game-objective {
+    top: 56px;
+  }
+  .game-controls {
+    bottom: 8px;
+  }
+  .game-dialogue {
+    bottom: 34px;
+    min-height: 130px;
+    padding: 14px 20px 8px;
+  }
+  #game-dialogue-text {
+    font-size: 16px;
+    min-height: 55px;
+  }
+  #dialogue-portrait {
+    height: 36cqh;
+  }
+  .guild-menu-panel {
+    padding: 16px 22px;
+  }
+  .guild-menu-body {
+    min-height: 170px;
+  }
+}

@@ -655,7 +655,11 @@ document.addEventListener(
     "click",
     (event) => {
       // An opening fade should stay quiet instead of flashing the click burst over it.
-      if (event.target.closest("#start-button,#story-return,#name-finish"))
+      if (
+        event.target.closest(
+          "#start-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
+        )
+      )
         return;
       if (event.button !== 0 || !settings.motion || reducedMotion.matches)
         return;

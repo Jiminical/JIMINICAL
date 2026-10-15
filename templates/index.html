@@ -10,6 +10,8 @@
     />
     <title>이종족연합국 그린스토아</title>
     <link rel="stylesheet" href="CSS/main.css" />
+    <link rel="stylesheet" href="CSS/game.css" />
+    <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
     <script src="JS/main.js" defer></script>
   </head>
@@ -263,8 +265,9 @@
               <button id="name-rewrite" class="story-quiet">
                 이름 다시 쓰기
               </button>
-              <button id="name-finish" class="story-action">
-                타이틀로 돌아가기
+              <button id="name-finish" class="story-quiet">타이틀로</button>
+              <button id="name-begin" class="story-action">
+                이야기 시작 <span aria-hidden="true">▸</span>
               </button>
             </div>
           </section>
@@ -279,6 +282,136 @@
             <span aria-hidden="true">▸</span>
           </button>
         </footer>
+      </section>
+      <section
+        id="game-screen"
+        class="game-screen"
+        aria-label="제르디아 왕국 모험가 길드"
+        hidden
+      >
+        <div
+          id="guild-assets"
+          data-lucy-src="assets/lucy-portrait.png"
+          data-cast-src="assets/guild-portraits.png"
+          hidden
+        ></div>
+        <header class="game-hud">
+          <div>
+            <span class="game-place">제르디아 왕국</span
+            ><strong>모험가 길드</strong>
+          </div>
+          <button
+            id="guild-menu-open"
+            class="guild-button"
+            aria-controls="guild-menu"
+          >
+            메뉴 <kbd>C</kbd>
+          </button>
+        </header>
+        <p id="game-objective" class="game-objective"></p>
+        <div class="world-viewport">
+          <canvas
+            id="guild-world"
+            width="720"
+            height="480"
+            tabindex="0"
+            aria-label="길드 내부. WASD 이동, 왼쪽 Shift 달리기, E 상호작용, C 메뉴."
+          ></canvas>
+        </div>
+        <p id="game-interaction" class="game-interaction" hidden></p>
+        <p id="game-toast" class="game-toast" role="status" hidden></p>
+        <footer class="game-controls">
+          <span><kbd>WASD</kbd> 이동</span><span><kbd>LSHIFT</kbd> 달리기</span
+          ><span><kbd>E</kbd> 대화 · 조사</span><span><kbd>C</kbd> 메뉴</span>
+        </footer>
+        <div class="game-touch" aria-label="터치 조작">
+          <div class="touch-directions">
+            <button data-game-key="KeyW" aria-label="위로 이동">↑</button
+            ><button data-game-key="KeyA" aria-label="왼쪽 이동">←</button
+            ><button data-game-key="KeyS" aria-label="아래로 이동">↓</button
+            ><button data-game-key="KeyD" aria-label="오른쪽 이동">→</button>
+          </div>
+          <button
+            data-game-key="ShiftLeft"
+            class="touch-run"
+            aria-label="달리기"
+          >
+            달리기
+          </button>
+          <button
+            data-game-key="KeyE"
+            class="touch-interact"
+            aria-label="상호작용"
+          >
+            E
+          </button>
+        </div>
+        <section
+          id="game-dialogue"
+          class="game-dialogue game-window"
+          role="dialog"
+          aria-labelledby="game-speaker"
+          aria-describedby="game-dialogue-live"
+          hidden
+        >
+          <canvas
+            id="dialogue-portrait"
+            width="384"
+            height="420"
+            aria-hidden="true"
+          ></canvas>
+          <h2 id="game-speaker"></h2>
+          <p id="game-dialogue-text" aria-hidden="true"></p>
+          <p
+            id="game-dialogue-live"
+            class="visually-hidden"
+            aria-live="polite"
+            aria-atomic="true"
+          ></p>
+          <div id="game-choices" class="game-choices" hidden></div>
+          <button id="game-dialogue-next" class="guild-button">E 다음</button>
+        </section>
+        <section
+          id="guild-menu"
+          class="guild-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="guild-menu-title"
+          hidden
+        >
+          <div class="guild-menu-panel game-window">
+            <header>
+              <div>
+                <h2 id="guild-menu-title">여행자의 기록</h2>
+                <p id="guild-player-name"></p>
+                <p id="guild-player-status"></p>
+              </div>
+              <button id="guild-menu-close" class="guild-button">
+                닫기 <kbd>C</kbd>
+              </button>
+            </header>
+            <nav class="guild-tabs" aria-label="메뉴 종류">
+              <button data-menu-tab="items">소지품</button
+              ><button data-menu-tab="quest">의뢰</button
+              ><button data-menu-tab="controls">조작</button>
+            </nav>
+            <div class="guild-menu-body">
+              <div id="guild-item-list" aria-label="소지품 목록"></div>
+              <div class="guild-description">
+                <p id="guild-item-detail"></p>
+                <button id="guild-item-action" class="guild-button" hidden>
+                  살펴보기
+                </button>
+              </div>
+            </div>
+            <footer>
+              <span>W/S 선택 · A/D 탭 · E 결정</span
+              ><button id="guild-exit-title" class="guild-button">
+                타이틀로
+              </button>
+            </footer>
+          </div>
+        </section>
       </section>
       <div id="scene-curtain" aria-hidden="true" hidden></div>
     </main>
