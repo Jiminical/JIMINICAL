@@ -20,7 +20,7 @@ const fieldWorld = (() => {
         { id: "library-entry", name: "이슬잎 도서관", x: 529, y: 191 },
         { id: "river-leaf", name: "강가에 내려앉은 잎", x: 116, y: 298 },
         { id: "spring", name: "작은 샘", x: 73, y: 266 },
-        { id: "grove-sign", name: "숲길 푯말", x: 456, y: 326 },
+        { id: "grove-sign", name: "숲길 비석", x: 456, y: 326 },
       ],
     },
     shop: {

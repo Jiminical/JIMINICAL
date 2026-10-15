@@ -218,24 +218,22 @@ const guildGame = (() => {
     if (!motion()) return;
     const frame = Math.floor(elapsed * 8);
     const water =
-      location === "library"
-        ? "여정의 쉼터 · 세계관 설정 / 인물 도감 / 프롤로그 웹툰을 펼쳐 보자."
-        : location === "city"
+      location === "city"
+        ? [
+            [347, 227],
+            [375, 234],
+            [358, 247],
+            [382, 244],
+          ]
+        : location === "grove"
           ? [
-              [347, 227],
-              [375, 234],
-              [358, 247],
-              [382, 244],
+              [211, 254],
+              [227, 287],
+              [206, 319],
+              [193, 365],
+              [215, 416],
             ]
-          : location === "grove"
-            ? [
-                [211, 254],
-                [227, 287],
-                [206, 319],
-                [193, 365],
-                [215, 416],
-              ]
-            : [];
+          : [];
     water.forEach(([x, y], i) => {
       const cel = (frame + i * 3) % 16;
       ctx.globalAlpha = cel < 8 ? 0.5 : 0.22;
@@ -305,13 +303,25 @@ const guildGame = (() => {
       transitionAnimation.cancel();
       return true;
     };
-    if (!(await fade(0, 1))) return;
-    prepare();
-    if (!(await fade(1, 0))) return;
-    transition.hidden = true;
-    phase = "free";
-    root.dataset.phase = phase;
-    if (after) after();
+    try {
+      if (!(await fade(0, 1))) return;
+      prepare();
+      if (!(await fade(1, 0))) return;
+      transition.hidden = true;
+      phase = "free";
+      root.dataset.phase = phase;
+      if (after) after();
+    } finally {
+      // A failed scene must never leave an opaque curtain over the whole game.
+      if (token === transitionSerial && active) {
+        transitionAnimation?.cancel();
+        transition.hidden = true;
+        if (phase === "transition") {
+          phase = "free";
+          root.dataset.phase = phase;
+        }
+      }
+    }
   }
   function travelTo(destination, setup, after) {
     return transitionTo(() => {
@@ -335,6 +345,7 @@ const guildGame = (() => {
       () => {
         hideVista();
         root.classList.add("is-event");
+        if (kind === "departure") gameAudio.scene("departure");
         document.querySelector(".world-viewport").inert = true;
         eventScenes.prepare(kind, {
           atlas: pictures.events,
@@ -404,6 +415,7 @@ const guildGame = (() => {
         cinematic.started = elapsed;
         phase = "vista";
         root.dataset.phase = phase;
+        gameAudio.scene(key);
         if (key === "sanctuary") gameAudio.sfx("sanctuary");
         document.querySelector("#vista-next").focus({ preventScroll: true });
       },
@@ -573,6 +585,7 @@ const guildGame = (() => {
     return transitionTo(
       () => {
         hideVista();
+        gameAudio.scene(location);
         drawWorld();
       },
       () => {
@@ -706,6 +719,7 @@ const guildGame = (() => {
     });
   }
   function hideAction() {
+    if (actionScenes.kind === "guide") gameAudio.scene(location);
     actionScenes.stop();
     root.classList.remove("is-action");
     document.querySelector(".world-viewport").inert = false;
@@ -716,6 +730,7 @@ const guildGame = (() => {
       phase = "action";
       root.dataset.phase = phase;
       root.classList.add("is-action");
+      if (kind === "guide") gameAudio.scene("guide");
       document.querySelector(".world-viewport").inert = true;
       actionScenes.prepare({
         kind,
@@ -1602,7 +1617,23 @@ const guildGame = (() => {
       notify("이야기할 사람이나 물건 가까이에서 E");
       return;
     }
-    gameAudio.sfx(target.kind === "npc" ? "next" : "paper");
+    const doors = [
+      "door",
+      "guild-entry",
+      "shop-entry",
+      "shop-exit",
+      "library-entry",
+      "library-exit",
+    ];
+    gameAudio.sfx(
+      target.kind === "npc"
+        ? "next"
+        : doors.includes(target.id)
+          ? "door"
+          : "paper",
+    );
+    if (["shop-entry", "library-entry"].includes(target.id))
+      gameAudio.sfx("bell");
     if (target.kind === "npc") {
       npcTalk(target.id);
       return;
@@ -1718,7 +1749,14 @@ const guildGame = (() => {
     footDistance += Math.hypot(player.x - oldX, player.y - oldY);
     if (footDistance >= (keys.has("ShiftLeft") ? 24 : 22)) {
       footDistance = 0;
-      gameAudio.sfx("footstep", location);
+      const surface =
+        location === "grove" && player.x < 165 && player.y > 237
+          ? "grass"
+          : location;
+      gameAudio.sfx(
+        "footstep",
+        surface + (keys.has("ShiftLeft") ? "-run" : ""),
+      );
     }
   }
   function drawPropOutlines() {
@@ -1730,21 +1768,8 @@ const guildGame = (() => {
       const shape = fieldTerrain.outline(location, target.id);
       if (!shape) continue;
       ctx.save();
-      ctx.beginPath();
-      shape.forEach(([x, y], index) => {
-        if (index) ctx.lineTo(x + 0.5, y + 0.5);
-        else ctx.moveTo(x + 0.5, y + 0.5);
-      });
-      ctx.closePath();
-      ctx.lineJoin = "miter";
-      ctx.strokeStyle = "#ffffff";
-      ctx.lineWidth = 3;
-      ctx.globalAlpha = 0.06 + pulse * 0.04;
-      ctx.stroke();
-      ctx.lineWidth = 1;
-      ctx.globalAlpha =
-        (nearest?.id === target.id ? 0.85 : 0.25) + pulse * 0.12;
-      ctx.stroke();
+      ctx.globalAlpha = (nearest?.id === target.id ? 0.63 : 0.18) + pulse * 0.1;
+      ctx.drawImage(shape, 0, 0);
       ctx.restore();
     }
   }
@@ -1870,6 +1895,8 @@ const guildGame = (() => {
     if (location === "carriage" && motion())
       ctx.translate(0, [0, -1, 0, 1][Math.floor(elapsed * 5) % 4]);
     ctx.drawImage(background, 0, 0);
+    if (location === "grove" && !fieldFlags.leafTaken)
+      ctx.drawImage(fieldTerrain.leafArt(), 0, 0);
     if (location === "carriage") {
       // Extend the edge rows through the tiny carriage shake, with no bare rim.
       ctx.drawImage(background, 0, 0, W, 1, 0, -2, W, 2);

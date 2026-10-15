@@ -37,7 +37,7 @@ const actionScenes = (() => {
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
     if (state.kind === "guide")
-      state.cells = portraitCells(state.pictures.guideKania);
+      state.cells = guideCels(state.pictures.guideKania);
     draw();
   }
   function portraitCells(image) {
@@ -81,10 +81,48 @@ const actionScenes = (() => {
       };
     });
   }
-  function cue(name, at, sound) {
+  function guideCels(image) {
+    // Keep the relaxed arm-down drawing throughout the walk. The old four
+    // independently drawn poses changed the face, shoulders and arm silhouette.
+    const cell = portraitCells(image)[1],
+      scale = 280 / cell.h;
+    const base = document.createElement("canvas");
+    base.width = 720;
+    base.height = 344;
+    const b = base.getContext("2d");
+    b.imageSmoothingEnabled = false;
+    b.drawImage(
+      image,
+      cell.x,
+      cell.y,
+      cell.w,
+      cell.h,
+      Math.round(160 - cell.head * scale),
+      82,
+      cell.w * scale,
+      280,
+    );
+    const lifts = [0, 0, -1, -1, 0, 0, -1, -1],
+      sways = [0, 0, 1, 1, 0, 0, -1, -1];
+    // Eight discrete pixel cels: a one-pixel footfall and a delayed one-pixel
+    // shift through the cloak/hair. Head size and the face drawing stay fixed.
+    return lifts.map((lift, frame) => {
+      const cel = document.createElement("canvas");
+      cel.width = 720;
+      cel.height = 344;
+      const paint = cel.getContext("2d");
+      paint.imageSmoothingEnabled = false;
+      for (let y = 0; y < 344; y++) {
+        const sway = Math.round(sways[frame] * clamp((y - 190) / 120));
+        paint.drawImage(base, 0, y, 720, 1, sway, y + lift, 720, 1);
+      }
+      return cel;
+    });
+  }
+  function cue(name, at, sound, variant = "") {
     if (seconds < at || state.cues.has(name)) return;
     state.cues.add(name);
-    if (sound) gameAudio.sfx(sound);
+    if (sound) gameAudio.sfx(sound, variant);
   }
   function drawRogue() {
     const rogue = state.actors.find((a) => a.id === "rogue"),
@@ -138,7 +176,7 @@ const actionScenes = (() => {
     cue("jump", 0.8, state.motion ? "jump" : null);
     cue("cry", 1.1, "cry");
     if (state.motion && moving && seconds < 3.9)
-      cue("step" + Math.floor(seconds * 6), 0, "footstep");
+      cue("step" + Math.floor(seconds * 6), 0, "footstep", "stone-run");
   }
   function drawGuide() {
     const art = state.pictures.guideForest,
@@ -156,25 +194,13 @@ const actionScenes = (() => {
       720,
       344,
     );
-    const frame = state.motion ? Math.floor(seconds * 6) % 4 : 0,
-      cell = state.cells[frame];
-    const scale = 280 / Math.max(...state.cells.map((x) => x.h));
+    const frame = state.motion ? Math.floor(seconds * 8.8) % 8 : 0;
     // The lower edge is hidden beneath the fixed caption bar, with overscan.
     c.save();
     c.beginPath();
     c.rect(0, 58, 720, 344);
     c.clip();
-    c.drawImage(
-      state.pictures.guideKania,
-      cell.x,
-      cell.y,
-      cell.w,
-      cell.h,
-      Math.round(160 - cell.head * scale),
-      140,
-      cell.w * scale,
-      cell.h * scale,
-    );
+    c.drawImage(state.cells[frame], 0, 58);
     c.restore();
     if (state.motion) {
       for (let i = 0; i < 7; i++) {
@@ -183,7 +209,7 @@ const actionScenes = (() => {
           y = 73 + i * 44;
         rect(x, y, 3, 1, "#eff7c779");
       }
-      cue("step" + Math.floor(seconds * 2.2), 0, "footstep");
+      cue("step" + Math.floor(seconds * 2.2), 0, "footstep", "earth");
       cue("birds", 2.6, "birds");
     }
     label.textContent =
