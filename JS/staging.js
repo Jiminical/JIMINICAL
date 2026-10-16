@@ -37,119 +37,8 @@ const actionScenes = (() => {
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
     if (state.kind === "guide")
-      state.cells = guideCels(state.pictures.guideKania);
+      state.cells = pixelAtlases.make(state.pictures.kaniaWalk, 4, 2);
     draw();
-  }
-  function portraitCells(image) {
-    const sample = document.createElement("canvas");
-    sample.width = image.naturalWidth;
-    sample.height = image.naturalHeight;
-    const ctx = sample.getContext("2d", { willReadFrequently: true });
-    ctx.drawImage(image, 0, 0);
-    const data = ctx.getImageData(0, 0, sample.width, sample.height).data,
-      w = sample.width / 2,
-      h = sample.height / 2;
-    return [0, 1, 2, 3].map((index) => {
-      const sx = (index % 2) * w,
-        sy = Math.floor(index / 2) * h;
-      let l = w,
-        r = 0,
-        t = h,
-        b = 0;
-      for (let y = 0; y < h; y++)
-        for (let x = 0; x < w; x++)
-          if (data[((y + sy) * sample.width + x + sx) * 4 + 3] > 128) {
-            l = Math.min(l, x);
-            r = Math.max(r, x);
-            t = Math.min(t, y);
-            b = Math.max(b, y);
-          }
-      let sum = 0,
-        count = 0;
-      for (let y = t; y < t + (b - t) * 0.26; y++)
-        for (let x = l; x <= r; x++)
-          if (data[((y + sy) * sample.width + x + sx) * 4 + 3] > 128) {
-            sum += x;
-            count++;
-          }
-      return {
-        x: sx + l,
-        y: sy + t,
-        w: r - l + 1,
-        h: b - t + 1,
-        head: (count ? sum / count : (l + r) / 2) - l,
-      };
-    });
-  }
-  function guideCels(image) {
-    // Keep one drawing so the face and body proportions stay consistent.
-    // Overscan below the picture window prevents a gap at the upward footfall.
-    const cell = portraitCells(image)[1],
-      scale = 300 / cell.h;
-    const base = document.createElement("canvas");
-    base.width = 720;
-    base.height = 376;
-    const b = base.getContext("2d", { willReadFrequently: true });
-    b.imageSmoothingEnabled = false;
-    b.drawImage(
-      image,
-      cell.x,
-      cell.y,
-      cell.w,
-      cell.h,
-      Math.round(160 - cell.head * scale),
-      64,
-      cell.w * scale,
-      300,
-    );
-    // The extracted art has translucent clothing pixels. Use the same solid
-    // alpha treatment as field sprites, preserving only the outside silhouette.
-    const pixels = b.getImageData(0, 0, base.width, base.height);
-    for (let i = 3; i < pixels.data.length; i += 4)
-      pixels.data[i] = pixels.data[i] >= 96 ? 255 : 0;
-    b.putImageData(pixels, 0, 0);
-    const mask = (points) => {
-      const layer = document.createElement("canvas");
-      layer.width = base.width; layer.height = base.height;
-      const ctx = layer.getContext("2d");
-      ctx.beginPath(); points.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
-      ctx.closePath(); ctx.fill();
-      return layer;
-    };
-    const armMask = mask([[154,247],[147,277],[134,299],[131,316],[140,337],[163,360],[179,376],[115,376],[104,353],[86,343],[63,333],[62,319],[73,296],[89,278],[120,266]]),
-      tailMask = mask([[0,160],[65,110],[107,95],[111,145],[86,202],[40,247],[0,270]]);
-    const cut = (shape) => {
-      const layer = document.createElement("canvas"); layer.width=720; layer.height=376;
-      const ctx=layer.getContext("2d");ctx.drawImage(base,0,0);
-      ctx.globalCompositeOperation="destination-in";ctx.drawImage(shape,0,0);return layer;
-    };
-    const arm=cut(armMask), tail=cut(tailMask), body=cut(base), torso=body.getContext("2d");
-    torso.globalCompositeOperation="destination-out";torso.drawImage(tailMask,0,0);
-    // Cloth behind the near arm prevents a transparent seam when it swings.
-    torso.globalCompositeOperation="source-over";
-    const lining=cut(armMask), liningContext=lining.getContext("2d");
-    liningContext.globalCompositeOperation="source-in";liningContext.fillStyle="#234632";
-    liningContext.fillRect(0,0,720,376);torso.drawImage(lining,0,0);
-    // Twelve rigid-body cels: two footfalls, opposite arm swing and a delayed
-    // ponytail. The face is translated intact; no scanline warping or pose swaps.
-    return Array.from({length:12}, (_,frame) => {
-      const phase=frame/12*Math.PI*2,
-        lift=Math.round(Math.cos(phase*2)-1);
-      const cel = document.createElement("canvas");
-      cel.width = 720;
-      cel.height = 376;
-      const paint = cel.getContext("2d");
-      paint.imageSmoothingEnabled = false;
-      paint.save();paint.translate(111,130+lift);paint.rotate(Math.sin(phase-.6)*.015);
-      paint.drawImage(tail,-111,-130);paint.restore();
-      paint.drawImage(body,0,lift);
-      paint.save();paint.translate(145,260+lift);paint.rotate(Math.sin(phase)*.065);
-      paint.drawImage(arm,-145,-260);paint.restore();
-      const pixels=paint.getImageData(0,0,720,376);
-      for(let i=3;i<pixels.data.length;i+=4)pixels.data[i]=pixels.data[i]>=96?255:0;
-      paint.putImageData(pixels,0,0);
-      return cel;
-    });
   }
   function cue(name, at, sound, variant = "") {
     if (seconds < at || state.cues.has(name)) return;
@@ -229,14 +118,20 @@ const actionScenes = (() => {
       720,
       344,
     );
-    const stepRate = 2.2,
-      frame = state.motion ? Math.floor(seconds * stepRate * 6) % 12 : 0;
-    // The lower edge is hidden beneath the fixed caption bar, with overscan.
-    c.save();
-    c.beginPath();
-    c.rect(0, 58, 720, 344);
-    c.clip();
-    c.drawImage(state.cells[frame], 0, 58);
+    const stepRate = 2.4,
+      frame = state.motion ? Math.floor(seconds * stepRate * 4) % 8 : 0;
+    // A visible path and planted boots give the walk a stable ground plane.
+    c.save(); c.beginPath(); c.rect(0, 58, 720, 344); c.clip();
+    const ground = c.createLinearGradient(0, 331, 0, 402);
+    ground.addColorStop(0, "#36553a00"); ground.addColorStop(.3, "#3c4a2c"); ground.addColorStop(1, "#1c3023");
+    c.fillStyle = ground; c.fillRect(0, 331, 720, 71);
+    for (let i = 0; i < 16; i++) {
+      const x = ((i * 64 - (state.motion ? seconds * 72 : 0)) % 960 + 960) % 960 - 96;
+      rect(x, 382 + i % 3 * 5, 27, 2, "#8b94654a");
+      rect(x + 31, 365 + i % 4 * 7, 4, 2, "#b3bb7838");
+    }
+    c.fillStyle = "#091c2260"; c.beginPath(); c.ellipse(227, 388, 49, 6, 0, 0, Math.PI * 2); c.fill();
+    pixelAtlases.draw(c, state.cells, frame, 225, 388, 222);
     c.restore();
     if (state.motion) {
       for (let i = 0; i < 7; i++) {

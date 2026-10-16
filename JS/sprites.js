@@ -290,3 +290,73 @@ const fieldSprites = (() => {
     bodyHeight: (kind) => cast[kind].drawnHeight,
   };
 })();
+
+// Generated animation atlases share a ground anchor and retain one scale across poses.
+const pixelAtlases = (() => {
+  const cache = new WeakMap();
+  function make(image, columns, rows) {
+    if (cache.has(image)) return cache.get(image);
+    const source = document.createElement('canvas');
+    source.width = image.naturalWidth; source.height = image.naturalHeight;
+    const ctx = source.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0);
+    const frames = [];
+    for (let i = 0; i < columns * rows; i++) {
+      const x = Math.round(i % columns * source.width / columns),
+        y = Math.round(Math.floor(i / columns) * source.height / rows),
+        w = Math.round((i % columns + 1) * source.width / columns) - x,
+        h = Math.round((Math.floor(i / columns) + 1) * source.height / rows) - y,
+        pixels = ctx.getImageData(x, y, w, h);
+      let left = w, right = 0, top = h, bottom = 0;
+      for (let py = 0; py < h; py++) for (let px = 0; px < w; px++) {
+        const offset = (py * w + px) * 4 + 3;
+        pixels.data[offset] = pixels.data[offset] >= 112 ? 255 : 0;
+        if (pixels.data[offset]) {
+          left = Math.min(left, px); right = Math.max(right, px);
+          top = Math.min(top, py); bottom = Math.max(bottom, py);
+        }
+      }
+      // A generated frame may include a disconnected sliver of its neighbour.
+      // Remove only small edge-connected components; preserve fine interior bow strings.
+      const labels = new Int32Array(w * h), queue = new Int32Array(w * h), components = [];
+      let label = 0;
+      for (let start = 0; start < labels.length; start++) {
+        if (labels[start] || !pixels.data[start * 4 + 3]) continue;
+        label++; let read = 0, write = 1, edge = false; queue[0] = start; labels[start] = label;
+        while (read < write) {
+          const pos = queue[read++], px = pos % w, py = Math.floor(pos / w);
+          if (px < 2 || px > w - 3 || py < 2 || py > h - 3) edge = true;
+          const neighbours = [px ? pos - 1 : -1, px < w - 1 ? pos + 1 : -1, py ? pos - w : -1, py < h - 1 ? pos + w : -1];
+          for (const n of neighbours) if (n >= 0 && !labels[n] && pixels.data[n * 4 + 3]) { labels[n] = label; queue[write++] = n; }
+        }
+        components.push({ label, size: write, edge });
+      }
+      const largest = Math.max(...components.map(part => part.size)), remove = new Set(components.filter(part => part.edge && part.size < largest * .3).map(part => part.label));
+      left = w; right = 0; top = h; bottom = 0;
+      for (let pos = 0; pos < labels.length; pos++) {
+        if (remove.has(labels[pos])) pixels.data[pos * 4 + 3] = 0;
+        if (pixels.data[pos * 4 + 3]) {
+          const px = pos % w, py = Math.floor(pos / w);
+          left = Math.min(left, px); right = Math.max(right, px);
+          top = Math.min(top, py); bottom = Math.max(bottom, py);
+        }
+      }
+      const art = document.createElement('canvas'); art.width = w; art.height = h;
+      art.getContext('2d').putImageData(pixels, 0, 0);
+      let sum = 0, count = 0;
+      for (let py = Math.round(bottom - (bottom - top) * .18); py <= bottom; py++)
+        for (let px = left; px <= right; px++) if (pixels.data[(py * w + px) * 4 + 3]) { sum += px; count++; }
+      frames.push({ art, anchor: count ? sum / count : w / 2, bottom, height: bottom - top + 1 });
+    }
+    const sheet = { frames, height: Math.max(...frames.map(f => f.height)) };
+    cache.set(image, sheet); return sheet;
+  }
+  function draw(ctx, sheet, frame, x, ground, height, opacity = 1) {
+    if (!sheet) return;
+    const f = sheet.frames[frame % sheet.frames.length], scale = height / sheet.height;
+    ctx.save(); ctx.globalAlpha *= opacity;
+    ctx.drawImage(f.art, Math.round(x - f.anchor * scale), Math.round(ground - f.bottom * scale), f.art.width * scale, f.art.height * scale);
+    ctx.restore();
+  }
+  return { make, draw };
+})();

@@ -327,6 +327,9 @@
           data-field-cast-src="assets/ld-fields.webp"
           data-sd-field-src="assets/sd-fields.webp"
           data-sd-kania-src="assets/sd-kania.webp"
+          data-demon-actions-src="assets/demon-actions.png"
+          data-kania-walk-src="assets/kania-walk.png"
+          data-kania-archery-src="assets/kania-archery.png"
           hidden
         ></div>
         <button
@@ -693,14 +696,13 @@
           </div>
           <section class="battle-message" aria-label="전투 상황">
             <p id="battle-message" role="status" aria-live="polite"></p>
-            <div id="battle-timing" hidden>
-              <div class="battle-timing-track"><span id="battle-timing-zone"></span><i id="battle-timing-cursor"></i></div>
-              <button id="battle-timing-button" type="button">E · 타이밍 맞추기</button>
-            </div>
             <button id="battle-continue" type="button" hidden>E · 계속</button>
           </section>
           </div>
-          <p class="battle-key-hint">↑ ↓ 선택 · E 결정 · Esc 돌아가기</p>
+          <div id="battle-wave-hud" hidden><b id="battle-pattern-name"></b><span id="battle-wave-time"></span><div><i id="battle-wave-bar"></i></div></div>
+          <div id="battle-turn" class="battle-turn" aria-live="polite"></div>
+          <p id="battle-hint" class="battle-key-hint">↑ ↓ 선택 · E 결정 · Esc 돌아가기</p>
+          <div id="battle-touch-pad" hidden><button type="button" data-dodge="ArrowUp" aria-label="위로 이동">↑</button><button type="button" data-dodge="ArrowLeft" aria-label="왼쪽으로 이동">←</button><button type="button" data-dodge="ArrowDown" aria-label="아래로 이동">↓</button><button type="button" data-dodge="ArrowRight" aria-label="오른쪽으로 이동">→</button></div>
         </section>
         <div id="game-transition" aria-hidden="true" hidden></div>
         <section

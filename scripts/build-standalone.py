@@ -58,6 +58,8 @@ assert 'data-art-src="data:image/webp;base64,' in page
 assert 'data-late-src="data:image/webp;base64,' in page
 for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-guild', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
+for attribute in ('demon-actions', 'kania-walk', 'kania-archery'):
+    assert 'data-' + attribute + '-src="data:image/png;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles
 (ROOT / "index.html").write_text(page)

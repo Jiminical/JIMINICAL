@@ -104,16 +104,23 @@ const guildGame = (() => {
       "guideForest",
       "guideKania",
       "sdKania",
+      "demonActions",
+      "kaniaWalk",
+      "kaniaArchery",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
-  ]).then(() =>
+  ]).then(() => {
     fieldSprites.prepare({
       hero: pictures.sdHero,
       guild: pictures.sdGuild,
       leads: pictures.sdLeads,
       field: pictures.sdField,
       kania: pictures.sdKania,
-    }),
-  );
+    });
+    // Decode and clean the animation frames during loading, before an encounter.
+    pixelAtlases.make(pictures.demonActions, 4, 2);
+    pixelAtlases.make(pictures.kaniaWalk, 4, 2);
+    pixelAtlases.make(pictures.kaniaArchery, 4, 1);
+  });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
   let active = false,
@@ -722,8 +729,10 @@ const guildGame = (() => {
     prompt.hidden = true;
     document.querySelector(".world-viewport").inert = true;
     gameAudio.scene("battle");
+    drawWorld();
     battleScenes.prepare({
       world: canvas,
+      pictures,
       origin: { x: 529, y: 185 },
       name: playerName,
       hp,
@@ -2058,8 +2067,10 @@ const guildGame = (() => {
       if (location === "library" && !document.hidden)
         libraryLetter.update(dt, motion());
     } else player.moving = false;
-    drawWorld();
-    drawVista();
+    if (phase !== "battle") {
+      drawWorld();
+      drawVista();
+    }
     request = requestAnimationFrame(tick);
   }
   function renderMenu() {
@@ -2411,9 +2422,10 @@ const guildGame = (() => {
     keys.add(code);
   }
   document.addEventListener("keydown", handleKey);
-  document.addEventListener("keyup", (event) => keys.delete(event.code));
+  document.addEventListener("keyup", (event) => { keys.delete(event.code); battleScenes.release(event.code); });
   function clearKeys() {
     keys.clear();
+    battleScenes.clearInput();
     if (player) player.moving = false;
   }
   window.addEventListener("blur", clearKeys);
