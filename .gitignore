@@ -1,3 +1,5 @@
 /dist-cloudflare/
 __pycache__/
 /dist-cloudflare-compact/
+node_modules/
+.wrangler/

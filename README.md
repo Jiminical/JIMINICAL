@@ -5,6 +5,28 @@
 
 로컬 서버로 확인하려면 저장소에서 `python3 -m http.server 8000`을 실행하세요.
 
+Cloudflare Workers의 GitHub 연동 배포는 아래 설정을 사용합니다.
+
+| 항목 | 값 |
+| --- | --- |
+| 저장소 | `Jiminical/JIMINICAL` |
+| 프로덕션 브랜치 | `codex/greenstoa-interactions-20261016` |
+| 루트 디렉터리 | `/` (저장소 루트) |
+| 빌드 명령 | `npm run build` |
+| 배포 명령 | `npm run deploy` |
+| Worker 이름 | `005` |
+
+Cloudflare의 **005 → 설정 → 빌드 → 연결**에서 GitHub 저장소를 연결합니다.
+Cloudflare가 `package-lock.json`으로 의존성을 설치하고, Node 빌드가
+`dist-cloudflare`에 파일 분리본을 만든 뒤 Wrangler가 이 폴더만 업로드합니다.
+`wrangler.jsonc`의 Worker 이름은 Cloudflare의 이름과 같아야 합니다.
+`.node-version`은 Node 22를 선택합니다. 토큰이나 계정 비밀값을 저장소에 넣지 않습니다.
+
+로컬 배포 사전 검증: `npm ci`, `npm run build`, `npm run check:deploy`.
+로컬 미리보기: 빌드 후 `npm run preview`.
+실제 배포는 GitHub 연결 후 Cloudflare에서 빌드를 실행하거나,
+Cloudflare 로그인이 설정된 환경에서 `npm run deploy`로 수행합니다.
+
 Cloudflare Pages에는 아래 파일 분리본을 사용하세요. 통합 `index.html`은 약 84MiB라
 파일당 25MB 제한을 초과합니다. 이미지 화질을 유지하면서 별도 파일로 배포하면
 가장 큰 자산도 약 3.25MiB입니다.

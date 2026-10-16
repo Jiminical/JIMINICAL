@@ -1,0 +1,17 @@
+{
+  "name": "greenstoa-prologue",
+  "version": "1.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build-cloudflare.mjs",
+    "deploy": "wrangler deploy",
+    "check:deploy": "wrangler deploy --dry-run",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "4.151.0"
+  }
+}
