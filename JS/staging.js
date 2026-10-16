@@ -108,7 +108,9 @@ const actionScenes = (() => {
     const walk=kaniaWalk.draw(c,state.cells,seconds,0,58,state.motion);
     c.restore();
     if(state.motion){
-      cue("step"+Math.floor(seconds/(kaniaWalk.period/2)),0,"footstep","stone");
+      const stride=kaniaWalk.period/2;
+      if(seconds>=stride)
+        cue("step"+Math.floor((seconds-stride)/stride),0,"footstep","stone");
       cue("birds",2.6,"birds");
     }
     label.textContent=seconds<3?"카니아를 따라 걷자, 나무 사이로 거대한 경관이 펼쳐졌다.":seconds<6.5?"끝없이 쏟아지는 폭포. 새 떼가 물안개 위를 가르고, 작은 페어리들이 빛났다.":"구름과 산맥 사이로 이어진 길 너머, 성역이 기다리고 있었다.";
@@ -131,7 +133,8 @@ const actionScenes = (() => {
       seconds += Math.min(0.05, Math.max(0, (now - previous) / 1000));
     previous = now;
     draw();
-    const duration = state.motion ? (state.kind === "rogue" ? 4.4 : 10.5) : 0.8;
+    // Motion preferences change the picture, never the time available to read it.
+    const duration = state.kind === "rogue" ? 4.4 : 10.5;
     if (seconds >= duration) {
       finish(true);
       return;

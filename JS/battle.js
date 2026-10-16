@@ -8,11 +8,14 @@ const battleScenes = (() => {
     touchPad = document.querySelector('#battle-touch-pad'), turnLabel = document.querySelector('#battle-turn');
   battleMenuArt.prepare([...buttons,back]);
   const held = new Set(), AW = 420, AH = 190;
+  const finaleStages = new Set(['overload','desperation','lastStrike','arrow','impact','dissolve']);
+  const finalDuration = 14.4;
+  const story = document.querySelector('#battle-story'), storyText = document.querySelector('#battle-story-text');
   const patterns = [
     {name:'잿비 · 역류',seconds:10,hint:'아래에서 되솟는 탄환도 살펴보자. 움직이는 빈틈을 따라 피한다.'},
     {name:'사냥꾼의 발톱',seconds:11,hint:'노란 예고선은 곧 발톱이 된다. 교차점에서 멀어지자.'},
     {name:'균열의 나선',seconds:12,hint:'휘어지는 탄환과 옆에서 날아오는 침. 넓은 틈으로 빠져나가자.'},
-    {name:'포식의 결계',seconds:6.8,hint:'결계의 마력이 몸을 짓누른다. 끝까지 버텨야 한다.'},
+    {name:'포식의 결계',seconds:finalDuration,hint:'결계의 마력이 몸을 짓누른다. 끝까지 버텨야 한다.'},
   ];
   let state = null, request = 0, previous = 0;
   const clamp = (n, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
@@ -25,6 +28,11 @@ const battleScenes = (() => {
     if (fill) { c.fillStyle = fill; c.fill(); }
     if (stroke) { c.strokeStyle = stroke; c.lineWidth = width; c.stroke(); }
   }
+  function narrate(line) {
+    if(storyText.textContent===line)return;
+    storyText.textContent=line;
+    if(motion())storyText.animate([{opacity:0,transform:'translateY(7px)'},{opacity:1,transform:'translateY(0)'}],{duration:420,easing:'ease-out'});
+  }
   function health() {
     document.querySelector('#battle-hp-text').textContent = `HP ${state.hp} / 24`;
     document.querySelector('#battle-hp-bar').style.width = state.hp / 24 * 100 + '%';
@@ -34,18 +42,29 @@ const battleScenes = (() => {
   function stage(kind, line) {
     if (!state) return;
     const previousView = enemyPosition();
+    if(kind==='lastStrike'){
+      state.finaleFrom=document.createElement('canvas');state.finaleFrom.width=canvas.width;state.finaleFrom.height=canvas.height;
+      state.finaleFrom.getContext('2d').drawImage(canvas,0,0);
+    }
     state.viewFrom = { x: previousView.x / canvas.width, ground: previousView.ground / canvas.height, height: previousView.height / canvas.height };
     state.stage = kind; state.age = 0; state.inputAfter = performance.now() + 160;
     root.dataset.state = kind;
+    const finale=finaleStages.has(kind);
+    root.dataset.finale=String(finale);story.hidden=!finale;
+    document.querySelector('.battle-message').setAttribute('aria-hidden',String(finale));
+    document.querySelector('#battle-menu').inert=!['command','info','items'].includes(kind);
+    if(kind==='overload')narrate('붉은 결계가 닫혔다. 도망칠 곳은 없다.');
+    if(kind==='desperation')narrate('마력이 몸을 짓누른다. 그래도 움직여야 한다.');
+    if(kind==='impact')narrate('한 발의 화살이, 마족의 이마를 꿰뚫었다.');
     const choosing = ['command','info','items'].includes(kind), dodging = ['dodge','desperation'].includes(kind);
     root.dataset.choosing = String(choosing); root.dataset.cinematic = String(cinematic());
     commands.hidden = kind !== 'command'; items.hidden = kind !== 'items'; back.hidden = !['info','items'].includes(kind);
     buttons.forEach(b => b.disabled = kind !== 'command');
     next.hidden = !['info','won'].includes(kind);
     next.textContent = kind === 'info' ? 'E · 돌아가기' : 'E · 카니아에게';
-    waveHud.hidden = !['telegraph','dodge','waveEnd','overload','desperation'].includes(kind);
-    touchPad.hidden = !dodging;
-    touchPad.querySelectorAll('button').forEach(b => b.disabled = !dodging);
+    waveHud.hidden = finale || !['telegraph','dodge','waveEnd'].includes(kind);
+    touchPad.hidden = !dodging || finale;
+    touchPad.querySelectorAll('button').forEach(b => b.disabled = !dodging || finale);
     turnLabel.textContent = ['overload','desperation'].includes(kind) ? '중급 마족 · 폭주' : choosing ? `내 차례 · ${state.turn + 1}` : ['telegraph','dodge','waveEnd','overload','desperation'].includes(kind) ? `적의 차례 · ${state.turn}` : '';
     document.querySelector('#battle-hint').textContent = dodging
       ? 'WASD / 방향키 이동 · Shift 천천히 · 터치: 회피 상자를 드래그'
@@ -152,8 +171,8 @@ const battleScenes = (() => {
     if(state.pointer){const x=state.pointer.x-state.soul.x,y=state.pointer.y-state.soul.y,distance=Math.hypot(x,y);if(distance>1){const move=Math.min(distance,speed*dt);state.soul.x+=x/distance*move;state.soul.y+=y/distance*move;}}
     else{state.soul.x+=dx/length*speed*dt;state.soul.y+=dy/length*speed*dt;}
     state.soul.x=clamp(state.soul.x,8,AW-8);state.soul.y=clamp(state.soul.y,8,AH-8);state.invincible=Math.max(0,state.invincible-dt);
-    const final=state.stage==='desperation',duration=final?(state.critical?2.3:6.8):patterns[state.pattern].seconds,
-      cadence=[.68,.98,.80,.47][state.pattern];
+    const final=state.stage==='desperation',duration=final?finalDuration:patterns[state.pattern].seconds,
+      cadence=[.68,.98,.80,.60][state.pattern];
     if(state.age<duration-1.0&&state.age>=state.spawn*cadence+.28)emit(state.spawn++);
     for(const warning of state.warnings){
       warning.age+=dt;
@@ -168,11 +187,11 @@ const battleScenes = (() => {
       if(state.stage!=='dodge'&&state.stage!=='desperation')return;
     }
     state.bullets=state.bullets.filter(b=>b.x>-40&&b.x<AW+40&&b.y>-40&&b.y<AH+40);
-    if(final&&!state.critical&&state.pulses<5&&state.age>=1.2+state.pulses*1.0){
+    if(final&&state.pulses<5&&state.age>=2.1+state.pulses*2.0){
       // The boss's enclosing curse is a visible story attack, separate from dodgeable shots.
-      const damage=Math.ceil((state.hp-1)/(5-state.pulses));state.pulses++;state.pressureAt=state.age;hurt(damage,true);
-      say(state.pulses===5?'HP 1. 결계가 닫힌다. 마지막 발톱이 눈앞까지 다가온다――!':'결계의 압박이 거세진다. 탄환 사이에서 어떻게든 버틴다……!');
+      const damage=Math.ceil((state.hp-1)/(5-state.pulses));state.pulses++;state.pressureAt=state.age;if(damage>0)hurt(damage,true);
     }
+    if(final)narrate(state.age<4.2?'마력이 몸을 짓누른다. 그래도 움직여야 한다.':state.age<8.4?'숨이 턱 끝까지 차오른다. 아직 쓰러질 수는 없다.':state.age<11.6?'검을 쥔 손에 힘이 풀린다. 시야가 붉게 물든다.':'이대로… 끝나는 건가.');
     const remaining=Math.max(0,duration-state.age);
     document.querySelector('#battle-wave-time').textContent=final?'버텨라':`${remaining.toFixed(1)}초`;
     document.querySelector('#battle-wave-bar').style.width=remaining/duration*100+'%';
@@ -192,21 +211,27 @@ const battleScenes = (() => {
       if(cut>=5.6){root.dataset.ready='true';command();}
     }else if(state.stage==='attack'){
       if(age>=.4&&!state.struck){state.struck=true;state.enemyHp=Math.max(1,state.enemyHp-state.damage);health();gameAudio.sfx('sword');say(state.reaction==='guard'?`교차한 발톱이 검을 막았다. 갑각에 ${state.damage} 피해!`:state.reaction==='dodge'?`마족이 몸을 틀었다. 날개를 스쳐 ${state.damage} 피해!`:`갑각의 틈을 베었다! ${state.damage} 피해.`);}
-      if(age>=1.35)enemyTurn();
+      if(age>=1.6)enemyTurn();
     }else if(state.stage==='healing'&&age>=1.4)enemyTurn();
     else if(state.stage==='telegraph'&&age>=1.6)stage('dodge',patterns[state.pattern].hint);
     else if(['dodge','desperation'].includes(state.stage))dodge(dt);
     else if(state.stage==='waveEnd'&&age>=1.15){if(state.turn>=3)beginDesperation();else command();}
-    else if(state.stage==='overload'&&age>=1.5){state.spawn=0;state.soul={x:AW/2,y:AH*.72};state.invincible=.5;stage('desperation','결계 안에 갇혔다. 공격을 피하며 버텨야 한다……!');}
-    else if(state.stage==='lastStrike'&&age>=.48){gameAudio.sfx('arrow');stage('arrow','――탁!');}
+    else if(state.stage==='overload'&&age>=3.6){state.spawn=0;state.soul={x:AW/2,y:AH*.72};state.invincible=.5;stage('desperation','결계 안에 갇혔다. 공격을 피하며 버텨야 한다……!');}
+    else if(state.stage==='lastStrike'&&age>=1.05){gameAudio.sfx('arrow');stage('arrow','――탁!');}
     else if(state.stage==='arrow'&&age>=.18){state.rescued=true;state.enemyHp=0;health();gameAudio.sfx('arrowHit');stage('impact','어디선가 날아온 화살이 마족의 이마에 박혔다!');}
-    else if(state.stage==='impact'&&age>=.7)stage('dissolve','마족의 마력이 흩어진다. 숲이 다시 조용해졌다.');
-    else if(state.stage==='dissolve'&&age>=2.2){gameAudio.scene('grove');gameAudio.sfx('rescued');stage('won','가까스로 숨을 내쉰다.\n등 뒤에서 익숙한 목소리가 들려왔다. “괜찮아?”');}
+    else if(state.stage==='impact'&&age>=1.0)stage('dissolve','마족의 마력이 흩어진다. 숲이 다시 조용해졌다.');
+    else if(state.stage==='dissolve'&&age>=2.8){gameAudio.scene('grove');gameAudio.sfx('rescued');stage('won','가까스로 숨을 내쉰다.\n등 뒤에서 익숙한 목소리가 들려왔다. “괜찮아?”');}
   }
   function layout() {
-    const w = canvas.width, h = canvas.height, portrait = h > w * 1.1, short = h < 430 && !portrait,
-      bw = portrait ? w * .86 : Math.min(w * .61, h * 1.14), bh = bw * AH / AW;
-    return { w,h,portrait,short,box:{x:(portrait ? w*.5 : w*.37)-bw/2,y:h*(short?.34:.43),w:bw,h:bh} };
+    const w=canvas.width,h=canvas.height,portrait=h>w*1.1,short=h<430&&!portrait,
+      bw=portrait?w*.86:Math.min(w*.61,h*1.14),bh=bw*AH/AW,
+      box={x:(portrait?w*.5:w*.37)-bw/2,y:h*(short?.34:.43),w:bw,h:bh};
+    if(['overload','desperation'].includes(state?.stage)){
+      const width=portrait?w*.86:Math.min(w*.86,h*(short?1.08:1.30)),height=portrait?h*.36:width*AH/AW,
+        target={x:(w-width)/2,y:h*(portrait?.34:short?.34:.29),w:width,h:height},p=state.stage==='overload'&&motion()?ease(state.age/1.1):1;
+      for(const key of ['x','y','w','h'])box[key]+=(target[key]-box[key])*p;
+    }
+    return {w,h,portrait,short,box};
   }
   function enemyPosition() {
     const {w,h,portrait,short} = layout(),
@@ -214,7 +239,8 @@ const battleScenes = (() => {
       blend = state.stage === 'telegraph' ? ease(state.age / 1.2) : wave ? 1 : 0;
     const target = { x:w*(portrait ? .3 + .2*blend : .36), ground:h*(portrait ? .53-.15*blend : short ? .66-.32*blend : .61-.21*blend),
       height:h*(portrait ? .32-.10*blend : short ? .53-.28*blend : .48-.18*blend) };
-    if(['lastStrike','arrow','impact'].includes(state.stage))target.height*=1.12;
+    if(['overload','desperation'].includes(state.stage))Object.assign(target,{x:w*.5,ground:h*.29,height:h*.25});
+    if(['lastStrike','arrow','impact','dissolve'].includes(state.stage))Object.assign(target,{x:w*.5,ground:h*(portrait?.62:.73),height:h*(portrait?.43:.62)});
     const from = state.viewFrom, progress = ease(state.age / .85);
     if (from && progress < 1 && motion()) return {
       x: from.x*w + (target.x-from.x*w)*progress,
@@ -260,8 +286,8 @@ const battleScenes = (() => {
     const p=enemyPosition(), age=state.age, kind=state.stage;
     let frame=0, x=p.x, ground=p.ground, height=p.height, alpha=1;
     if(kind==='attack') {
-      frame=age<.36?0:state.reaction==='guard'?3:state.reaction==='dodge'?(age<.8?4:5):6;
-      if(motion()) x+=(state.reaction==='dodge'?Math.sin(clamp((age-.35)/.9)*Math.PI)*height*.12:Math.sin(age*29)*4*(1-ease(age/1.3)));
+      frame=age<.4?0:state.reaction==='guard'?3:state.reaction==='dodge'?(age<.8?4:5):6;
+      if(motion()) x+=(state.reaction==='dodge'?Math.sin(clamp((age-.35)/.9)*Math.PI)*height*.12:(age>=.4?Math.sin((age-.4)*48)*4*(1-ease((age-.4)/.32)):0));
     } else if(['telegraph','overload'].includes(kind)) frame=1;
     else if(['lastStrike','arrow'].includes(kind))frame=2;
     else if(['dodge','desperation'].includes(kind)) frame=Math.sin(age*3)>.3?2:1;
@@ -270,6 +296,8 @@ const battleScenes = (() => {
       if(kind==='dissolve') {alpha=1-ease((age-.35)/1.8);ground+=age*8;}
     } else if(['won'].includes(kind)) alpha=0;
 
+    if(['overload','desperation'].includes(kind))alpha=.18;
+    else if(kind==='lastStrike')alpha=.18+.82*ease(age/.6);
     c.save();
     c.globalAlpha=alpha;c.fillStyle='#000a';c.beginPath();c.ellipse(x,ground+4,height*.43,height*.045,0,0,Math.PI*2);c.fill();c.globalAlpha=1;
     const bob=motion()&&!['impact','dissolve'].includes(kind)?Math.sin(state.elapsed*2)*height*.004:0;
@@ -277,11 +305,6 @@ const battleScenes = (() => {
     const poseBlend = kind==='impact' ? 1 : motion() ? ease((state.elapsed - state.poseAt) / .16) : 1;
     if (poseBlend < 1) pixelAtlases.draw(c,state.enemy,state.previousFrame,x,ground+bob,height,alpha*(1-poseBlend));
     pixelAtlases.draw(c,state.enemy,frame,x,ground+bob,height,alpha*poseBlend);
-    if(kind==='attack'&&age>.4&&age<1.15) {
-      const progress=clamp((age-.4)/.6);c.globalAlpha=1-ease((age-.8)/.35);c.strokeStyle='#fff5c9';c.lineWidth=4;
-      c.beginPath();c.moveTo(x-height*.28,ground-height*.66);c.lineTo(x+height*.29*progress,ground-height*.26*progress-height*.4);c.stroke();
-      c.fillStyle=state.reaction==='guard'?'#d5d8e2':'#ffe78f';c.font=`bold ${Math.max(24,height*.13)}px Galmuri,monospace`;c.textAlign='center';c.fillText(state.damage,x,ground-height*.73-progress*22);c.textAlign='left';
-    }
     c.restore();
     if(['overload','lastStrike'].includes(kind)) {
       c.save();c.strokeStyle='#ff597c';c.globalAlpha=.45;c.lineWidth=2;
@@ -291,7 +314,7 @@ const battleScenes = (() => {
       c.restore();
     }
     if(['impact','dissolve'].includes(kind)) {
-      const t=kind==='impact'?age*.2:.15+age;
+      const t=kind==='impact'?age*.2:.20+age;
       c.save();c.globalAlpha=1-ease(t/2.8);
       for(let i=0;i<42;i++){const a=i*2.399,dist=t*(22+i%6*8);c.fillStyle=i%3?'#eb3b6a':'#fff3ba';c.fillRect(x+Math.cos(a)*dist,ground-height*.60+Math.sin(a)*dist+t*t*17,2+i%3,2+i%3);}
       if(kind==='impact'){c.strokeStyle='#fff1b5';c.lineWidth=3;for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.moveTo(x+Math.cos(a)*13,ground-height*.60+Math.sin(a)*13);c.lineTo(x+Math.cos(a)*(28+age*24),ground-height*.60+Math.sin(a)*(28+age*24));c.stroke();}}
@@ -330,7 +353,7 @@ const battleScenes = (() => {
       c.restore();
     }
     if(state.stage==='desperation'){
-      const period=state.critical?.65:1,next=(state.age-(state.critical?0:.2))%period,
+      const period=2,next=(state.age-.1)%period,
         pulse=ease(clamp(next/period));
       c.save();c.strokeStyle='#f05d86';c.globalAlpha=.28+.3*pulse;c.lineWidth=2;
       c.strokeRect(4+pulse*22,4+pulse*10,AW-8-pulse*44,AH-8-pulse*20);
@@ -399,7 +422,8 @@ const battleScenes = (() => {
     if(!state)return;
     c.imageSmoothingEnabled=false;
     if(state.stage==='intro'){intro();return;}
-    backdrop();drawEnemy();drawHands();drawArena();rescueScene();
+    backdrop();drawEnemy();drawHands();battleEffects.draw(c,{...layout(),enemy:enemyPosition(),enemySheet:state.enemy,frame:state.lastFrame,stage:state.stage,age:state.age,reaction:state.reaction,damage:state.damage,motion:motion()});drawArena();rescueScene();
+    if(state.stage==='lastStrike'&&state.age<.38&&state.finaleFrom){c.save();c.globalAlpha=1-ease(state.age/.38);c.drawImage(state.finaleFrom,0,0,canvas.width,canvas.height);c.restore();}
     if(['overload','lastStrike'].includes(state.stage)){
       const {w,h}=layout();c.save();c.globalAlpha=.16*ease(state.age/2);c.fillStyle='#ef2d60';c.fillRect(0,0,w,h);c.restore();
     }
@@ -467,5 +491,5 @@ const battleScenes = (() => {
     for(const name of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(name,()=>{held.delete(b.dataset.dodge);b.classList.remove('is-held');});
   });
   new ResizeObserver(fit).observe(document.querySelector('#game-screen'));
-  return {prepare,play,stop,handle,release,clearInput,get active(){return !!state;},getState(){return state?{stage:state.stage,hp:state.hp,enemyHp:state.enemyHp,turn:state.turn,rescued:state.rescued,pattern:patterns[state.pattern]?.name,projectiles:state.bullets.length,warnings:state.warnings.length,soul:{...state.soul},invincible:state.invincible,age:state.age}:null;}};
+  return {prepare,play,stop,handle,release,clearInput,get active(){return !!state;},getState(){return state?{stage:state.stage,hp:state.hp,enemyHp:state.enemyHp,turn:state.turn,rescued:state.rescued,pattern:patterns[state.pattern]?.name,projectiles:state.bullets.length,warnings:state.warnings.length,soul:{...state.soul},invincible:state.invincible,age:state.age,finale:finaleStages.has(state.stage),narration:storyText.textContent}:null;}};
 })();

@@ -11,8 +11,8 @@ import re
 
 ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
-styles = (ROOT / "CSS/main.css").read_text() + "\n" + (ROOT / "CSS/game.css").read_text()
-script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "terrain.js", "lore.js", "archive.js", "staging.js", "letter.js", "shops.js", "sprites.js", "weapon.js", "landscape.js", "walk.js", "menu-art.js", "battle.js", "game.js", "story.js", "main.js"))
+styles = "\n".join((ROOT / "CSS" / name).read_text() for name in ("main.css", "game.css", "battle-polish.css", "scene-polish.css", "item-view.css"))
+script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "terrain.js", "lore.js", "archive.js", "staging.js", "letter.js", "shops.js", "sprites.js", "item-view.js", "weapon.js", "landscape.js", "walk.js", "menu-art.js", "battle-effects.js", "battle.js", "game.js", "story.js", "main.js"))
 # All image references are embedded, including the game maps and scenic interludes.
 image_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp)", page + "\n" + styles)))
 for ref in image_refs:
@@ -34,7 +34,7 @@ styles = "/* Galmuri font license:\n" + license_text + "\n*/\n" + styles
 style_tag = '<style id="greenstoa-styles">\n' + styles + "\n</style>"
 script_tag = '<script id="greenstoa-script">\n' + script + "\n</script>"
 
-page = re.sub(r'\s*<link rel="stylesheet" href="CSS/game.css"\s*/?>', "", page)
+page = re.sub(r'\s*<link rel="stylesheet" href="CSS/(?:game|battle-polish|scene-polish|item-view).css"\s*/?>', "", page)
 if '<style id="greenstoa-styles">' in page:
     page = re.sub(
         r'<style id="greenstoa-styles">.*?</style>', lambda _: style_tag, page, flags=re.S
@@ -47,7 +47,7 @@ if '<script id="greenstoa-script">' in page:
         r'<script id="greenstoa-script">.*?</script>', lambda _: script_tag, page, flags=re.S
     )
 else:
-    page = re.sub(r'\s*<script src="JS/(?:audio|events|fields|terrain|lore|archive|staging|letter|shops|sprites|weapon|landscape|walk|menu-art|battle|game|story|main).js" defer></script>', "", page)
+    page = re.sub(r'\s*<script src="JS/(?:audio|events|fields|terrain|lore|archive|staging|letter|shops|sprites|item-view|weapon|landscape|walk|menu-art|battle-effects|battle|game|story|main).js" defer></script>', "", page)
     page = page.replace("</body>", script_tag + "\n</body>")
 
 assert '<style id="greenstoa-styles">' in page
@@ -58,7 +58,7 @@ assert 'data-art-src="data:image/webp;base64,' in page
 assert 'data-late-src="data:image/webp;base64,' in page
 for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-guild', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
-for attribute in ('demon-actions', 'first-person-arms', 'forest-ambush'):
+for attribute in ('demon-actions', 'item-specimens', 'first-person-arms', 'forest-ambush'):
     assert 'data-' + attribute + '-src="data:image/png;base64,' in page
 assert "data:font/woff2;base64," in page
 assert "../assets/" not in styles

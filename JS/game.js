@@ -106,6 +106,7 @@ const guildGame = (() => {
       "sdKania",
       "demonActions",
       "firstPersonArms",
+      "itemSpecimens",
       "forestAmbush",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]).then(() => {
@@ -120,6 +121,7 @@ const guildGame = (() => {
     pixelAtlases.make(pictures.demonActions, 4, 2);
     kaniaWalk.prepare(pictures.guideKania);
     firstPersonArms.prepare(pictures.firstPersonArms);
+    itemSpecimens.prepare(pictures.itemSpecimens);
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -2154,6 +2156,7 @@ const guildGame = (() => {
     canvas.focus({ preventScroll: true });
   }
   function hideItemInspection() {
+    itemSpecimens.hide();
     itemInspection.hidden = true;
     document.querySelector(".guild-menu-panel").inert = false;
   }
@@ -2175,6 +2178,7 @@ const guildGame = (() => {
       item.description || fieldWorld.items[item.id]?.description || "여행 중에 챙긴 소지품이다.";
     document.querySelector(".guild-menu-panel").inert = true;
     itemInspection.hidden = false;
+    itemSpecimens.show(item, {container: document.querySelector("#item-inspection-visual")});
     inspectionInputAfter = performance.now() + 180;
     gameAudio.sfx("paper");
     document.querySelector("#item-inspection-close").focus({ preventScroll: true });
@@ -2226,8 +2230,8 @@ const guildGame = (() => {
     )
       return;
     const code = event.code;
-    // Let the native sound button handle its own Enter activation.
-    if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
+    // Let the native sound button handle its own keyboard activation.
+    if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-sound-toggle"))
       return;
     if (phase === "battle") {
       if (["Enter", "Space"].includes(code) &&
@@ -2238,10 +2242,10 @@ const guildGame = (() => {
     if (phase === "inspect") {
       if (["Enter", "Space"].includes(code) && event.target.closest?.("#item-inspection button"))
         return;
+      if(itemSpecimens.handle(code,event)){event.preventDefault();return;}
       if (code === "Tab") {
         event.preventDefault();
-        const buttons = [document.querySelector("#item-inspection-description"),
-          document.querySelector("#item-inspection-close")],
+        const buttons = [...itemInspection.querySelectorAll('button:not([disabled]), [tabindex="0"]')].filter(node=>node.getClientRects().length),
           index = buttons.indexOf(document.activeElement);
         buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
       } else if (["KeyE", "KeyC", "Enter", "Escape"].includes(code)) {

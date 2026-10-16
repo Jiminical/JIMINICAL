@@ -38,7 +38,7 @@ const scenicLandscape = (() => {
     }
     ctx.restore();ctx.globalAlpha=1;
     for(let i=0;i<9;i++){
-      const x=745-((t*17+i*29)%510),y=104+i%3*9+Math.sin(t*.8+i*.7)*8;
+      const x=745-((t*17+i*29)%820),y=104+i%3*9+Math.sin(t*.8+i*.7)*8;
       bird(ctx,x,y,i<4?1:1.4,Math.floor(t*5+i)%2,i<4?'#526d7c':'#ebf7ee');
     }
     for(let i=0;i<5;i++)fairy(ctx,430+i*47+Math.sin(t*.8+i)*30,180+i%3*40+Math.sin(t*1.3+i*1.8)*15,t,i);
