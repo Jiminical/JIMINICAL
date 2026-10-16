@@ -37,7 +37,7 @@ const actionScenes = (() => {
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
     if (state.kind === "guide")
-      state.cells = kaniaWalk.prepare(state.pictures.kaniaWalk);
+      state.cells = kaniaWalk.prepare(state.pictures.guideKania);
     draw();
   }
   function cue(name, at, sound, variant = "") {
@@ -103,53 +103,17 @@ const actionScenes = (() => {
       cue("step" + Math.floor(seconds * 6), 0, "footstep", "stone-run");
   }
   function drawGuide() {
-    const art = state.pictures.guideForest,
-      t = state.motion ? clamp(seconds / 10) : 1;
-    const sw = art.naturalWidth * 0.74,
-      sh = (sw * 344) / 720;
-    c.drawImage(
-      art,
-      Math.round((art.naturalWidth - sw) * t),
-      Math.round((art.naturalHeight - sh) * 0.4),
-      sw,
-      sh,
-      0,
-      58,
-      720,
-      344,
-    );
-    const stepRate = kaniaWalk.phaseAt(1) * 2;
-    // A visible path and planted boots give the walk a stable ground plane.
-    c.save(); c.beginPath(); c.rect(0, 58, 720, 344); c.clip();
-    const ground = c.createLinearGradient(0, 331, 0, 402);
-    ground.addColorStop(0, "#36553a00"); ground.addColorStop(.3, "#3c4a2c"); ground.addColorStop(1, "#1c3023");
-    c.fillStyle = ground; c.fillRect(0, 331, 720, 71);
-    for (let i = 0; i < 16; i++) {
-      const x = ((i * 64 - (state.motion ? seconds * 72 : 0)) % 960 + 960) % 960 - 96;
-      rect(x, 382 + i % 3 * 5, 27, 2, "#8b94654a");
-      rect(x + 31, 365 + i % 4 * 7, 4, 2, "#b3bb7838");
-    }
-    c.fillStyle = "#091c2260"; c.beginPath(); c.ellipse(227, 388, 49, 6, 0, 0, Math.PI * 2); c.fill();
-    const walk = kaniaWalk.draw(c, state.cells, seconds, 225, 388, 222, state.motion);
+    const vista=scenicLandscape.draw(c,state.pictures.guideForest,seconds,state.motion);
+    c.save();c.beginPath();c.rect(0,58,720,344);c.clip();
+    const walk=kaniaWalk.draw(c,state.cells,seconds,0,58,state.motion);
     c.restore();
-    if (state.motion) {
-      for (let i = 0; i < 7; i++) {
-        const x =
-            ((((i * 151 - Math.floor(seconds * 34)) % 790) + 790) % 790) - 35,
-          y = 73 + i * 44;
-        rect(x, y, 3, 1, "#eff7c779");
-      }
-      cue("step" + Math.floor(seconds * stepRate), 0, "footstep", "earth");
-      cue("birds", 2.6, "birds");
+    if(state.motion){
+      cue("step"+Math.floor(seconds/(kaniaWalk.period/2)),0,"footstep","stone");
+      cue("birds",2.6,"birds");
     }
-    label.textContent =
-      seconds < 3
-        ? "카니아의 발걸음을 따라, 숲의 안쪽으로."
-        : seconds < 6.5
-          ? "물소리가 가까워졌다. 나뭇잎 사이로 오래된 다리와 폭포가 보였다."
-          : "커다란 뿌리 너머로 성역의 문이 모습을 드러냈다.";
-    root.dataset.pan = t.toFixed(3);
-    root.dataset.cel = String(walk.frame);
+    label.textContent=seconds<3?"카니아를 따라 걷자, 나무 사이로 거대한 경관이 펼쳐졌다.":seconds<6.5?"끝없이 쏟아지는 폭포. 새 떼가 물안개 위를 가르고, 작은 페어리들이 빛났다.":"구름과 산맥 사이로 이어진 길 너머, 성역이 기다리고 있었다.";
+    root.dataset.pan=vista.pan.toFixed(3);root.dataset.cel=String(walk.frame);
+    root.dataset.framing="upper-body";root.dataset.waterFlow=vista.flow.toFixed(2);
   }
   function draw() {
     if (!state) return;

@@ -21,7 +21,10 @@
     <script src="JS/letter.js" defer></script>
     <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
+    <script src="JS/weapon.js" defer></script>
+    <script src="JS/landscape.js" defer></script>
     <script src="JS/walk.js" defer></script>
+    <script src="JS/menu-art.js" defer></script>
     <script src="JS/battle.js" defer></script>
     <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
@@ -329,7 +332,7 @@
           data-sd-field-src="assets/sd-fields.webp"
           data-sd-kania-src="assets/sd-kania.webp"
           data-demon-actions-src="assets/demon-actions.png"
-          data-kania-walk-src="assets/kania-walk.png"
+          data-first-person-arms-src="assets/first-person-arms.png"
           data-forest-ambush-src="assets/forest-ambush.png"
           hidden
         ></div>
@@ -684,9 +687,9 @@
           <nav id="battle-menu" class="battle-menu" aria-label="전투 행동">
             <p class="battle-menu-kicker">어떻게 할까?</p>
             <div id="battle-commands">
-              <button type="button" data-battle-command="attack"><span>01</span><b>공격</b><small>검을 겨눈다</small></button>
-              <button type="button" data-battle-command="info"><span>02</span><b>정보</b><small>적을 살핀다</small></button>
-              <button type="button" data-battle-command="items"><span>03</span><b>아이템</b><small>소지품을 쓴다</small></button>
+              <button type="button" data-battle-command="attack"><canvas class="battle-command-frame" width="120" height="48" aria-hidden="true"></canvas><span aria-hidden="true">I<canvas class="battle-command-icon" width="16" height="16" aria-hidden="true"></canvas></span><b>공격</b><small>검을 겨눈다</small></button>
+              <button type="button" data-battle-command="info"><canvas class="battle-command-frame" width="120" height="48" aria-hidden="true"></canvas><span aria-hidden="true">II<canvas class="battle-command-icon" width="16" height="16" aria-hidden="true"></canvas></span><b>정보</b><small>적을 살핀다</small></button>
+              <button type="button" data-battle-command="items"><canvas class="battle-command-frame" width="120" height="48" aria-hidden="true"></canvas><span aria-hidden="true">III<canvas class="battle-command-icon" width="16" height="16" aria-hidden="true"></canvas></span><b>아이템</b><small>소지품을 쓴다</small></button>
             </div>
             <div id="battle-item-list" hidden></div>
             <button id="battle-back" type="button" hidden>← 돌아가기</button>

@@ -105,7 +105,7 @@ const guildGame = (() => {
       "guideKania",
       "sdKania",
       "demonActions",
-      "kaniaWalk",
+      "firstPersonArms",
       "forestAmbush",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]).then(() => {
@@ -118,7 +118,8 @@ const guildGame = (() => {
     });
     // Decode and clean the animation frames during loading, before an encounter.
     pixelAtlases.make(pictures.demonActions, 4, 2);
-    kaniaWalk.prepare(pictures.kaniaWalk);
+    kaniaWalk.prepare(pictures.guideKania);
+    firstPersonArms.prepare(pictures.firstPersonArms);
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
