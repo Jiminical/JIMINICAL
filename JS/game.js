@@ -877,9 +877,17 @@ const guildGame = (() => {
     if (actionScenes.kind === "guide") gameAudio.scene(location);
     actionScenes.stop();
     root.classList.remove("is-action");
+    root.classList.remove("is-guide-chat");
     document.querySelector(".world-viewport").inert = false;
   }
   function playAction(kind, after) {
+    const start = () => {
+      actionScenes.play();
+      if (kind === "guide") {
+        root.classList.add("is-guide-chat");
+        kaniaConversation({ walking: true });
+      }
+    };
     const prepare = () => {
       keys.clear();
       phase = "action";
@@ -889,6 +897,7 @@ const guildGame = (() => {
       document.querySelector(".world-viewport").inert = true;
       actionScenes.prepare({
         kind,
+        interactive: kind === "guide",
         world: background,
         pictures,
         motion: motion(),
@@ -907,10 +916,10 @@ const guildGame = (() => {
       return transitionTo(prepare, () => {
         phase = "action";
         root.dataset.phase = phase;
-        actionScenes.play();
+        start();
       });
     prepare();
-    actionScenes.play();
+    start();
   }
   function giveItem(id) {
     const found = inventory.find((item) => item.id === id);
@@ -1217,7 +1226,8 @@ const guildGame = (() => {
       : line.voice
         ? "어디선가 들려오는 목소리"
         : placeNames[location][1];
-    portraitFor(line.kind, line.expression);
+    // The tracking shot already frames Kania; keep the scenery visible behind her words.
+    portraitFor(root.classList.contains("is-guide-chat") ? null : line.kind, line.expression);
     cancelPortraitMotion();
     dialogue.pulses = 0;
     reactPortrait(line);
@@ -1254,6 +1264,7 @@ const guildGame = (() => {
       b.addEventListener("click", () => choose(i));
       choicesBox.append(b);
     });
+    choicesBox.querySelector(".is-current")?.scrollIntoView({ block: "nearest" });
   }
   function choose(index) {
     if (
@@ -1626,6 +1637,74 @@ const guildGame = (() => {
     })));
   }
 
+  function kaniaConversation({ walking = false } = {}) {
+    const asked = new Set();
+    const topics = [
+      {
+        label: "하이엘프인데, 왜 정찰병이야?",
+        lines: [
+          { kind: "hero", text: "하이엘프라고 들었어.\n그런데 정찰병은… 네가 원해서 하는 일이야?" },
+          { kind: "scout", expression: "explaining", text: "그래. 내가 지원했다.\n안전한 곳에서 소식만 기다리는 건 성미에 안 맞아서." },
+          { kind: "hero", text: "바깥은 위험할 텐데." },
+          { kind: "scout", expression: "neutral", text: "내가 먼저 수상한 발자국을 찾으면,\n누군가는 무사히 집에 돌아갈 수 있지." },
+          { kind: "scout", expression: "welcoming", text: "이 귀와 활이 쓸모 있는 곳에 있고 싶어.\n네가 돌아올 길도, 내가 봐 둘 테니." },
+        ],
+      },
+      {
+        label: "아까부터 무슨 소리를 듣는 거야?",
+        lines: [
+          { kind: "hero", text: "아까부터 자꾸 옆을 보네.\n무슨 소리를 듣는 거야?" },
+          { kind: "scout", expression: "warning", text: "잠깐. 오른쪽 가지 위에…" },
+          { text: "잠시 뒤, 잎사귀 사이에서 작은 새 한 마리가 고개를 내민다." },
+          { kind: "scout", expression: "explaining", text: "…새였군. 잎이 스치는 소리가 달라졌어.\n소리도 냄새도, 평소와 다르면 신경이 쓰이거든." },
+          { kind: "hero", text: "늘 그렇게 신경 쓰면 안 피곤해?" },
+          { kind: "scout", expression: "welcoming", text: "익숙해. 너까지 긴장할 필요는 없어.\n내가 멈추라고 할 때만 멈춰 주면 돼." },
+        ],
+      },
+      {
+        label: "좋아하는 사람 앞에서도 침착해?",
+        lines: [
+          { kind: "hero", text: "좋아하는 사람 앞에서도 그렇게 침착해?" },
+          { kind: "scout", expression: "flustered", text: "…그건 정찰과 무슨 관계가 있지?" },
+          { kind: "hero", text: "그냥 궁금해서.\n누가 좋아한다고 하면 뭐라고 답할 거야?" },
+          { kind: "scout", expression: "flustered", text: "그… 먼저 진심인지 확인해야겠지.\n그다음에는… 잠깐. 보통은 뭐라고 답하지?" },
+          { kind: "hero", text: "마음에 들면 웃어 주는 것부터?" },
+          { kind: "scout", expression: "flustered", text: "웃는 것부터… 그렇군.\n활시위를 당기는 쪽이 훨씬 쉽네." },
+        ],
+      },
+    ];
+    if (!walking && fieldFlags.libraryAmbushCleared) topics.push({
+      label: "그 초록 화살, 네가 쏜 거야?",
+      lines: [
+        { kind: "hero", text: "그 초록빛 화살… 네가 쏜 거지?\n정말 끝인 줄 알았어. 고마워." },
+        { kind: "scout", expression: "explaining", text: "화살촉에 마력을 모았어.\n빗나갈 수 없는 한 발이 필요했으니까." },
+        { kind: "scout", expression: "welcoming", text: "살아 돌아왔잖아. 그걸로 됐어.\n다음엔 혼자 버티려 하지 마. 뒤에는 나도 있으니." },
+      ],
+    });
+    const finish = () => {
+      if (walking) {
+        phase = "action";
+        root.dataset.phase = phase;
+        actionScenes.finish();
+      } else speak([{ kind: "scout", expression: "welcoming", text: "그래. 천천히 둘러봐.\n필요한 일이 있으면 나를 부르고." }]);
+    };
+    const questions = (first = false) => speak(
+      [{ kind: "scout", expression: "welcoming", text: first
+        ? walking ? "정문까지는 조금 걸어야 해.\n궁금한 게 있으면 물어봐. 길은 내가 보고 있으니."
+          : "무슨 일이야?\n잠깐 이야기할 시간이라면 있어."
+        : "…더 궁금한 게 있어?" }],
+      null,
+      [...topics.map((topic, i) => ({
+        label: (asked.has(i) ? "✓ " : "") + topic.label,
+        action: () => {
+          asked.add(i);
+          speak(topic.lines, () => questions());
+        },
+      })), { label: walking ? "풍경을 보며 정문까지 함께 걷는다" : "다음에 또 이야기하자", action: finish }],
+    );
+    questions(true);
+  }
+
   function npcTalk(id) {
     if (id === "rael") {
       speak(
@@ -1649,14 +1728,7 @@ const guildGame = (() => {
 
     if (id === "scout") {
       if (location === "checkpoint") showCredentials();
-      else
-        speak([
-          {
-            kind: "scout",
-            expression: "welcoming",
-            text: "먼 길 오느라 수고했다.\n낯선 곳이겠지만, 이곳에서는 네 종족도 신분도 묻지 않는다.",
-          },
-        ]);
+      else kaniaConversation();
       return;
     }
     if (id === "lucy") {
@@ -2452,7 +2524,8 @@ const guildGame = (() => {
           code === "KeyS" ||
           code === "ArrowDown")
       ) {
-        selectedChoice = (selectedChoice + 1) % dialogue.choices.length;
+        const offset = code === "KeyW" || code === "ArrowUp" ? -1 : 1;
+        selectedChoice = (selectedChoice + offset + dialogue.choices.length) % dialogue.choices.length;
         gameAudio.sfx("select");
         renderChoices();
       } else if (code === "KeyE" || code === "Enter") advanceDialogue();

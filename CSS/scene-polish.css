@@ -53,6 +53,74 @@
     padding-bottom: 16px;
   }
 }
+/* Questions stay inside Kania's uninterrupted tracking shot. */
+.is-guide-chat .action-caption {
+  display: none;
+}
+.is-guide-chat .game-dialogue {
+  z-index: 12;
+  left: auto;
+  right: 4%;
+  bottom: 6%;
+  width: 51%;
+  max-height: 83%;
+  min-height: 150px;
+  overflow-y: auto;
+  padding: 18px 22px 12px;
+  background: #122623ed;
+  border: 2px solid #a5b58b;
+  box-shadow: 4px 4px #050e12;
+}
+.is-guide-chat .game-dialogue h2 {
+  color: #c4dca6;
+}
+.is-guide-chat #game-dialogue-text {
+  font-size: clamp(14px, 1.5cqw, 19px);
+  line-height: 1.85;
+  min-height: 3.7em;
+}
+.is-guide-chat .game-choices {
+  width: 100%;
+  gap: 5px;
+  margin-top: 14px;
+}
+.is-guide-chat .game-choices button {
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 1px solid #6b895966;
+  font-size: clamp(12px, 1.18cqw, 15px);
+  line-height: 1.7;
+  color: #c3cbb6;
+}
+.is-guide-chat .game-choices button:is(.is-current, :hover, :focus-visible) {
+  background: #304a37;
+  border-color: #b0c18b;
+  color: #fff0bd;
+}
+@media (max-aspect-ratio: 4/5) {
+  .is-guide-chat .journey-action {
+    justify-content: flex-start;
+    padding-top: 13cqh;
+    gap: 0;
+  }
+  .is-guide-chat .game-dialogue {
+    top: calc(13cqh + 100cqw * 344 / 720 + 22px);
+    bottom: auto;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: calc(87cqh - 100cqw * 344 / 720 - 38px);
+    min-height: 0;
+    padding: 14px 16px 10px;
+  }
+  .is-guide-chat #game-dialogue-text {
+    font-size: 14px;
+  }
+  .is-guide-chat .game-choices button {
+    font-size: 12px;
+    min-height: 40px;
+  }
+}
 /* A full-screen film canvas; the first twenty seconds belong to the landscape. */
 .game-vista.is-journey {
   display: block;

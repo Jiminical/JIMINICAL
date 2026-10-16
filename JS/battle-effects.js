@@ -36,6 +36,37 @@ const battleEffects = (() => {
     shape([[-length+8,1],[-length-4,6],[-length-2,1]],'#d5e2bf');
     shape([[-length+5,-1],[-length-3,-4],[-length-2,-2]],'#f4e8ba');
   }
+  function lightning(x,y,angle,length,spread,phase,alpha=1){
+    const cs=Math.cos(angle),sn=Math.sin(angle),points=[];
+    for(let i=0;i<=12;i++){
+      const p=i/12,jag=i===0||i===12?0:Math.sin(i*7.13+phase)*spread*Math.sin(p*Math.PI);
+      points.push([Math.round(x+cs*length*p-sn*jag),Math.round(y+sn*length*p+cs*jag)]);
+    }
+    c.save();c.globalAlpha*=alpha;c.lineJoin='miter';
+    for(const [color,width] of [['#287a51',4],['#89ef9b',2],['#efffd0',1]]){
+      c.strokeStyle=color;c.lineWidth=width;c.beginPath();
+      points.forEach(([xx,yy],i)=>i?c.lineTo(xx,yy):c.moveTo(xx,yy));c.stroke();
+    }
+    c.restore();
+  }
+  function enchantedTrail(x,y,angle,size,age){
+    const cs=Math.cos(angle),sn=Math.sin(angle),length=size*.85,
+      at=(along,across)=>[x+cs*along-sn*across,y+sn*along+cs*across],
+      shape=(points,color,alpha)=>{c.globalAlpha=alpha;polygon(points.map(([a,b])=>at(a,b)),color);};
+    shape([[-length,0],[-length*.5,-7],[-12,-9],[8,0],[-12,9],[-length*.5,7]],'#287a51',.55);
+    shape([[-length*.9,0],[-28,-4],[7,0],[-28,4]],'#8feaa3',.9);
+    shape([[-length*.72,0],[-12,-1],[8,0],[-12,1]],'#f1ffce',1);
+    for(let i=0;i<3;i++){
+      const [xx,yy]=at(-9,(i-1)*5);
+      lightning(xx,yy,angle+Math.PI,length*(.64+i*.12),5+i*2,Math.floor(age*65)+i*4,.8);
+    }
+    for(let i=0;i<12;i++){
+      const along=-12-((age*170+i*13)%length),across=Math.sin(i*9+age*24)*(5+(i%4)*2),[xx,yy]=at(along,across);
+      c.globalAlpha=(1-Math.abs(along)/length)*.9;
+      star(xx,yy,1+i%2,i%3?'#a9ef99':'#faffd5');
+    }
+    c.globalAlpha=1;
+  }
   function forehead(enemy,sheet,frame){
     const anchors=[[.51,.35],[.46,.32],[.49,.37],[.50,.34],[.23,.34],[.77,.35],[.66,.16],[.36,.44]],
       f=sheet.frames[frame%sheet.frames.length],head=anchors[frame%anchors.length],s=enemy.height/sheet.height;
@@ -50,14 +81,7 @@ const battleEffects = (() => {
     if(stage==='arrow'){
       const t=clamp(age/.18),xx=start.x+(x-start.x)*t,yy=start.y+(y-start.y)*t;
       if(motion){
-        for(let i=0;i<3;i++){
-          const length=45+i*17,side=(i-1)*3;
-          c.globalAlpha=[.65,.85,.35][i];
-          polygon([[xx-cs*length-sn*side,yy-sn*length+cs*side],
-            [xx-cs*6-sn*side,yy-sn*6+cs*side],
-            [xx-cs*18-sn*(side+1),yy-sn*18+cs*(side+1)]],i===1?'#fff7d2':'#84c7cf');
-        }
-        c.globalAlpha=1;
+        enchantedTrail(xx,yy,angle,size,age);
       }
       arrowShaft(xx,yy,angle,size);
       return;
@@ -66,29 +90,41 @@ const battleEffects = (() => {
     // The shaft remains lodged in the forehead and fades with the enemy.
     c.save(); c.globalAlpha=dissolve?1-ease((age-.35)/1.8):1;
     arrowShaft(x+cs*3,y+sn*3,angle,size,motion&&time<.27?Math.sin(time*105)*(1-time/.27)*1.7:0);
+    if(motion&&time<1.05){
+      const glow=1-ease(time/1.05);
+      lightning(x-cs*6,y-sn*6,angle+Math.PI,size*.22,3,Math.floor(time*30),glow*.85);
+    }
     c.restore();
     if(dissolve)return;
-    if(!motion){if(age<.28)star(x,y,size*.055,'#f5edc7');return;}
+    if(!motion){if(age<.28)star(x,y,size*.055,'#ccf2ab');return;}
     if(age<.12&&enemySheet){
       m.clearRect(0,0,width,height);m.globalCompositeOperation='source-over';
       pixelAtlases.draw(m,enemySheet,frame,enemy.x/scale,enemy.ground/scale,enemy.height/scale);
-      m.globalCompositeOperation='source-in';m.fillStyle='#fff4d7';m.fillRect(0,0,width,height);
+      m.globalCompositeOperation='source-in';m.fillStyle='#e5ffd3';m.fillRect(0,0,width,height);
       c.globalAlpha=(1-age/.12)*.72;c.drawImage(mask,0,0);c.globalAlpha=1;
     }
     if(age<.16){
       const length=size*.6,thickness=(1-age/.16)*3;
       polygon([[x-cs*length-sn*thickness,y-sn*length+cs*thickness],
-        [x+cs*length,y+sn*length],[x-cs*length+sn*thickness,y-sn*length-cs*thickness]],'#fff1c0');
+        [x+cs*length,y+sn*length],[x-cs*length+sn*thickness,y-sn*length-cs*thickness]],'#e7ffc0');
     }
     const flash=1-ease(age/.27);
     if(flash>0){
-      star(x,y,size*.20*flash,'#76a9bc');star(x,y,size*.135*flash,'#f2d194');
+      star(x,y,size*.25*flash,'#399c66');star(x,y,size*.17*flash,'#a7ed96');
       star(x,y,size*.075*flash,'#fffef0');
     }
-    if(age>.035&&age<.56){
-      const p=clamp((age-.035)/.525),radius=size*(.055+p*.33);
-      c.globalAlpha=(1-p)*.8;c.strokeStyle='#d5ead3';c.lineWidth=p<.3?2:1;
-      c.beginPath();for(let i=0;i<=12;i++){const a=i*Math.PI/6;c.lineTo(Math.round(x+Math.cos(a)*radius),Math.round(y+Math.sin(a)*radius*.61));}c.stroke();c.globalAlpha=1;
+    if(age>.025&&age<.65){
+      const p=clamp((age-.025)/.625),radius=size*(.055+ease(p)*.42);
+      for(let ring=0;ring<2;ring++){
+        const r=radius*(ring?.7:1);c.globalAlpha=(1-p)*(ring?.4:.9);c.strokeStyle=ring?'#e4ffc6':'#83db93';c.lineWidth=p<.25?2:1;
+        c.beginPath();for(let i=0;i<=12;i++){const a=i*Math.PI/6;c.lineTo(Math.round(x+Math.cos(a)*r),Math.round(y+Math.sin(a)*r*.61));}c.stroke();
+      }
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3+.25,xx=x+Math.cos(a)*radius,yy=y+Math.sin(a)*radius*.61;
+        c.globalAlpha=(1-p)*.75;star(xx,yy,2,'#dcffb6');
+        if(age<.42)lightning(x+Math.cos(a)*5,y+Math.sin(a)*5,a,radius*.8,6,Math.floor(age*40)+i,(1-p)*.65);
+      }
+      c.globalAlpha=1;
     }
     if(age<1.05)for(let i=0;i<26;i++){
       const a=i*2.399,speed=size*(.18+(i%5)*.05),t=age,
@@ -96,7 +132,7 @@ const battleEffects = (() => {
         r=(1-ease(t/1.05))*(1.4+i%3);
       c.globalAlpha=1-ease((t-.4)/.65);
       if(i%3===0){polygon([[xx-r,yy],[xx,yy-r*1.6],[xx+r,yy],[xx,yy+r]],'#403b56');c.fillStyle='#d5977a';c.fillRect(Math.round(xx),Math.round(yy-r),1,1);}
-      else star(xx,yy,r,i%2?'#f7e3a2':'#aacfd2');
+      else star(xx,yy,r,i%2?'#d8f5ad':'#70d595');
     }
     c.globalAlpha=1;
   }

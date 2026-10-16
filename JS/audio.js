@@ -744,10 +744,14 @@ const gameAudio = (() => {
         tone(83,.9,{wave:"sawtooth",level:.1,end:260,filter:900});break;
       case "arrow":
         if (!sample("arrow", 1.2, 1.16)) noise(.15,.35,4400,0,{crisp:true});
+        [0,.035,.082,.123].forEach((delay,i)=>noise(.025,.18-i*.02,3200+i*650,delay,{crisp:true}));
+        tone(2200,.17,{wave:"sawtooth",level:.055,end:5400,filter:6500});
         tone(3600,.13,{wave:"sine",level:.065,end:1100,filter:7000});break;
       case "arrowHit":
         sample("arrowHit", 1.25, 1);
-        noise(.035,.3,3700,0,{crisp:true});tone(118,.17,{level:.19,end:38,filter:520});break;
+        noise(.035,.3,3700,0,{crisp:true});tone(118,.21,{level:.22,end:38,filter:520});
+        [1760,2640].forEach((hz,i)=>tone(hz,.32+i*.09,{wave:"sine",level:.065/(i+1),end:hz*.72,filter:5000}));
+        [0.045,.11,.19,.29].forEach((delay,i)=>noise(.022,.14-i*.025,4100-i*470,delay,{crisp:true}));break;
       case "rescued":
         [392,494,659,784].forEach((hz,i)=>tone(hz,.28,{wave:"triangle",level:.09,delay:i*.09}));break;
       case "next":

@@ -36,6 +36,7 @@ const actionScenes = (() => {
     inputAfter = performance.now() + 180;
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
+    root.dataset.interactive = String(!!state.interactive);
     if (state.kind === "guide")
       state.cells = kaniaWalk.prepare(state.pictures.guideKania);
     draw();
@@ -135,7 +136,7 @@ const actionScenes = (() => {
     draw();
     // Motion preferences change the picture, never the time available to read it.
     const duration = state.kind === "rogue" ? 4.4 : 10.5;
-    if (seconds >= duration) {
+    if (!state.interactive && seconds >= duration) {
       finish(true);
       return;
     }
@@ -145,7 +146,7 @@ const actionScenes = (() => {
     if (!state) return;
     previous = performance.now();
     request = requestAnimationFrame(loop);
-    next.focus({ preventScroll: true });
+    if (!state.interactive) next.focus({ preventScroll: true });
   }
   function finish(automatic = false) {
     if (!state || (!automatic && performance.now() < inputAfter)) return;
@@ -158,6 +159,7 @@ const actionScenes = (() => {
     if(state?.kind === "rogue")gameAudio.stopTransient("comic");
     state = null;
     root.hidden = true;
+    delete root.dataset.interactive;
     label.textContent = "";
   }
   next.addEventListener("click", () => finish());

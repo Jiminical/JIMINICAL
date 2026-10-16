@@ -287,6 +287,16 @@ h1 {
   margin-left: -10px;
   color: #eee5c4;
 }
+.logo-tree {
+  position: absolute;
+  width: 72px;
+  height: 58px;
+  top: -67px;
+  left: calc(50% - 36px);
+  shape-rendering: crispEdges;
+  filter: drop-shadow(2px 3px 0 #142f2d);
+  pointer-events: none;
+}
 .logo-wordmark {
   display: block;
   position: relative;
@@ -301,17 +311,16 @@ h1 {
   filter: drop-shadow(2px 2px 0 #132b30);
 }
 .logo-sprig {
-  left: -10px;
-  bottom: 6px;
-  width: 16px;
-  height: 24px;
-  opacity: 0.85;
+  left: -19px;
+  bottom: 5px;
+  width: 30px;
+  height: 68px;
 }
 .logo-leaf {
-  left: calc(100% - 3px);
-  top: 48%;
-  width: 20px;
-  height: 28px;
+  right: -21px;
+  bottom: 5px;
+  width: 30px;
+  height: 68px;
 }
 .logo-spark {
   left: calc(50% + 106px);
@@ -322,10 +331,9 @@ h1 {
 }
 .logo-tails {
   left: 0;
-  bottom: 2px;
+  bottom: -9px;
   width: 100%;
-  height: 12px;
-  opacity: 0.7;
+  height: 16px;
 }
 .logo-twinkles {
   position: absolute;
@@ -473,6 +481,7 @@ h1 {
   letter-spacing: 3px;
   font-weight: 400;
   margin-bottom: 9px;
+  color: #d5ddb4;
 }
 .title-name {
   display: block;
@@ -481,6 +490,11 @@ h1 {
   line-height: 1.3;
   letter-spacing: -2px;
   color: #f0e7c4;
+  text-shadow:
+    -2px -2px #24483b, 2px -2px #24483b,
+    -2px 2px #24483b, 2px 2px #24483b,
+    0 4px #a4b779, 2px 6px #47653e,
+    4px 8px #132e2c;
 }
 .intro-copy {
   margin: 17px 0 43px;
@@ -1012,6 +1026,20 @@ input[type="range"]::-moz-range-thumb {
     letter-spacing: 2px;
     margin-bottom: 6px;
   }
+  .logo-tree {
+    width: 60px;
+    height: 48px;
+    top: -56px;
+    left: calc(50% - 30px);
+  }
+  .logo-sprig,
+  .logo-leaf {
+    width: 22px;
+    height: 50px;
+    bottom: 0;
+  }
+  .logo-sprig { left: -13px; }
+  .logo-leaf { right: -13px; }
   .title-name {
     font-size: clamp(48px, 15.8vw, 64px);
     letter-spacing: -2px;
@@ -3860,6 +3888,74 @@ button.is-pressed {
     padding-bottom: 16px;
   }
 }
+/* Questions stay inside Kania's uninterrupted tracking shot. */
+.is-guide-chat .action-caption {
+  display: none;
+}
+.is-guide-chat .game-dialogue {
+  z-index: 12;
+  left: auto;
+  right: 4%;
+  bottom: 6%;
+  width: 51%;
+  max-height: 83%;
+  min-height: 150px;
+  overflow-y: auto;
+  padding: 18px 22px 12px;
+  background: #122623ed;
+  border: 2px solid #a5b58b;
+  box-shadow: 4px 4px #050e12;
+}
+.is-guide-chat .game-dialogue h2 {
+  color: #c4dca6;
+}
+.is-guide-chat #game-dialogue-text {
+  font-size: clamp(14px, 1.5cqw, 19px);
+  line-height: 1.85;
+  min-height: 3.7em;
+}
+.is-guide-chat .game-choices {
+  width: 100%;
+  gap: 5px;
+  margin-top: 14px;
+}
+.is-guide-chat .game-choices button {
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 1px solid #6b895966;
+  font-size: clamp(12px, 1.18cqw, 15px);
+  line-height: 1.7;
+  color: #c3cbb6;
+}
+.is-guide-chat .game-choices button:is(.is-current, :hover, :focus-visible) {
+  background: #304a37;
+  border-color: #b0c18b;
+  color: #fff0bd;
+}
+@media (max-aspect-ratio: 4/5) {
+  .is-guide-chat .journey-action {
+    justify-content: flex-start;
+    padding-top: 13cqh;
+    gap: 0;
+  }
+  .is-guide-chat .game-dialogue {
+    top: calc(13cqh + 100cqw * 344 / 720 + 22px);
+    bottom: auto;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    max-height: calc(87cqh - 100cqw * 344 / 720 - 38px);
+    min-height: 0;
+    padding: 14px 16px 10px;
+  }
+  .is-guide-chat #game-dialogue-text {
+    font-size: 14px;
+  }
+  .is-guide-chat .game-choices button {
+    font-size: 12px;
+    min-height: 40px;
+  }
+}
 /* A full-screen film canvas; the first twenty seconds belong to the landscape. */
 .game-vista.is-journey {
   display: block;
@@ -4110,6 +4206,14 @@ button.is-pressed {
 
         <section class="title-content">
           <h1 class="title-logo">
+            <svg class="logo-tree" viewBox="0 0 40 32" aria-hidden="true">
+              <path fill="#244d3b" d="M16 0h8v2h6v4h4v4h4v8h-4v4h-8v2H14v-2H6v-4H2v-8h4V6h4V2h6Z"/>
+              <path fill="#6c9760" d="M16 2h8v2h6v4h4v6h-4v4h-8v2H12v-2H6v-6h4V6h6Z"/>
+              <path fill="#b0c77e" d="M16 4h8v2h4v4h-6V8h-8v4H8v-2h4V6h4Zm12 10h6v2h-6Z"/>
+              <path fill="#c4b37b" d="M18 14h4v8h2v4h6v2h4v2H22v-2h-4v2H6v-2h4v-2h6v-4h2Z"/>
+              <path fill="#6c8253" d="M18 18h2v10h-2Zm6 8h4v2h-4ZM12 26h4v2h-4Z"/>
+              <path fill="#f2e4ae" d="M18 6h4v2h-4ZM6 4h2v2H6Zm26-2h2v2h-2Z"/>
+            </svg>
             <span class="title-prefix">이종족연합국</span>
             <span class="logo-wordmark">
               <span class="title-name"
@@ -4119,32 +4223,27 @@ button.is-pressed {
               >
               <svg
                 class="logo-sprig"
-                viewBox="0 0 16 24"
+                viewBox="0 0 24 54"
                 fill="none"
                 aria-hidden="true"
               >
-                <path
-                  d="M14 22h-2v-4h-2v-4H8v-4H6V6H4V2"
-                  stroke="currentColor"
-                  stroke-width="2"
-                />
-                <path
-                  d="M2 3h4v4H4v2H2V3Zm6 7h4V8h2v6h-4v-2H8v-2Z"
-                  fill="currentColor"
-                />
+                <path fill="#426b48" d="M20 54h-4v-6h-4v-8H8V28H6V14h2v14h4v10h4v8h4Z"/>
+                <path fill="#83a766" d="M6 24H2v-4H0V10h4v4h4v10Zm4 10v-8h4v-4h6v8h-4v4ZM12 44H6v-2H2v-8h6v4h4Zm4 2v-8h4v-2h4v8h-4v2Z"/>
+                <path fill="#bed18b" d="M2 12h2v8H2Zm12 14h4v2h-4ZM4 36h2v4H4Zm16 2h2v4h-2Z"/>
+                <path fill="#e8d9a0" d="M6 4h2V0h2v4h2v2h-2v4H8V6H6Z"/>
               </svg>
               <svg
                 class="logo-leaf"
-                viewBox="0 0 20 28"
+                viewBox="0 0 24 54"
                 fill="none"
                 aria-hidden="true"
               >
-                <path
-                  d="M2 26V16h2v-4h2V8h2V4h4V2h6v4h-2v4h-2v4h-4v2H6v10H2Z"
-                  fill="currentColor"
-                />
-                <path d="M6 23v-6h4v-2h8v4h-2v2h-4v2H6Z" fill="currentColor" />
-                <path d="M6 16v-4h2V8h4V6" stroke="#41584c" stroke-width="2" />
+                <g transform="translate(24 0) scale(-1 1)">
+                  <path fill="#426b48" d="M20 54h-4v-6h-4v-8H8V28H6V14h2v14h4v10h4v8h4Z"/>
+                  <path fill="#83a766" d="M6 24H2v-4H0V10h4v4h4v10Zm4 10v-8h4v-4h6v8h-4v4ZM12 44H6v-2H2v-8h6v4h4Zm4 2v-8h4v-2h4v8h-4v2Z"/>
+                  <path fill="#bed18b" d="M2 12h2v8H2Zm12 14h4v2h-4ZM4 36h2v4H4Zm16 2h2v4h-2Z"/>
+                  <path fill="#e8d9a0" d="M6 4h2V0h2v4h2v2h-2v4H8V6H6Z"/>
+                </g>
               </svg>
             </span>
             <svg class="logo-spark" viewBox="0 0 10 20" aria-hidden="true">
@@ -4160,12 +4259,12 @@ button.is-pressed {
               aria-hidden="true"
             >
               <path
-                d="M0 2h4v2h10v2h20v2h12v2H12V8H4V6H0V2Zm360 0h-4v2h-10v2h-20v2h-12v2h34V8h8V6h4V2Z"
-                fill="currentColor"
+                d="M0 0h4v2h14v2h34v2h70v2h40v2H48V8H16V6H2V4H0Zm360 0h-4v2h-14v2h-34v2h-70v2h-40v2h114V8h32V6h14V4h2Z"
+                fill="#789657"
               />
               <path
-                d="M46 8h10V6h8v2h-6v2H46V8Zm268 0h-10V6h-8v2h6v2h12V8Zm-136-2h4v2h2v2h-2v2h-4v-2h-2V8h2V6Z"
-                fill="currentColor"
+                d="M62 6V2h6v2h6v2Zm230 0V4h6V2h6v4ZM176 2h8v2h2v4h-2v4h-8V8h-2V4h2Z"
+                fill="#d5cf91"
               />
             </svg>
             <span class="logo-twinkles" aria-hidden="true"
@@ -4662,7 +4761,7 @@ button.is-pressed {
               id="action-art"
               width="720"
               height="480"
-              aria-label="인물과 숲의 여정"
+              aria-label="카니아와 함께 걷는 폭포와 산맥의 여정"
             ></canvas>
           </div>
           <div class="action-caption">
@@ -5619,10 +5718,14 @@ const gameAudio = (() => {
         tone(83,.9,{wave:"sawtooth",level:.1,end:260,filter:900});break;
       case "arrow":
         if (!sample("arrow", 1.2, 1.16)) noise(.15,.35,4400,0,{crisp:true});
+        [0,.035,.082,.123].forEach((delay,i)=>noise(.025,.18-i*.02,3200+i*650,delay,{crisp:true}));
+        tone(2200,.17,{wave:"sawtooth",level:.055,end:5400,filter:6500});
         tone(3600,.13,{wave:"sine",level:.065,end:1100,filter:7000});break;
       case "arrowHit":
         sample("arrowHit", 1.25, 1);
-        noise(.035,.3,3700,0,{crisp:true});tone(118,.17,{level:.19,end:38,filter:520});break;
+        noise(.035,.3,3700,0,{crisp:true});tone(118,.21,{level:.22,end:38,filter:520});
+        [1760,2640].forEach((hz,i)=>tone(hz,.32+i*.09,{wave:"sine",level:.065/(i+1),end:hz*.72,filter:5000}));
+        [0.045,.11,.19,.29].forEach((delay,i)=>noise(.022,.14-i*.025,4100-i*470,delay,{crisp:true}));break;
       case "rescued":
         [392,494,659,784].forEach((hz,i)=>tone(hz,.28,{wave:"triangle",level:.09,delay:i*.09}));break;
       case "next":
@@ -7135,8 +7238,8 @@ const greenstoaLore = (() => {
       id: "scout",
       name: "카니아",
       role: "그린스토아 정찰병",
-      summary: "성역의 입구를 지키고, 방문객을 안내하는 엘프.",
-      body: "그린스토아의 평등을 존중하면서도 마기와 음기에 관한 검문에는 엄격하다. 주인공의 모험가증과 조사 의뢰를 확인한 뒤, 서두를 필요 없이 편하게 지내라며 성역의 정문까지 안내한다.",
+      summary: "스스로 정찰병을 자처한, 듬직하고 감각이 예민한 하이엘프.",
+      body: "안전한 곳에서 소식만 기다리기보다, 직접 위험을 발견해 누군가의 귀갓길을 지키고자 정찰병에 지원했다. 작은 소리와 냄새의 변화에도 민감하며, 검문에는 엄격하지만 동행자를 세심하게 챙긴다. 활을 다루는 솜씨와 달리 사랑이나 마음을 표현하는 일에는 서툴다. 주인공의 신분과 의뢰를 확인한 뒤, 성역으로 안내하며 질문에 답해 준다.",
     },
     {
       id: "hero",
@@ -7508,6 +7611,7 @@ const actionScenes = (() => {
     inputAfter = performance.now() + 180;
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
+    root.dataset.interactive = String(!!state.interactive);
     if (state.kind === "guide")
       state.cells = kaniaWalk.prepare(state.pictures.guideKania);
     draw();
@@ -7607,7 +7711,7 @@ const actionScenes = (() => {
     draw();
     // Motion preferences change the picture, never the time available to read it.
     const duration = state.kind === "rogue" ? 4.4 : 10.5;
-    if (seconds >= duration) {
+    if (!state.interactive && seconds >= duration) {
       finish(true);
       return;
     }
@@ -7617,7 +7721,7 @@ const actionScenes = (() => {
     if (!state) return;
     previous = performance.now();
     request = requestAnimationFrame(loop);
-    next.focus({ preventScroll: true });
+    if (!state.interactive) next.focus({ preventScroll: true });
   }
   function finish(automatic = false) {
     if (!state || (!automatic && performance.now() < inputAfter)) return;
@@ -7630,6 +7734,7 @@ const actionScenes = (() => {
     if(state?.kind === "rogue")gameAudio.stopTransient("comic");
     state = null;
     root.hidden = true;
+    delete root.dataset.interactive;
     label.textContent = "";
   }
   next.addEventListener("click", () => finish());
@@ -8802,6 +8907,37 @@ const battleEffects = (() => {
     shape([[-length+8,1],[-length-4,6],[-length-2,1]],'#d5e2bf');
     shape([[-length+5,-1],[-length-3,-4],[-length-2,-2]],'#f4e8ba');
   }
+  function lightning(x,y,angle,length,spread,phase,alpha=1){
+    const cs=Math.cos(angle),sn=Math.sin(angle),points=[];
+    for(let i=0;i<=12;i++){
+      const p=i/12,jag=i===0||i===12?0:Math.sin(i*7.13+phase)*spread*Math.sin(p*Math.PI);
+      points.push([Math.round(x+cs*length*p-sn*jag),Math.round(y+sn*length*p+cs*jag)]);
+    }
+    c.save();c.globalAlpha*=alpha;c.lineJoin='miter';
+    for(const [color,width] of [['#287a51',4],['#89ef9b',2],['#efffd0',1]]){
+      c.strokeStyle=color;c.lineWidth=width;c.beginPath();
+      points.forEach(([xx,yy],i)=>i?c.lineTo(xx,yy):c.moveTo(xx,yy));c.stroke();
+    }
+    c.restore();
+  }
+  function enchantedTrail(x,y,angle,size,age){
+    const cs=Math.cos(angle),sn=Math.sin(angle),length=size*.85,
+      at=(along,across)=>[x+cs*along-sn*across,y+sn*along+cs*across],
+      shape=(points,color,alpha)=>{c.globalAlpha=alpha;polygon(points.map(([a,b])=>at(a,b)),color);};
+    shape([[-length,0],[-length*.5,-7],[-12,-9],[8,0],[-12,9],[-length*.5,7]],'#287a51',.55);
+    shape([[-length*.9,0],[-28,-4],[7,0],[-28,4]],'#8feaa3',.9);
+    shape([[-length*.72,0],[-12,-1],[8,0],[-12,1]],'#f1ffce',1);
+    for(let i=0;i<3;i++){
+      const [xx,yy]=at(-9,(i-1)*5);
+      lightning(xx,yy,angle+Math.PI,length*(.64+i*.12),5+i*2,Math.floor(age*65)+i*4,.8);
+    }
+    for(let i=0;i<12;i++){
+      const along=-12-((age*170+i*13)%length),across=Math.sin(i*9+age*24)*(5+(i%4)*2),[xx,yy]=at(along,across);
+      c.globalAlpha=(1-Math.abs(along)/length)*.9;
+      star(xx,yy,1+i%2,i%3?'#a9ef99':'#faffd5');
+    }
+    c.globalAlpha=1;
+  }
   function forehead(enemy,sheet,frame){
     const anchors=[[.51,.35],[.46,.32],[.49,.37],[.50,.34],[.23,.34],[.77,.35],[.66,.16],[.36,.44]],
       f=sheet.frames[frame%sheet.frames.length],head=anchors[frame%anchors.length],s=enemy.height/sheet.height;
@@ -8816,14 +8952,7 @@ const battleEffects = (() => {
     if(stage==='arrow'){
       const t=clamp(age/.18),xx=start.x+(x-start.x)*t,yy=start.y+(y-start.y)*t;
       if(motion){
-        for(let i=0;i<3;i++){
-          const length=45+i*17,side=(i-1)*3;
-          c.globalAlpha=[.65,.85,.35][i];
-          polygon([[xx-cs*length-sn*side,yy-sn*length+cs*side],
-            [xx-cs*6-sn*side,yy-sn*6+cs*side],
-            [xx-cs*18-sn*(side+1),yy-sn*18+cs*(side+1)]],i===1?'#fff7d2':'#84c7cf');
-        }
-        c.globalAlpha=1;
+        enchantedTrail(xx,yy,angle,size,age);
       }
       arrowShaft(xx,yy,angle,size);
       return;
@@ -8832,29 +8961,41 @@ const battleEffects = (() => {
     // The shaft remains lodged in the forehead and fades with the enemy.
     c.save(); c.globalAlpha=dissolve?1-ease((age-.35)/1.8):1;
     arrowShaft(x+cs*3,y+sn*3,angle,size,motion&&time<.27?Math.sin(time*105)*(1-time/.27)*1.7:0);
+    if(motion&&time<1.05){
+      const glow=1-ease(time/1.05);
+      lightning(x-cs*6,y-sn*6,angle+Math.PI,size*.22,3,Math.floor(time*30),glow*.85);
+    }
     c.restore();
     if(dissolve)return;
-    if(!motion){if(age<.28)star(x,y,size*.055,'#f5edc7');return;}
+    if(!motion){if(age<.28)star(x,y,size*.055,'#ccf2ab');return;}
     if(age<.12&&enemySheet){
       m.clearRect(0,0,width,height);m.globalCompositeOperation='source-over';
       pixelAtlases.draw(m,enemySheet,frame,enemy.x/scale,enemy.ground/scale,enemy.height/scale);
-      m.globalCompositeOperation='source-in';m.fillStyle='#fff4d7';m.fillRect(0,0,width,height);
+      m.globalCompositeOperation='source-in';m.fillStyle='#e5ffd3';m.fillRect(0,0,width,height);
       c.globalAlpha=(1-age/.12)*.72;c.drawImage(mask,0,0);c.globalAlpha=1;
     }
     if(age<.16){
       const length=size*.6,thickness=(1-age/.16)*3;
       polygon([[x-cs*length-sn*thickness,y-sn*length+cs*thickness],
-        [x+cs*length,y+sn*length],[x-cs*length+sn*thickness,y-sn*length-cs*thickness]],'#fff1c0');
+        [x+cs*length,y+sn*length],[x-cs*length+sn*thickness,y-sn*length-cs*thickness]],'#e7ffc0');
     }
     const flash=1-ease(age/.27);
     if(flash>0){
-      star(x,y,size*.20*flash,'#76a9bc');star(x,y,size*.135*flash,'#f2d194');
+      star(x,y,size*.25*flash,'#399c66');star(x,y,size*.17*flash,'#a7ed96');
       star(x,y,size*.075*flash,'#fffef0');
     }
-    if(age>.035&&age<.56){
-      const p=clamp((age-.035)/.525),radius=size*(.055+p*.33);
-      c.globalAlpha=(1-p)*.8;c.strokeStyle='#d5ead3';c.lineWidth=p<.3?2:1;
-      c.beginPath();for(let i=0;i<=12;i++){const a=i*Math.PI/6;c.lineTo(Math.round(x+Math.cos(a)*radius),Math.round(y+Math.sin(a)*radius*.61));}c.stroke();c.globalAlpha=1;
+    if(age>.025&&age<.65){
+      const p=clamp((age-.025)/.625),radius=size*(.055+ease(p)*.42);
+      for(let ring=0;ring<2;ring++){
+        const r=radius*(ring?.7:1);c.globalAlpha=(1-p)*(ring?.4:.9);c.strokeStyle=ring?'#e4ffc6':'#83db93';c.lineWidth=p<.25?2:1;
+        c.beginPath();for(let i=0;i<=12;i++){const a=i*Math.PI/6;c.lineTo(Math.round(x+Math.cos(a)*r),Math.round(y+Math.sin(a)*r*.61));}c.stroke();
+      }
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3+.25,xx=x+Math.cos(a)*radius,yy=y+Math.sin(a)*radius*.61;
+        c.globalAlpha=(1-p)*.75;star(xx,yy,2,'#dcffb6');
+        if(age<.42)lightning(x+Math.cos(a)*5,y+Math.sin(a)*5,a,radius*.8,6,Math.floor(age*40)+i,(1-p)*.65);
+      }
+      c.globalAlpha=1;
     }
     if(age<1.05)for(let i=0;i<26;i++){
       const a=i*2.399,speed=size*(.18+(i%5)*.05),t=age,
@@ -8862,7 +9003,7 @@ const battleEffects = (() => {
         r=(1-ease(t/1.05))*(1.4+i%3);
       c.globalAlpha=1-ease((t-.4)/.65);
       if(i%3===0){polygon([[xx-r,yy],[xx,yy-r*1.6],[xx+r,yy],[xx,yy+r]],'#403b56');c.fillStyle='#d5977a';c.fillRect(Math.round(xx),Math.round(yy-r),1,1);}
-      else star(xx,yy,r,i%2?'#f7e3a2':'#aacfd2');
+      else star(xx,yy,r,i%2?'#d8f5ad':'#70d595');
     }
     c.globalAlpha=1;
   }
@@ -10338,9 +10479,17 @@ const guildGame = (() => {
     if (actionScenes.kind === "guide") gameAudio.scene(location);
     actionScenes.stop();
     root.classList.remove("is-action");
+    root.classList.remove("is-guide-chat");
     document.querySelector(".world-viewport").inert = false;
   }
   function playAction(kind, after) {
+    const start = () => {
+      actionScenes.play();
+      if (kind === "guide") {
+        root.classList.add("is-guide-chat");
+        kaniaConversation({ walking: true });
+      }
+    };
     const prepare = () => {
       keys.clear();
       phase = "action";
@@ -10350,6 +10499,7 @@ const guildGame = (() => {
       document.querySelector(".world-viewport").inert = true;
       actionScenes.prepare({
         kind,
+        interactive: kind === "guide",
         world: background,
         pictures,
         motion: motion(),
@@ -10368,10 +10518,10 @@ const guildGame = (() => {
       return transitionTo(prepare, () => {
         phase = "action";
         root.dataset.phase = phase;
-        actionScenes.play();
+        start();
       });
     prepare();
-    actionScenes.play();
+    start();
   }
   function giveItem(id) {
     const found = inventory.find((item) => item.id === id);
@@ -10678,7 +10828,8 @@ const guildGame = (() => {
       : line.voice
         ? "어디선가 들려오는 목소리"
         : placeNames[location][1];
-    portraitFor(line.kind, line.expression);
+    // The tracking shot already frames Kania; keep the scenery visible behind her words.
+    portraitFor(root.classList.contains("is-guide-chat") ? null : line.kind, line.expression);
     cancelPortraitMotion();
     dialogue.pulses = 0;
     reactPortrait(line);
@@ -10715,6 +10866,7 @@ const guildGame = (() => {
       b.addEventListener("click", () => choose(i));
       choicesBox.append(b);
     });
+    choicesBox.querySelector(".is-current")?.scrollIntoView({ block: "nearest" });
   }
   function choose(index) {
     if (
@@ -11087,6 +11239,74 @@ const guildGame = (() => {
     })));
   }
 
+  function kaniaConversation({ walking = false } = {}) {
+    const asked = new Set();
+    const topics = [
+      {
+        label: "하이엘프인데, 왜 정찰병이야?",
+        lines: [
+          { kind: "hero", text: "하이엘프라고 들었어.\n그런데 정찰병은… 네가 원해서 하는 일이야?" },
+          { kind: "scout", expression: "explaining", text: "그래. 내가 지원했다.\n안전한 곳에서 소식만 기다리는 건 성미에 안 맞아서." },
+          { kind: "hero", text: "바깥은 위험할 텐데." },
+          { kind: "scout", expression: "neutral", text: "내가 먼저 수상한 발자국을 찾으면,\n누군가는 무사히 집에 돌아갈 수 있지." },
+          { kind: "scout", expression: "welcoming", text: "이 귀와 활이 쓸모 있는 곳에 있고 싶어.\n네가 돌아올 길도, 내가 봐 둘 테니." },
+        ],
+      },
+      {
+        label: "아까부터 무슨 소리를 듣는 거야?",
+        lines: [
+          { kind: "hero", text: "아까부터 자꾸 옆을 보네.\n무슨 소리를 듣는 거야?" },
+          { kind: "scout", expression: "warning", text: "잠깐. 오른쪽 가지 위에…" },
+          { text: "잠시 뒤, 잎사귀 사이에서 작은 새 한 마리가 고개를 내민다." },
+          { kind: "scout", expression: "explaining", text: "…새였군. 잎이 스치는 소리가 달라졌어.\n소리도 냄새도, 평소와 다르면 신경이 쓰이거든." },
+          { kind: "hero", text: "늘 그렇게 신경 쓰면 안 피곤해?" },
+          { kind: "scout", expression: "welcoming", text: "익숙해. 너까지 긴장할 필요는 없어.\n내가 멈추라고 할 때만 멈춰 주면 돼." },
+        ],
+      },
+      {
+        label: "좋아하는 사람 앞에서도 침착해?",
+        lines: [
+          { kind: "hero", text: "좋아하는 사람 앞에서도 그렇게 침착해?" },
+          { kind: "scout", expression: "flustered", text: "…그건 정찰과 무슨 관계가 있지?" },
+          { kind: "hero", text: "그냥 궁금해서.\n누가 좋아한다고 하면 뭐라고 답할 거야?" },
+          { kind: "scout", expression: "flustered", text: "그… 먼저 진심인지 확인해야겠지.\n그다음에는… 잠깐. 보통은 뭐라고 답하지?" },
+          { kind: "hero", text: "마음에 들면 웃어 주는 것부터?" },
+          { kind: "scout", expression: "flustered", text: "웃는 것부터… 그렇군.\n활시위를 당기는 쪽이 훨씬 쉽네." },
+        ],
+      },
+    ];
+    if (!walking && fieldFlags.libraryAmbushCleared) topics.push({
+      label: "그 초록 화살, 네가 쏜 거야?",
+      lines: [
+        { kind: "hero", text: "그 초록빛 화살… 네가 쏜 거지?\n정말 끝인 줄 알았어. 고마워." },
+        { kind: "scout", expression: "explaining", text: "화살촉에 마력을 모았어.\n빗나갈 수 없는 한 발이 필요했으니까." },
+        { kind: "scout", expression: "welcoming", text: "살아 돌아왔잖아. 그걸로 됐어.\n다음엔 혼자 버티려 하지 마. 뒤에는 나도 있으니." },
+      ],
+    });
+    const finish = () => {
+      if (walking) {
+        phase = "action";
+        root.dataset.phase = phase;
+        actionScenes.finish();
+      } else speak([{ kind: "scout", expression: "welcoming", text: "그래. 천천히 둘러봐.\n필요한 일이 있으면 나를 부르고." }]);
+    };
+    const questions = (first = false) => speak(
+      [{ kind: "scout", expression: "welcoming", text: first
+        ? walking ? "정문까지는 조금 걸어야 해.\n궁금한 게 있으면 물어봐. 길은 내가 보고 있으니."
+          : "무슨 일이야?\n잠깐 이야기할 시간이라면 있어."
+        : "…더 궁금한 게 있어?" }],
+      null,
+      [...topics.map((topic, i) => ({
+        label: (asked.has(i) ? "✓ " : "") + topic.label,
+        action: () => {
+          asked.add(i);
+          speak(topic.lines, () => questions());
+        },
+      })), { label: walking ? "풍경을 보며 정문까지 함께 걷는다" : "다음에 또 이야기하자", action: finish }],
+    );
+    questions(true);
+  }
+
   function npcTalk(id) {
     if (id === "rael") {
       speak(
@@ -11110,14 +11330,7 @@ const guildGame = (() => {
 
     if (id === "scout") {
       if (location === "checkpoint") showCredentials();
-      else
-        speak([
-          {
-            kind: "scout",
-            expression: "welcoming",
-            text: "먼 길 오느라 수고했다.\n낯선 곳이겠지만, 이곳에서는 네 종족도 신분도 묻지 않는다.",
-          },
-        ]);
+      else kaniaConversation();
       return;
     }
     if (id === "lucy") {
@@ -11913,7 +12126,8 @@ const guildGame = (() => {
           code === "KeyS" ||
           code === "ArrowDown")
       ) {
-        selectedChoice = (selectedChoice + 1) % dialogue.choices.length;
+        const offset = code === "KeyW" || code === "ArrowUp" ? -1 : 1;
+        selectedChoice = (selectedChoice + offset + dialogue.choices.length) % dialogue.choices.length;
         gameAudio.sfx("select");
         renderChoices();
       } else if (code === "KeyE" || code === "Enter") advanceDialogue();
