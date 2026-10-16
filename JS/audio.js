@@ -26,6 +26,7 @@ const gameAudio = (() => {
     guild: { wind: 0.018, water: 0, cutoff: 300 },
     shop: { wind: 0.012, water: 0, cutoff: 260 },
     library: { wind: 0.008, water: 0, cutoff: 240 },
+    battle: { wind: 0.02, water: 0, cutoff: 390 },
     city: { wind: 0.035, water: 0.055, cutoff: 650 },
     departure: { wind: 0.07, water: 0, cutoff: 290 },
     carriage: { wind: 0.095, water: 0, cutoff: 250 },
@@ -184,6 +185,18 @@ const gameAudio = (() => {
     }
     const now = context.currentTime;
     const rolling = place === "carriage" || place === "departure";
+    if (place === "battle") {
+      if (nextBeat < now - .3) nextBeat = now + .03;
+      const bass = [82.41,82.41,98,73.42,82.41,110,98,73.42];
+      while (nextBeat < now + .12) {
+        const delay = Math.max(0, nextBeat - now);
+        tone(bass[beat % bass.length], .14, {group:"scene",delay,wave:"triangle",level:.13,filter:750});
+        if (beat % 2 === 0) tone(bass[beat % bass.length] * 4, .08, {group:"scene",delay,wave:"square",level:.025,filter:1800});
+        noise(.035,.055,beat % 2 ? 1800 : 450,delay,{group:"scene",crisp:true});
+        beat++; nextBeat += .205;
+      }
+      return;
+    }
     // A short lookahead keeps hoofbeats steady without queuing sounds after a cut.
     if (rolling) {
       if (nextBeat < now - 0.3) nextBeat = now + 0.04;
@@ -467,6 +480,25 @@ const gameAudio = (() => {
       case "select":
         tone(860, 0.035, { wave: "square", level: 0.035, end: 1050 });
         break;
+      case "battleStart":
+        [440,330,220,110].forEach((hz,i)=>tone(hz,.14,{wave:"square",level:.12,delay:i*.08,end:hz*.7}));
+        noise(.32,.3,550); break;
+      case "demon":
+        tone(74,.38,{wave:"sawtooth",level:.16,end:48,filter:600});noise(.2,.2,340);break;
+      case "sword":
+        noise(.15,.4,2600,0,{crisp:true});tone(740,.17,{wave:"triangle",level:.1,end:180});break;
+      case "parry":
+        [1160,1740].forEach(hz=>tone(hz,.19,{wave:"sine",level:.1}));break;
+      case "hurt":
+        noise(.13,.4,650);tone(147,.18,{wave:"square",level:.1,end:55});break;
+      case "charge":
+        tone(83,.9,{wave:"sawtooth",level:.1,end:260,filter:900});break;
+      case "arrow":
+        noise(.18,.35,3200,0,{crisp:true});tone(1200,.12,{level:.08,end:340});break;
+      case "arrowHit":
+        noise(.09,.5,1050);tone(180,.2,{level:.16,end:48});break;
+      case "rescued":
+        [392,494,659,784].forEach((hz,i)=>tone(hz,.28,{wave:"triangle",level:.09,delay:i*.09}));break;
       case "next":
         tone(610, 0.028, { level: 0.055, end: 760 });
         break;

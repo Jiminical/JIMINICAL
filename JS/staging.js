@@ -108,27 +108,46 @@ const actionScenes = (() => {
     for (let i = 3; i < pixels.data.length; i += 4)
       pixels.data[i] = pixels.data[i] >= 96 ? 255 : 0;
     b.putImageData(pixels, 0, 0);
-    const lifts = [0, -1, -2, -1, 0, -1, -2, -1],
-      sways = [0, 1, 2, 1, 0, -1, -2, -1];
-    // Two footfalls per cycle. Move the torso rigidly, with a small delayed
-    // follow-through only in the trailing ponytail and cloak.
-    return lifts.map((lift, frame) => {
+    const mask = (points) => {
+      const layer = document.createElement("canvas");
+      layer.width = base.width; layer.height = base.height;
+      const ctx = layer.getContext("2d");
+      ctx.beginPath(); points.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+      ctx.closePath(); ctx.fill();
+      return layer;
+    };
+    const armMask = mask([[154,247],[147,277],[134,299],[131,316],[140,337],[163,360],[179,376],[115,376],[104,353],[86,343],[63,333],[62,319],[73,296],[89,278],[120,266]]),
+      tailMask = mask([[0,160],[65,110],[107,95],[111,145],[86,202],[40,247],[0,270]]);
+    const cut = (shape) => {
+      const layer = document.createElement("canvas"); layer.width=720; layer.height=376;
+      const ctx=layer.getContext("2d");ctx.drawImage(base,0,0);
+      ctx.globalCompositeOperation="destination-in";ctx.drawImage(shape,0,0);return layer;
+    };
+    const arm=cut(armMask), tail=cut(tailMask), body=cut(base), torso=body.getContext("2d");
+    torso.globalCompositeOperation="destination-out";torso.drawImage(tailMask,0,0);
+    // Cloth behind the near arm prevents a transparent seam when it swings.
+    torso.globalCompositeOperation="source-over";
+    const lining=cut(armMask), liningContext=lining.getContext("2d");
+    liningContext.globalCompositeOperation="source-in";liningContext.fillStyle="#234632";
+    liningContext.fillRect(0,0,720,376);torso.drawImage(lining,0,0);
+    // Twelve rigid-body cels: two footfalls, opposite arm swing and a delayed
+    // ponytail. The face is translated intact; no scanline warping or pose swaps.
+    return Array.from({length:12}, (_,frame) => {
+      const phase=frame/12*Math.PI*2,
+        lift=Math.round(Math.cos(phase*2)-1);
       const cel = document.createElement("canvas");
       cel.width = 720;
       cel.height = 376;
       const paint = cel.getContext("2d");
       paint.imageSmoothingEnabled = false;
-      paint.drawImage(base, 0, lift);
-      paint.save();
-      paint.beginPath();
-      paint.rect(0, 0, 100, cel.height);
-      paint.clip();
-      paint.clearRect(0, 0, 100, cel.height);
-      for (let y = 0; y < base.height; y++) {
-        const sway = Math.round(sways[frame] * clamp((y - 150) / 170));
-        paint.drawImage(base, 0, y, 112, 1, sway, y + lift, 112, 1);
-      }
-      paint.restore();
+      paint.save();paint.translate(111,130+lift);paint.rotate(Math.sin(phase-.6)*.015);
+      paint.drawImage(tail,-111,-130);paint.restore();
+      paint.drawImage(body,0,lift);
+      paint.save();paint.translate(145,260+lift);paint.rotate(Math.sin(phase)*.065);
+      paint.drawImage(arm,-145,-260);paint.restore();
+      const pixels=paint.getImageData(0,0,720,376);
+      for(let i=3;i<pixels.data.length;i+=4)pixels.data[i]=pixels.data[i]>=96?255:0;
+      paint.putImageData(pixels,0,0);
       return cel;
     });
   }
@@ -197,11 +216,11 @@ const actionScenes = (() => {
   function drawGuide() {
     const art = state.pictures.guideForest,
       t = state.motion ? clamp(seconds / 10) : 1;
-    const sw = art.naturalWidth * 0.9,
+    const sw = art.naturalWidth * 0.74,
       sh = (sw * 344) / 720;
     c.drawImage(
       art,
-      Math.round((art.naturalWidth - sw) * ease(t)),
+      Math.round((art.naturalWidth - sw) * t),
       Math.round((art.naturalHeight - sh) * 0.4),
       sw,
       sh,
@@ -211,7 +230,7 @@ const actionScenes = (() => {
       344,
     );
     const stepRate = 2.2,
-      frame = state.motion ? Math.floor(seconds * stepRate * 4) % 8 : 0;
+      frame = state.motion ? Math.floor(seconds * stepRate * 6) % 12 : 0;
     // The lower edge is hidden beneath the fixed caption bar, with overscan.
     c.save();
     c.beginPath();

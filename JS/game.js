@@ -147,6 +147,7 @@ const guildGame = (() => {
       springUsed: false,
       libraryReached: false,
       libraryLetterRead: false,
+      libraryAmbushCleared: false,
     };
   const visited = new Set(["guild"]);
   let typingTimer = 0,
@@ -705,6 +706,59 @@ const guildGame = (() => {
         else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
       },
     );
+  }
+  function hideBattle() {
+    battleScenes.stop();
+    root.classList.remove("is-battle");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function approachLibrary() {
+    if (fieldFlags.libraryAmbushCleared) return enterLibrary();
+    keys.clear();
+    player.moving = false;
+    phase = "battle";
+    root.dataset.phase = phase;
+    root.classList.add("is-battle");
+    prompt.hidden = true;
+    document.querySelector(".world-viewport").inert = true;
+    gameAudio.scene("battle");
+    battleScenes.prepare({
+      world: canvas,
+      origin: { x: 529, y: 185 },
+      name: playerName,
+      hp,
+      motion: motion(),
+      items: () => inventory.filter(item => fieldWorld.items[item.id]?.heal)
+        .map(item => ({ ...item, heal: fieldWorld.items[item.id].heal })),
+      useItem: (id, currentHp) => {
+        const item = inventory.find(item => item.id === id),
+          heal = fieldWorld.items[id]?.heal;
+        if (!item || !heal || item.count < 1) return { ok: false, message: "사용할 수 없는 소지품이다." };
+        if (currentHp >= 24) return { ok: false, message: "체력이 가득하다. 소지품을 아껴 두자." };
+        item.count--;
+        if (!item.count) inventory.splice(inventory.indexOf(item), 1);
+        const restored = Math.min(24 - currentHp, heal);
+        return { ok: true, hp: currentHp + restored, message: `${item.name}을(를) 사용했다. 체력 ${restored} 회복.` };
+      },
+      after: result => {
+        if (!active) return;
+        hp = result.hp;
+        fieldFlags.libraryAmbushCleared = true;
+        transitionTo(() => {
+          hideBattle();
+          gameAudio.scene(location);
+          npcs = fieldPeople("grove");
+          npcs.push(actor("scout", Math.min(660, player.x + 44), player.y + 4, "left"));
+          drawWorld();
+        }, () => speak([
+          { kind: "scout", expression: "concerned", text: "괜찮아? 다행히 늦지는 않았네.\n조금만 더 늦었으면 위험했어." },
+          { kind: "scout", expression: "warning", text: "중급 마족이야. 성역의 문턱까지 숨어들었군.\n보통이라면 이곳에 발을 들일 수 없는 놈인데……." },
+          { kind: "scout", expression: "explaining", text: "네가 조사하러 온 ‘불미스러운 일’. 바로 이런 일이야.\n요즘 성역 안팎에서 이질적인 마력이 감지되고 있어." },
+          { kind: "scout", expression: "warning", text: "도서관으로 들어가. 기록을 확인하면 실마리를 찾을 수 있을 거야.\n주변은 내가 살펴볼게." },
+        ], enterLibrary));
+      },
+    });
+    battleScenes.play();
   }
   function leaveLibrary() {
     travelTo("grove", () => {
@@ -1704,7 +1758,7 @@ const guildGame = (() => {
     if (target.id === "door") leaveGuild();
     if (target.id === "guild-entry") visitGuild();
     if (target.id === "shop-entry") enterShop();
-    if (target.id === "library-entry") enterLibrary();
+    if (target.id === "library-entry") approachLibrary();
     if (target.id === "library-exit") leaveLibrary();
     if (target.id === "archive-world") openArchive("world");
     if (target.id === "archive-people") openArchive("people");
@@ -2158,6 +2212,12 @@ const guildGame = (() => {
     // Let the native sound button handle its own Enter activation.
     if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "battle") {
+      if (["Enter", "Space"].includes(code) &&
+        event.target.closest?.("#battle-screen button:not([disabled])")) return;
+      if (battleScenes.handle(code, event.repeat, event.shiftKey)) event.preventDefault();
+      return;
+    }
     if (phase === "inspect") {
       if (["Enter", "Space"].includes(code) && event.target.closest?.("#item-inspection button"))
         return;
@@ -2436,7 +2496,8 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "letter") libraryLetter.finish();
+        if (phase === "battle") battleScenes.handle("KeyE", false, false);
+        else if (phase === "letter") libraryLetter.finish();
         else if (phase === "action") actionScenes.finish();
         else if (phase === "archive") libraryArchive.handle("KeyE");
         else if (phase === "shop") shopView.handle("KeyE");
@@ -2471,6 +2532,7 @@ const guildGame = (() => {
       springUsed: false,
       libraryReached: false,
       libraryLetterRead: false,
+      libraryAmbushCleared: false,
     };
     visited.clear();
     buildMap();
@@ -2523,6 +2585,7 @@ const guildGame = (() => {
     hideLibraryLetter(true);
     hideItemInspection();
     hideAction();
+    hideBattle();
     gameAudio.stopTransient();
     gameAudio.scene("title");
     cancelAnimationFrame(request);
@@ -2561,6 +2624,7 @@ const guildGame = (() => {
         action: actionScenes.kind,
         archive: libraryArchive.active ? libraryArchive.tab : null,
         letter: libraryLetter.delivery,
+        battle: battleScenes.getState(),
         inspectedItem: phase === "inspect" ? inventory[selectedItem]?.id : null,
         vista: cinematic?.key || null,
         expression: dialogue?.lines[dialogue.index].expression || "neutral",

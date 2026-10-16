@@ -21,6 +21,7 @@
     <script src="JS/letter.js" defer></script>
     <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
+    <script src="JS/battle.js" defer></script>
     <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
     <script src="JS/main.js" defer></script>
@@ -666,6 +667,40 @@
               ><span id="archive-page-count"></span>
             </footer>
           </div>
+        </section>
+        <section id="battle-screen" class="battle-screen" role="dialog"
+          aria-modal="true" aria-labelledby="battle-title" hidden>
+          <canvas id="battle-art" width="960" height="600" aria-label="마족과 마주 선 1인칭 전투 화면"></canvas>
+          <header class="battle-heading">
+            <p>이슬잎 도서관 앞 · 기습</p>
+            <h2 id="battle-title">중급 마족 <span>균열의 추적자</span></h2>
+            <div class="battle-enemy-health"><span id="battle-enemy-bar"></span></div>
+          </header>
+          <nav id="battle-menu" class="battle-menu" aria-label="전투 행동">
+            <p class="battle-menu-kicker">어떻게 할까?</p>
+            <div id="battle-commands">
+              <button type="button" data-battle-command="attack"><span>01</span><b>공격</b><small>검을 겨눈다</small></button>
+              <button type="button" data-battle-command="info"><span>02</span><b>정보</b><small>적을 살핀다</small></button>
+              <button type="button" data-battle-command="items"><span>03</span><b>아이템</b><small>소지품을 쓴다</small></button>
+            </div>
+            <div id="battle-item-list" hidden></div>
+            <button id="battle-back" type="button" hidden>← 돌아가기</button>
+          </nav>
+          <div class="battle-bottom">
+          <div class="battle-player-health">
+            <span id="battle-player-name"></span><b id="battle-hp-text"></b>
+            <div><span id="battle-hp-bar"></span></div>
+          </div>
+          <section class="battle-message" aria-label="전투 상황">
+            <p id="battle-message" role="status" aria-live="polite"></p>
+            <div id="battle-timing" hidden>
+              <div class="battle-timing-track"><span id="battle-timing-zone"></span><i id="battle-timing-cursor"></i></div>
+              <button id="battle-timing-button" type="button">E · 타이밍 맞추기</button>
+            </div>
+            <button id="battle-continue" type="button" hidden>E · 계속</button>
+          </section>
+          </div>
+          <p class="battle-key-hint">↑ ↓ 선택 · E 결정 · Esc 돌아가기</p>
         </section>
         <div id="game-transition" aria-hidden="true" hidden></div>
         <section
