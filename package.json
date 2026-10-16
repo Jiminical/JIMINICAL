@@ -6,6 +6,7 @@
     "node": ">=22.0.0"
   },
   "scripts": {
+    "test": "node --test tests/*.test.cjs",
     "build": "node scripts/build-cloudflare.mjs",
     "deploy": "wrangler deploy",
     "check:deploy": "wrangler deploy --dry-run",

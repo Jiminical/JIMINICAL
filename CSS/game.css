@@ -571,6 +571,22 @@
   color: #e0d5ad;
   margin: 0;
 }
+.guild-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+#guild-save-status {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #c2cfb5;
+}
+#guild-save {
+  flex-shrink: 0;
+}
 .game-touch {
   display: none;
 }
@@ -583,6 +599,10 @@
     align-items: flex-end;
     gap: 12px;
     pointer-events: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .game-touch button {
     width: 42px;
@@ -600,17 +620,14 @@
     grid-template-columns: repeat(3, 42px);
     gap: 3px;
   }
-  .touch-directions button:first-child {
-    grid-column: 2;
+  .game-touch button.is-held {
+    background: #496553ed;
+    color: #fff5cc;
+    border-color: #e6dbb6;
+    box-shadow: inset 0 0 0 1px #d7d5ad;
   }
-  .touch-directions button:nth-child(2) {
-    grid-row: 2;
-  }
-  .touch-directions button:nth-child(3) {
-    grid-row: 2;
-  }
-  .touch-directions button:nth-child(4) {
-    grid-row: 2;
+  .touch-directions button:nth-child(5) {
+    grid-column: 3;
   }
   .game-touch .touch-run {
     margin-left: auto;
@@ -625,10 +642,14 @@
     display: none;
   }
   .game-dialogue {
-    bottom: 114px;
+    bottom: 159px;
   }
   .game-interaction {
-    bottom: 116px;
+    bottom: 161px;
+  }
+  .is-dialogue-compact .game-dialogue {
+    top: 64px;
+    bottom: 159px;
   }
 }
 @media (max-width: 700px) {

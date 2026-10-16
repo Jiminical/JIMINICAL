@@ -562,6 +562,24 @@ h1 {
   outline: none;
   background: #344754;
 }
+.menu-item[hidden], .title-save-message[hidden] {
+  display: none;
+}
+#continue-summary {
+  display: block;
+  max-width: 172px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 400;
+  color: #bdc9b6;
+}
+.title-save-message {
+  max-width: 280px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #eddbb7;
+}
 .footer {
   position: absolute;
   bottom: 23px;

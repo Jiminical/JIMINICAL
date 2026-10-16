@@ -30,7 +30,7 @@ const gameAudio = (() => {
     battle: { wind: 0.02, water: 0, cutoff: 390 },
     city: { wind: 0.035, water: 0.055, cutoff: 650 },
     departure: { wind: 0.07, water: 0, cutoff: 290 },
-    carriage: { wind: 0.095, water: 0, cutoff: 250 },
+    carriage: { wind: 0.12, water: 0, cutoff: 330 },
     checkpoint: { wind: 0.08, water: 0.045, cutoff: 950 },
     gate: { wind: 0.065, water: 0.08, cutoff: 1100 },
     grove: { wind: 0.055, water: 0.14, cutoff: 1250 },
@@ -207,11 +207,11 @@ const gameAudio = (() => {
           options = { group: "scene", delay };
         tone(beat % 2 ? 124 : 96, 0.075, {
           ...options,
-          level: 0.115,
+          level: 0.15,
           end: 48,
           filter: 700,
         });
-        noise(0.045, 0.16, beat % 2 ? 720 : 460, delay, {
+        noise(0.045, 0.22, beat % 2 ? 720 : 460, delay, {
           group: "scene",
           crisp: true,
         });
@@ -225,24 +225,24 @@ const gameAudio = (() => {
             group: "scene",
             crisp: true,
           });
-        if (beat % 7 === 5)
-          tone(68, 0.19, { ...options, level: 0.2, end: 30, filter: 400 });
+        if (beat % 4 === 1)
+          carriageJolt(delay + 0.04, beat % 8 === 5 ? 1.2 : 0.85, "scene");
         nextBeat += place === "departure" ? 0.36 : 0.285;
         beat++;
       }
     }
     if (now < nextAccent) return;
-    nextAccent = now + (interiors.has(place) ? 8 : 5) + Math.random() * 4;
+    nextAccent = now + (rolling ? 1.8 : interiors.has(place) ? 8 : 5) + Math.random() * (rolling ? 1.2 : 4);
     if (rolling) {
       // The carriage body creaks over an uneven stretch of road.
       tone(165, 0.28, {
         group: "scene",
-        level: 0.055,
+        level: 0.12,
         end: 112,
         wave: "triangle",
         filter: 550,
       });
-      noise(0.16, 0.075, 580, 0.05, { group: "scene" });
+      noise(0.24, 0.16, 580, 0.05, { group: "scene" });
     } else if (place === "guild") {
       noise(0.13, 0.07, 1700, 0, { group: "scene", crisp: true });
       tone(210, 0.055, { group: "scene", level: 0.026, end: 90, delay: 0.15 });
@@ -366,6 +366,15 @@ const gameAudio = (() => {
       stopTransient();
     } else if (!sceneryClock) syncScenery();
     applyVolume();
+  }
+  function carriageJolt(delay = 0, strength = 1, group = "effect") {
+    // A heavy axle impact, wooden rebound and brief metal rattle form one bump.
+    tone(74, 0.22, { group, delay, level: 0.32 * strength, end: 29, filter: 420 });
+    tone(184, 0.095, { group, delay: delay + 0.025, level: 0.18 * strength, end: 82, filter: 950 });
+    noise(0.065, 0.36 * strength, 720, delay, { group, crisp: true });
+    noise(0.18, 0.18 * strength, 360, delay + 0.06, { group });
+    noise(0.045, 0.14 * strength, 2600, delay + 0.04, { group, crisp: true });
+    tone(1370, 0.075, { group, delay: delay + 0.06, wave: "sine", level: 0.045 * strength, end: 890, filter: 2200 });
   }
   function tone(hz, length, options = {}) {
     if (!usable() || playing.size >= (options.group === "scene" ? 16 : 28))
@@ -552,10 +561,8 @@ const gameAudio = (() => {
         );
         break;
       case "wheel":
-        [0, 0.13, 0.28].forEach((delay, i) => {
-          tone(83 + i * 12, 0.1, { level: 0.13, delay, end: 48 });
-          noise(0.08, 0.22, 320, delay);
-        });
+        carriageJolt(0, 1.25);
+        carriageJolt(0.19, 0.72);
         break;
       case "scan":
         [440, 554, 659, 880].forEach((hz, i) =>

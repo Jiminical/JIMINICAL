@@ -26,6 +26,21 @@ const guildGame = (() => {
   const menuButton = document.querySelector("#guild-menu-open");
   const prompt = document.querySelector("#game-interaction");
   const keys = new Set();
+  const movementCodes = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ShiftLeft"]);
+  const keyboardMovement = new Set();
+  const touchMovement = new Map();
+  const touchButtons = [...document.querySelectorAll("[data-game-key]")];
+  function syncMovementKeys() {
+    keys.clear();
+    for (const code of keyboardMovement) keys.add(code);
+    for (const { codes } of touchMovement.values())
+      for (const code of codes) keys.add(code);
+  }
+  function updateTouchButtons() {
+    const held = new Set([...touchMovement.values()].map(({ button }) => button));
+    for (const button of touchButtons)
+      button.classList.toggle("is-held", held.has(button));
+  }
   const W = 720,
     H = 480;
   const cast = {
@@ -162,6 +177,8 @@ const guildGame = (() => {
   let typingTimer = 0,
     toastTimer = 0;
   let footDistance = 0;
+  let nextAutosave = 0;
+  let resumingSave = false;
   const background = document.createElement("canvas");
   background.width = W;
   background.height = H;
@@ -285,6 +302,7 @@ const guildGame = (() => {
     document.querySelector(".world-viewport").inert = false;
   }
   async function transitionTo(prepare, after) {
+    saveProgress();
     const token = ++transitionSerial;
     phase = "transition";
     root.dataset.phase = phase;
@@ -677,7 +695,7 @@ const guildGame = (() => {
   function exitShop() {
     visitCity(false);
   }
-  function enterLibrary() {
+  function welcomeLibrary() {
     const welcome = () =>
       speak([
         {
@@ -689,6 +707,24 @@ const guildGame = (() => {
           text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
         },
       ]);
+    if (!fieldFlags.libraryLetterRead)
+      libraryLetter.deliver({
+        motion: motion(),
+        after: () => {
+          fieldFlags.libraryLetterRead = true;
+          inventory.push({
+            id: "libraryLetter",
+            name: "추광더리우스 3세의 편지",
+            count: 1,
+            description: document.querySelector("#library-letter-message").textContent +
+              "\n\n" + document.querySelector("#library-letter-signature").textContent,
+          });
+          welcome();
+        },
+      });
+    else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
+  }
+  function enterLibrary() {
     travelTo(
       "library",
       () => {
@@ -696,24 +732,7 @@ const guildGame = (() => {
         npcs = [actor("rael", 360, 108)];
         fieldFlags.libraryReached = true;
       },
-      () => {
-        if (!fieldFlags.libraryLetterRead)
-          libraryLetter.deliver({
-            motion: motion(),
-            after: () => {
-              fieldFlags.libraryLetterRead = true;
-              inventory.push({
-                id: "libraryLetter",
-                name: "추광더리우스 3세의 편지",
-                count: 1,
-                description: document.querySelector("#library-letter-message").textContent +
-                  "\n\n" + document.querySelector("#library-letter-signature").textContent,
-              });
-              welcome();
-            },
-          });
-        else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
-      },
+      welcomeLibrary,
     );
   }
   function hideBattle() {
@@ -727,6 +746,7 @@ const guildGame = (() => {
   }
   function startForestAmbush() {
     if (phase !== "free" || fieldFlags.libraryAmbushCleared) return;
+    saveProgress();
     keys.clear();
     player.moving = false;
     phase = "battle";
@@ -1189,6 +1209,7 @@ const guildGame = (() => {
     fitPortrait();
   }
   function speak(lines, after, choices) {
+    saveProgress();
     keys.clear();
     phase = "dialogue";
     dialogue = { lines, index: 0, shown: 0, letters: [], after, choices };
@@ -1562,38 +1583,23 @@ const guildGame = (() => {
               npcs = [actor("scout", 360, 305, "down")];
               storyStep = "arrival";
             },
-            () =>
-              speak(
-                [
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
-                  },
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
-                  },
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "이종족연합국, 그린스토아다.",
-                  },
-                ],
-                () =>
-                  showVista("sanctuary", () =>
-                    resumeWorld(() => {
-                      storyStep = "arrived";
-                      npcs = [actor("scout", 442, 312, "left")];
-                      updateObjective();
-                      notify("그린스토아에 도착했다.");
-                    }),
-                  ),
-              ),
+            welcomeAtGate,
           ),
         ),
     );
+  }
+
+  function welcomeAtGate() {
+    speak([
+      { kind: "scout", expression: "welcoming", text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—" },
+      { kind: "scout", expression: "welcoming", text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—" },
+      { kind: "scout", expression: "welcoming", text: "이종족연합국, 그린스토아다." },
+    ], () => showVista("sanctuary", () => resumeWorld(() => {
+      storyStep = "arrived";
+      npcs = [actor("scout", 442, 312, "left")];
+      updateObjective();
+      notify("그린스토아에 도착했다.");
+    })));
   }
 
   function npcTalk(id) {
@@ -1852,6 +1858,8 @@ const guildGame = (() => {
     return npcs.some((n) => Math.abs(n.x - x) < 14 && Math.abs(n.y - y) < 9);
   }
   function movePlayer(dt) {
+    // Scenes pause movement, but a held key/finger survives until its release.
+    syncMovementKeys();
     const oldX = player.x,
       oldY = player.y;
     let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
@@ -2074,6 +2082,10 @@ const guildGame = (() => {
       if (phase === "free") movePeople(dt);
       if (location === "library" && !document.hidden)
         libraryLetter.update(dt, motion());
+      if (elapsed >= nextAutosave) {
+        saveProgress();
+        nextAutosave = elapsed + 2;
+      }
     } else player.moving = false;
     if (phase !== "battle") {
       drawWorld();
@@ -2137,6 +2149,7 @@ const guildGame = (() => {
   }
   function openMenu() {
     if (phase !== "free") return;
+    saveProgress();
     gameAudio.sfx("menuOpen");
     phase = "menu";
     root.dataset.phase = phase;
@@ -2230,6 +2243,10 @@ const guildGame = (() => {
     )
       return;
     const code = event.code;
+    if (movementCodes.has(code)) {
+      keyboardMovement.add(code);
+      syncMovementKeys();
+    }
     // Let the native sound button handle its own keyboard activation.
     if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-sound-toggle"))
       return;
@@ -2424,22 +2441,28 @@ const guildGame = (() => {
       openMenu();
       return;
     }
-    if (code === "KeyE" && !event.repeat) {
-      keys.clear();
-      interact();
+    if (code === "KeyE") {
+      if (!event.repeat) interact();
       return;
     }
-    keys.add(code);
   }
   document.addEventListener("keydown", handleKey);
-  document.addEventListener("keyup", (event) => { keys.delete(event.code); battleScenes.release(event.code); });
+  document.addEventListener("keyup", (event) => {
+    keyboardMovement.delete(event.code);
+    syncMovementKeys();
+    battleScenes.release(event.code);
+  });
   function clearKeys() {
+    keyboardMovement.clear();
+    touchMovement.clear();
     keys.clear();
+    updateTouchButtons();
     battleScenes.clearInput();
     if (player) player.moving = false;
   }
   window.addEventListener("blur", clearKeys);
   document.addEventListener("visibilitychange", () => {
+    if (document.hidden) saveProgress();
     clearKeys();
     previous = performance.now();
     if (document.hidden) clearTimeout(typingTimer);
@@ -2451,6 +2474,8 @@ const guildGame = (() => {
     )
       typeLetter();
   });
+  window.addEventListener("pagehide", () => saveProgress());
+  document.querySelector("#guild-save").addEventListener("click", () => saveProgress({ manual: true }));
   document.querySelector("#vista-next").addEventListener("click", finishVista);
   document
     .querySelector("#game-dialogue-next")
@@ -2511,28 +2536,67 @@ const guildGame = (() => {
   const vistaLayout = new ResizeObserver(fitVista);
   vistaLayout.observe(root);
   vistaLayout.observe(document.querySelector(".vista-copy"));
-  for (const b of document.querySelectorAll("[data-game-key]")) {
+  for (const b of touchButtons) {
+    b.addEventListener("contextmenu", event => event.preventDefault());
     b.addEventListener("pointerdown", (event) => {
       event.preventDefault();
-      if (inputLocked) return;
+      if (!active || inputLocked || document.hidden || event.button !== 0) return;
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "battle") battleScenes.handle("KeyE", false, false);
-        else if (phase === "letter") libraryLetter.finish();
-        else if (phase === "action") actionScenes.finish();
-        else if (phase === "archive") libraryArchive.handle("KeyE");
-        else if (phase === "shop") shopView.handle("KeyE");
-        else if (phase === "event") eventScenes.finish();
-        else if (phase === "vista") finishVista();
-        else if (phase === "dialogue") advanceDialogue();
-        else if (phase === "free") interact();
-      } else if (phase === "free") keys.add(code);
+        handleKey({ code, target: b, repeat: false, preventDefault() {} });
+      } else {
+        touchMovement.set(event.pointerId, { button: b, codes: code.split(" ") });
+        syncMovementKeys();
+        updateTouchButtons();
+      }
     });
-    for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
-      b.addEventListener(event, () => keys.delete(b.dataset.gameKey));
+    b.addEventListener("pointermove", (event) => {
+      if (!touchMovement.has(event.pointerId) || !b.closest(".touch-directions")) return;
+      const button = document.elementFromPoint(event.clientX, event.clientY)
+        ?.closest(".touch-directions [data-game-key]");
+      touchMovement.set(event.pointerId, {
+        button,
+        codes: button ? button.dataset.gameKey.split(" ") : [],
+      });
+      syncMovementKeys();
+      updateTouchButtons();
+    });
+    for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
+      b.addEventListener(name, (event) => {
+        touchMovement.delete(event.pointerId);
+        syncMovementKeys();
+        updateTouchButtons();
+      });
   }
-  async function start(name, exit) {
+  function saveProgress({ manual = false, opening = false } = {}) {
+    if (!active || inputLocked || (!opening && !["free", "menu"].includes(phase))) return false;
+    const saved = journeySave.write({
+      name: playerName,
+      resume: opening ? "opening" : "world",
+      location, storyStep, questAccepted, hp, coins, shopOrigin,
+      player: { x: player.x, y: player.y, dir: player.dir },
+      npcs: npcs.map(person => ({
+        id: person.id, x: person.x, y: person.y, dir: person.dir,
+        talkCount: person.talkCount || 0,
+      })),
+      inventory: inventory.map(item => ({ ...item })),
+      shopStocks,
+      fieldFlags: { ...fieldFlags },
+      visited: [...visited],
+    });
+    const label = document.querySelector("#guild-save-status");
+    label.textContent = saved
+      ? `저장 완료 · ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
+      : "저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.";
+    if (manual) {
+      if (saved) gameAudio.sfx("registered");
+      notify(saved ? "여정을 저장했다. 타이틀에서 이어할 수 있다." : label.textContent);
+    }
+    return saved;
+  }
+  async function start(name, exit, saved = null) {
+    if (saved && !journeySave.valid(saved)) throw new Error("Invalid journey save");
     await ready;
     stop();
     inputLocked = true;
@@ -2544,6 +2608,8 @@ const guildGame = (() => {
     phase = "dialogue";
     elapsed = 0;
     footDistance = 0;
+    nextAutosave = 0;
+    resumingSave = !!saved;
     location = "guild";
     storyStep = "lucy";
     shopOrigin = "city";
@@ -2585,6 +2651,25 @@ const guildGame = (() => {
     });
     player = actor("hero", 360, 188, "up");
     npcs = guildPeople();
+    if (saved) {
+      playerName = saved.name;
+      cast.hero.name = saved.name;
+      location = saved.location;
+      storyStep = saved.storyStep;
+      questAccepted = saved.questAccepted;
+      hp = saved.hp;
+      coins = saved.coins;
+      shopOrigin = saved.shopOrigin;
+      shopStocks = JSON.parse(JSON.stringify(saved.shopStocks));
+      fieldFlags = { ...saved.fieldFlags };
+      inventory = saved.inventory.map(item => ({ ...item }));
+      player = actor("hero", saved.player.x, saved.player.y, saved.player.dir);
+      npcs = saved.npcs.map(person => ({ ...actor(person.id, person.x, person.y, person.dir), talkCount: person.talkCount }));
+      visited.clear();
+      saved.visited.forEach(place => visited.add(place));
+      buildMap();
+      updateObjective();
+    }
     root.hidden = false;
     menu.hidden = true;
     document.querySelector("#game-toast").hidden = true;
@@ -2592,9 +2677,16 @@ const guildGame = (() => {
     drawWorld();
     request = requestAnimationFrame(tick);
     canvas.focus({ preventScroll: true });
-    wakeAtCounter();
+    if (!saved || saved.resume === "opening") wakeAtCounter();
+    else if (location === "carriage") carriageConversation();
+    else if (location === "gate" && storyStep === "arrival") welcomeAtGate();
+    else {
+      phase = "free";
+      root.dataset.phase = phase;
+    }
   }
   function stop() {
+    saveProgress();
     active = false;
     ++transitionSerial;
     transitionAnimation?.cancel();
@@ -2613,7 +2705,7 @@ const guildGame = (() => {
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
-    keys.clear();
+    clearKeys();
     dialogue = null;
     root.hidden = true;
     menu.hidden = true;
@@ -2628,6 +2720,9 @@ const guildGame = (() => {
       if (!motion()) gameAudio.voice(dialogue.lines[dialogue.index].kind, "가");
       typeLetter();
     }
+    if (!resumingSave) saveProgress({ opening: true });
+    else if (location === "library" && !fieldFlags.libraryLetterRead) welcomeLibrary();
+    if (resumingSave && phase === "free") notify("저장된 여정에서 이어간다.");
   }
   return {
     ready,

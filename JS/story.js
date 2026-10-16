@@ -294,20 +294,22 @@ const storyJourney = (() => {
     nextButton.focus({ preventScroll: true });
     startTyping();
   }
-  async function beginGame() {
-    if (busy || phase !== "complete") return;
+  async function beginGame(saved = null) {
+    if (busy || phase !== (saved ? "title" : "complete")) return;
     const token = cancelWork();
     busy = true;
     phase = "game-opening";
+    title.inert = true;
     curtain.hidden = false;
     try {
       await Promise.all([fade(curtain, 1, 420), guildGame.ready]);
       if (token !== sequence) return;
       screen.hidden = true;
-      scene.classList.add("is-game-active");
+      title.hidden = true;
+      scene.classList.add("is-game-active", "is-story-active");
       scene.setAttribute("aria-label", "제르디아 왕국 모험가 길드");
       phase = "game";
-      await guildGame.start(draftName, returnToTitle);
+      await guildGame.start(saved ? saved.name : draftName, returnToTitle, saved);
       notify();
       if (!(await fade(curtain, 0, 620)) || token !== sequence) return;
       curtain.hidden = true;
@@ -317,14 +319,34 @@ const storyJourney = (() => {
       if (token !== sequence) return;
       guildGame.stop();
       scene.classList.remove("is-game-active");
-      showPage("complete");
-      screen.hidden = false;
-      document.querySelector("#record-note").textContent =
-        "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";
+      if (saved) {
+        phase = "title";
+        title.hidden = false;
+        title.inert = false;
+        scene.classList.remove("is-story-active");
+        scene.setAttribute("aria-label", "그린스토아 타이틀 화면");
+        const message = document.querySelector("#title-save-message");
+        message.textContent = "여정을 불러오지 못했어요. 저장 기록은 유지됩니다. 다시 이어해 주세요.";
+        message.hidden = false;
+      } else {
+        showPage("complete");
+        screen.hidden = false;
+        document.querySelector("#record-note").textContent =
+          "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";
+      }
       await fade(curtain, 0, 240);
       curtain.hidden = true;
       busy = false;
+      notify();
     }
+  }
+  function continueGame() {
+    const saved = journeySave.read();
+    if (saved) return beginGame(saved);
+    const message = document.querySelector("#title-save-message");
+    message.textContent = "이어할 수 있는 저장 기록이 없어요.";
+    message.hidden = false;
+    document.dispatchEvent(new Event("greenstoa:savechange"));
   }
   nextButton.addEventListener("click", next);
   skipButton.addEventListener("click", showName);
@@ -334,7 +356,7 @@ const storyJourney = (() => {
   document
     .querySelector("#name-finish")
     .addEventListener("click", returnToTitle);
-  document.querySelector("#name-begin").addEventListener("click", beginGame);
+  document.querySelector("#name-begin").addEventListener("click", () => beginGame());
   autoButton.addEventListener("click", () => {
     automatic = !automatic;
     autoButton.setAttribute("aria-pressed", String(automatic));
@@ -403,6 +425,7 @@ const storyJourney = (() => {
   new ResizeObserver(drawArtwork).observe(art);
   return {
     start,
+    continue: continueGame,
     get active() {
       return phase !== "title";
     },

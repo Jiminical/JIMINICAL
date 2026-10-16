@@ -1,5 +1,6 @@
 const defaults = {
-  sound: false,
+  sound: true,
+  audioPreferenceVersion: 1,
   volume: 35,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
@@ -9,7 +10,9 @@ try {
     localStorage.getItem("greenstoa-settings") || "null",
   );
   if (saved && typeof saved === "object") {
-    if (typeof saved.sound === "boolean") settings.sound = saved.sound;
+    // Earlier versions defaulted to mute. Migrate that default once; new choices persist.
+    if (saved.sound === true || (saved.audioPreferenceVersion === 1 && typeof saved.sound === "boolean"))
+      settings.sound = saved.sound;
     if (typeof saved.motion === "boolean") settings.motion = saved.motion;
     if (Number.isFinite(saved.volume))
       settings.volume = Math.max(0, Math.min(100, saved.volume));
@@ -445,7 +448,7 @@ function saveSettings() {
 function updateInterface() {
   gameAudio.configure({ enabled: settings.sound, volume: settings.volume });
   audioUnlocked = gameAudio.unlocked;
-  const playing = settings.sound && audioUnlocked;
+  const playing = settings.sound;
   soundButton.setAttribute("aria-pressed", String(playing));
   soundButton.setAttribute("aria-label", playing ? "소리 끄기" : "소리 켜기");
   soundButton.querySelector("span").textContent = playing
@@ -468,10 +471,6 @@ async function activateAudio() {
   updateInterface();
   if (!settings.sound) return;
   audioUnlocked = await gameAudio.unlock();
-  if (!audioUnlocked) {
-    settings.sound = false;
-    saveSettings();
-  }
   updateInterface();
 }
 for (const button of [
@@ -479,7 +478,7 @@ for (const button of [
   ...document.querySelectorAll("[data-audio-toggle]"),
 ]) {
   button.addEventListener("click", async () => {
-    settings.sound = !(settings.sound && audioUnlocked);
+    settings.sound = !settings.sound;
     saveSettings();
     await activateAudio();
     if (settings.sound) gameAudio.sfx("confirm");
@@ -509,6 +508,11 @@ document.querySelector("#start-button").addEventListener("click", () => {
   activateAudio();
   storyJourney.start();
 });
+document.querySelector("#continue-button").addEventListener("click", () => {
+  characterSpeech.close();
+  activateAudio();
+  storyJourney.continue();
+});
 document.addEventListener("greenstoa:storychange", updateInterface);
 document.addEventListener("greenstoa:audiochange", updateInterface);
 for (const dialog of [optionsDialog]) {
@@ -528,33 +532,48 @@ const menuButtons = [...document.querySelectorAll(".main-menu button")];
 let selectedMenuIndex = 0;
 function selectMenu(index) {
   if (selectedMenuIndex !== index) gameAudio.sfx("select");
-  selectedMenuIndex = index;
-  menuButtons.forEach((button, i) => {
-    button.classList.toggle("is-selected", i === index);
+  const visible = menuButtons.filter(button => !button.hidden);
+  selectedMenuIndex = Math.max(0, Math.min(index, visible.length - 1));
+  menuButtons.forEach((button) => {
+    button.classList.toggle("is-selected", button === visible[selectedMenuIndex]);
   });
 }
-menuButtons.forEach((button, index) => {
-  button.addEventListener("pointerenter", () => selectMenu(index));
-  button.addEventListener("focus", () => selectMenu(index));
+menuButtons.forEach((button) => {
+  const select = () => selectMenu(menuButtons.filter(item => !item.hidden).indexOf(button));
+  button.addEventListener("pointerenter", select);
+  button.addEventListener("focus", select);
 });
+function updateContinue() {
+  const saved = journeySave.read(), button = document.querySelector("#continue-button");
+  button.hidden = !saved;
+  if (saved) {
+    const places = { guild: "모험가 길드", city: "길드 앞 광장", shop: "잡화점", carriage: "동쪽 숲길", checkpoint: "성역 검문소", gate: "그린스토아 정문", grove: "이슬잎 숲길", library: "이슬잎 도서관" };
+    document.querySelector("#continue-summary").textContent = `${saved.name} · ${places[saved.location]}`;
+  }
+  selectMenu(0);
+}
+document.addEventListener("greenstoa:savechange", updateContinue);
+window.addEventListener("storage", event => { if (event.key === journeySave.key || event.key === null) updateContinue(); });
+updateContinue();
 document.addEventListener("keydown", (event) => {
   if (optionsDialog.open || storyJourney.active) return;
   if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+    const visible = menuButtons.filter(button => !button.hidden);
     event.preventDefault();
     const next =
       (selectedMenuIndex +
         (event.key === "ArrowDown" ? 1 : -1) +
-        menuButtons.length) %
-      menuButtons.length;
+        visible.length) %
+      visible.length;
     selectMenu(next);
-    menuButtons[next].focus();
+    visible[next].focus();
   } else if (
     event.key === "Enter" &&
     !event.repeat &&
     (event.target === document.body || menuButtons.includes(event.target))
   ) {
     event.preventDefault();
-    menuButtons[selectedMenuIndex].click();
+    menuButtons.filter(button => !button.hidden)[selectedMenuIndex].click();
   }
 });
 document.addEventListener(
@@ -567,14 +586,14 @@ document.addEventListener(
     )
       activateAudio();
   },
-  { once: true },
+  { passive: true },
 );
 document.addEventListener(
   "keydown",
   () => {
     if (settings.sound && !audioUnlocked) activateAudio();
   },
-  { once: true },
+  { passive: true },
 );
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button");
@@ -643,7 +662,7 @@ document.addEventListener("click", (event) => {
       // An opening fade should stay quiet instead of flashing the click burst over it.
       if (
         event.target.closest(
-          "#start-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
+          "#start-button,#continue-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
         )
       )
         return;

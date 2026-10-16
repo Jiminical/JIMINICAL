@@ -670,6 +670,24 @@ h1 {
   outline: none;
   background: #344754;
 }
+.menu-item[hidden], .title-save-message[hidden] {
+  display: none;
+}
+#continue-summary {
+  display: block;
+  max-width: 172px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 400;
+  color: #bdc9b6;
+}
+.title-save-message {
+  max-width: 280px;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #eddbb7;
+}
 .footer {
   position: absolute;
   bottom: 23px;
@@ -2204,6 +2222,22 @@ button.is-pressed {
   color: #e0d5ad;
   margin: 0;
 }
+.guild-save-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+}
+#guild-save-status {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.7;
+  color: #c2cfb5;
+}
+#guild-save {
+  flex-shrink: 0;
+}
 .game-touch {
   display: none;
 }
@@ -2216,6 +2250,10 @@ button.is-pressed {
     align-items: flex-end;
     gap: 12px;
     pointer-events: none;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
   .game-touch button {
     width: 42px;
@@ -2233,17 +2271,14 @@ button.is-pressed {
     grid-template-columns: repeat(3, 42px);
     gap: 3px;
   }
-  .touch-directions button:first-child {
-    grid-column: 2;
+  .game-touch button.is-held {
+    background: #496553ed;
+    color: #fff5cc;
+    border-color: #e6dbb6;
+    box-shadow: inset 0 0 0 1px #d7d5ad;
   }
-  .touch-directions button:nth-child(2) {
-    grid-row: 2;
-  }
-  .touch-directions button:nth-child(3) {
-    grid-row: 2;
-  }
-  .touch-directions button:nth-child(4) {
-    grid-row: 2;
+  .touch-directions button:nth-child(5) {
+    grid-column: 3;
   }
   .game-touch .touch-run {
     margin-left: auto;
@@ -2258,10 +2293,14 @@ button.is-pressed {
     display: none;
   }
   .game-dialogue {
-    bottom: 114px;
+    bottom: 159px;
   }
   .game-interaction {
-    bottom: 116px;
+    bottom: 161px;
+  }
+  .is-dialogue-compact .game-dialogue {
+    top: 64px;
+    bottom: 159px;
   }
 }
 @media (max-width: 700px) {
@@ -4059,11 +4098,15 @@ button.is-pressed {
           </h1>
           <p class="intro-copy">강물 소리가 들려온다.</p>
           <nav class="main-menu game-window" aria-label="게임 메뉴">
+            <button class="menu-item" id="continue-button" hidden>
+              이어하기<small id="continue-summary"></small>
+            </button>
             <button class="menu-item is-selected" id="start-button">
               시작하기
             </button>
             <button class="menu-item" id="options-button">설정</button>
           </nav>
+          <p id="title-save-message" class="title-save-message" role="status" hidden></p>
         </section>
 
         <section
@@ -4284,12 +4327,17 @@ button.is-pressed {
         </footer>
         <div class="game-touch" aria-label="터치 조작">
           <div class="touch-directions">
-            <button data-game-key="KeyW" aria-label="위로 이동">↑</button
-            ><button data-game-key="KeyA" aria-label="왼쪽 이동">←</button
-            ><button data-game-key="KeyS" aria-label="아래로 이동">↓</button
-            ><button data-game-key="KeyD" aria-label="오른쪽 이동">→</button>
+            <button type="button" data-game-key="KeyW KeyA" aria-label="왼쪽 위로 이동">↖</button>
+            <button type="button" data-game-key="KeyW" aria-label="위로 이동">↑</button>
+            <button type="button" data-game-key="KeyW KeyD" aria-label="오른쪽 위로 이동">↗</button>
+            <button type="button" data-game-key="KeyA" aria-label="왼쪽 이동">←</button>
+            <button type="button" data-game-key="KeyD" aria-label="오른쪽 이동">→</button>
+            <button type="button" data-game-key="KeyS KeyA" aria-label="왼쪽 아래로 이동">↙</button>
+            <button type="button" data-game-key="KeyS" aria-label="아래로 이동">↓</button>
+            <button type="button" data-game-key="KeyS KeyD" aria-label="오른쪽 아래로 이동">↘</button>
           </div>
           <button
+            type="button"
             data-game-key="ShiftLeft"
             class="touch-run"
             aria-label="달리기"
@@ -4297,6 +4345,7 @@ button.is-pressed {
             달리기
           </button>
           <button
+            type="button"
             data-game-key="KeyE"
             class="touch-interact"
             aria-label="상호작용"
@@ -4655,6 +4704,10 @@ button.is-pressed {
                 </button>
               </div>
             </div>
+            <div class="guild-save-row">
+              <p id="guild-save-status" role="status">이 브라우저에 자동 저장됩니다.</p>
+              <button id="guild-save" type="button" class="guild-button">여정 저장</button>
+            </div>
             <footer>
               <span>W/S 선택 · A/D 탭 · E 결정</span
               ><button id="guild-exit-title" class="guild-button">
@@ -4760,7 +4813,7 @@ const gameAudio = (() => {
     battle: { wind: 0.02, water: 0, cutoff: 390 },
     city: { wind: 0.035, water: 0.055, cutoff: 650 },
     departure: { wind: 0.07, water: 0, cutoff: 290 },
-    carriage: { wind: 0.095, water: 0, cutoff: 250 },
+    carriage: { wind: 0.12, water: 0, cutoff: 330 },
     checkpoint: { wind: 0.08, water: 0.045, cutoff: 950 },
     gate: { wind: 0.065, water: 0.08, cutoff: 1100 },
     grove: { wind: 0.055, water: 0.14, cutoff: 1250 },
@@ -4937,11 +4990,11 @@ const gameAudio = (() => {
           options = { group: "scene", delay };
         tone(beat % 2 ? 124 : 96, 0.075, {
           ...options,
-          level: 0.115,
+          level: 0.15,
           end: 48,
           filter: 700,
         });
-        noise(0.045, 0.16, beat % 2 ? 720 : 460, delay, {
+        noise(0.045, 0.22, beat % 2 ? 720 : 460, delay, {
           group: "scene",
           crisp: true,
         });
@@ -4955,24 +5008,24 @@ const gameAudio = (() => {
             group: "scene",
             crisp: true,
           });
-        if (beat % 7 === 5)
-          tone(68, 0.19, { ...options, level: 0.2, end: 30, filter: 400 });
+        if (beat % 4 === 1)
+          carriageJolt(delay + 0.04, beat % 8 === 5 ? 1.2 : 0.85, "scene");
         nextBeat += place === "departure" ? 0.36 : 0.285;
         beat++;
       }
     }
     if (now < nextAccent) return;
-    nextAccent = now + (interiors.has(place) ? 8 : 5) + Math.random() * 4;
+    nextAccent = now + (rolling ? 1.8 : interiors.has(place) ? 8 : 5) + Math.random() * (rolling ? 1.2 : 4);
     if (rolling) {
       // The carriage body creaks over an uneven stretch of road.
       tone(165, 0.28, {
         group: "scene",
-        level: 0.055,
+        level: 0.12,
         end: 112,
         wave: "triangle",
         filter: 550,
       });
-      noise(0.16, 0.075, 580, 0.05, { group: "scene" });
+      noise(0.24, 0.16, 580, 0.05, { group: "scene" });
     } else if (place === "guild") {
       noise(0.13, 0.07, 1700, 0, { group: "scene", crisp: true });
       tone(210, 0.055, { group: "scene", level: 0.026, end: 90, delay: 0.15 });
@@ -5096,6 +5149,15 @@ const gameAudio = (() => {
       stopTransient();
     } else if (!sceneryClock) syncScenery();
     applyVolume();
+  }
+  function carriageJolt(delay = 0, strength = 1, group = "effect") {
+    // A heavy axle impact, wooden rebound and brief metal rattle form one bump.
+    tone(74, 0.22, { group, delay, level: 0.32 * strength, end: 29, filter: 420 });
+    tone(184, 0.095, { group, delay: delay + 0.025, level: 0.18 * strength, end: 82, filter: 950 });
+    noise(0.065, 0.36 * strength, 720, delay, { group, crisp: true });
+    noise(0.18, 0.18 * strength, 360, delay + 0.06, { group });
+    noise(0.045, 0.14 * strength, 2600, delay + 0.04, { group, crisp: true });
+    tone(1370, 0.075, { group, delay: delay + 0.06, wave: "sine", level: 0.045 * strength, end: 890, filter: 2200 });
   }
   function tone(hz, length, options = {}) {
     if (!usable() || playing.size >= (options.group === "scene" ? 16 : 28))
@@ -5282,10 +5344,8 @@ const gameAudio = (() => {
         );
         break;
       case "wheel":
-        [0, 0.13, 0.28].forEach((delay, i) => {
-          tone(83 + i * 12, 0.1, { level: 0.13, delay, end: 48 });
-          noise(0.08, 0.22, 320, delay);
-        });
+        carriageJolt(0, 1.25);
+        carriageJolt(0.19, 0.72);
         break;
       case "scan":
         [440, 554, 659, 880].forEach((hz, i) =>
@@ -8795,6 +8855,54 @@ const battleScenes = (() => {
   return {prepare,play,stop,handle,release,clearInput,get active(){return !!state;},getState(){return state?{stage:state.stage,hp:state.hp,enemyHp:state.enemyHp,turn:state.turn,rescued:state.rescued,pattern:patterns[state.pattern]?.name,projectiles:state.bullets.length,warnings:state.warnings.length,soul:{...state.soul},invincible:state.invincible,age:state.age,finale:finaleStages.has(state.stage),narration:storyText.textContent}:null;}};
 })();
 
+// One local save slot. Only settled world states are written by game.js.
+const journeySave = (() => {
+  const key = "greenstoa-journey-v1";
+  const locations = new Set(["guild", "city", "shop", "carriage", "checkpoint", "gate", "grove", "library"]);
+  const steps = new Set(["lucy", "accepted", "departure", "carriage", "checkpoint", "arrival", "arrived"]);
+  const directions = new Set(["up", "down", "left", "right"]);
+  const people = new Set(["lucy", "bran", "mia", "nara", "tobin", "leon", "rogue", "scout", "rose", "rael", "edan", "sena"]);
+  const items = new Set(["map", "bread", "credentials", "dispatch", "tonic", "bandage", "riverLeaf", "libraryLetter"]);
+  const flags = ["lucyFarewell", "leafTaken", "springUsed", "libraryReached", "libraryLetterRead", "libraryAmbushCleared"];
+  const integer = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
+  const text = (value, max) => typeof value === "string" && value.length <= max;
+  const point = value => value && Number.isFinite(value.x) && value.x >= 0 && value.x <= 720 &&
+    Number.isFinite(value.y) && value.y >= 0 && value.y <= 480 && directions.has(value.dir);
+  function valid(save) {
+    return !!(save && save.version === 1 && Number.isFinite(save.savedAt) &&
+      text(save.name, 40) && save.name.trim() && locations.has(save.location) && steps.has(save.storyStep) &&
+      ["opening", "world"].includes(save.resume) && (save.resume !== "opening" || save.location === "guild") &&
+      point(save.player) && integer(save.hp, 1, 24) && integer(save.coins, 0, 999999) &&
+      typeof save.questAccepted === "boolean" && ["city", "grove"].includes(save.shopOrigin) &&
+      save.fieldFlags && flags.every(flag => typeof save.fieldFlags[flag] === "boolean") &&
+      Array.isArray(save.visited) && save.visited.length <= locations.size && save.visited.every(place => locations.has(place)) &&
+      Array.isArray(save.inventory) && save.inventory.length <= items.size &&
+      new Set(save.inventory.map(item => item?.id)).size === save.inventory.length &&
+      save.inventory.every(item => item && items.has(item.id) && integer(item.count, 1, 999) && text(item.name, 80) && text(item.description, 5000)) &&
+      Array.isArray(save.npcs) && save.npcs.length <= people.size &&
+      save.npcs.every(person => person && people.has(person.id) && point(person) && integer(person.talkCount, 0, 999999)) &&
+      save.shopStocks?.city && ["bread", "tonic", "bandage"].every(id => integer(save.shopStocks.city[id], 0, 999)));
+  }
+  function read() {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw || raw.length > 64000) return null;
+      const save = JSON.parse(raw);
+      return valid(save) ? save : null;
+    } catch { return null; }
+  }
+  function write(state) {
+    const save = { ...state, version: 1, savedAt: Date.now() };
+    if (!valid(save)) return false;
+    try {
+      localStorage.setItem(key, JSON.stringify(save));
+      document.dispatchEvent(new Event("greenstoa:savechange"));
+      return true;
+    } catch { return false; }
+  }
+  return { key, valid, read, write };
+})();
+
 // A self-contained opening journey. Each room uses a 720 × 480 pixel world.
 const guildGame = (() => {
   const root = document.querySelector("#game-screen");
@@ -8823,6 +8931,21 @@ const guildGame = (() => {
   const menuButton = document.querySelector("#guild-menu-open");
   const prompt = document.querySelector("#game-interaction");
   const keys = new Set();
+  const movementCodes = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ShiftLeft"]);
+  const keyboardMovement = new Set();
+  const touchMovement = new Map();
+  const touchButtons = [...document.querySelectorAll("[data-game-key]")];
+  function syncMovementKeys() {
+    keys.clear();
+    for (const code of keyboardMovement) keys.add(code);
+    for (const { codes } of touchMovement.values())
+      for (const code of codes) keys.add(code);
+  }
+  function updateTouchButtons() {
+    const held = new Set([...touchMovement.values()].map(({ button }) => button));
+    for (const button of touchButtons)
+      button.classList.toggle("is-held", held.has(button));
+  }
   const W = 720,
     H = 480;
   const cast = {
@@ -8959,6 +9082,8 @@ const guildGame = (() => {
   let typingTimer = 0,
     toastTimer = 0;
   let footDistance = 0;
+  let nextAutosave = 0;
+  let resumingSave = false;
   const background = document.createElement("canvas");
   background.width = W;
   background.height = H;
@@ -9082,6 +9207,7 @@ const guildGame = (() => {
     document.querySelector(".world-viewport").inert = false;
   }
   async function transitionTo(prepare, after) {
+    saveProgress();
     const token = ++transitionSerial;
     phase = "transition";
     root.dataset.phase = phase;
@@ -9474,7 +9600,7 @@ const guildGame = (() => {
   function exitShop() {
     visitCity(false);
   }
-  function enterLibrary() {
+  function welcomeLibrary() {
     const welcome = () =>
       speak([
         {
@@ -9486,6 +9612,24 @@ const guildGame = (() => {
           text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
         },
       ]);
+    if (!fieldFlags.libraryLetterRead)
+      libraryLetter.deliver({
+        motion: motion(),
+        after: () => {
+          fieldFlags.libraryLetterRead = true;
+          inventory.push({
+            id: "libraryLetter",
+            name: "추광더리우스 3세의 편지",
+            count: 1,
+            description: document.querySelector("#library-letter-message").textContent +
+              "\n\n" + document.querySelector("#library-letter-signature").textContent,
+          });
+          welcome();
+        },
+      });
+    else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
+  }
+  function enterLibrary() {
     travelTo(
       "library",
       () => {
@@ -9493,24 +9637,7 @@ const guildGame = (() => {
         npcs = [actor("rael", 360, 108)];
         fieldFlags.libraryReached = true;
       },
-      () => {
-        if (!fieldFlags.libraryLetterRead)
-          libraryLetter.deliver({
-            motion: motion(),
-            after: () => {
-              fieldFlags.libraryLetterRead = true;
-              inventory.push({
-                id: "libraryLetter",
-                name: "추광더리우스 3세의 편지",
-                count: 1,
-                description: document.querySelector("#library-letter-message").textContent +
-                  "\n\n" + document.querySelector("#library-letter-signature").textContent,
-              });
-              welcome();
-            },
-          });
-        else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
-      },
+      welcomeLibrary,
     );
   }
   function hideBattle() {
@@ -9524,6 +9651,7 @@ const guildGame = (() => {
   }
   function startForestAmbush() {
     if (phase !== "free" || fieldFlags.libraryAmbushCleared) return;
+    saveProgress();
     keys.clear();
     player.moving = false;
     phase = "battle";
@@ -9986,6 +10114,7 @@ const guildGame = (() => {
     fitPortrait();
   }
   function speak(lines, after, choices) {
+    saveProgress();
     keys.clear();
     phase = "dialogue";
     dialogue = { lines, index: 0, shown: 0, letters: [], after, choices };
@@ -10359,38 +10488,23 @@ const guildGame = (() => {
               npcs = [actor("scout", 360, 305, "down")];
               storyStep = "arrival";
             },
-            () =>
-              speak(
-                [
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—",
-                  },
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—",
-                  },
-                  {
-                    kind: "scout",
-                    expression: "welcoming",
-                    text: "이종족연합국, 그린스토아다.",
-                  },
-                ],
-                () =>
-                  showVista("sanctuary", () =>
-                    resumeWorld(() => {
-                      storyStep = "arrived";
-                      npcs = [actor("scout", 442, 312, "left")];
-                      updateObjective();
-                      notify("그린스토아에 도착했다.");
-                    }),
-                  ),
-              ),
+            welcomeAtGate,
           ),
         ),
     );
+  }
+
+  function welcomeAtGate() {
+    speak([
+      { kind: "scout", expression: "welcoming", text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—" },
+      { kind: "scout", expression: "welcoming", text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—" },
+      { kind: "scout", expression: "welcoming", text: "이종족연합국, 그린스토아다." },
+    ], () => showVista("sanctuary", () => resumeWorld(() => {
+      storyStep = "arrived";
+      npcs = [actor("scout", 442, 312, "left")];
+      updateObjective();
+      notify("그린스토아에 도착했다.");
+    })));
   }
 
   function npcTalk(id) {
@@ -10649,6 +10763,8 @@ const guildGame = (() => {
     return npcs.some((n) => Math.abs(n.x - x) < 14 && Math.abs(n.y - y) < 9);
   }
   function movePlayer(dt) {
+    // Scenes pause movement, but a held key/finger survives until its release.
+    syncMovementKeys();
     const oldX = player.x,
       oldY = player.y;
     let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
@@ -10871,6 +10987,10 @@ const guildGame = (() => {
       if (phase === "free") movePeople(dt);
       if (location === "library" && !document.hidden)
         libraryLetter.update(dt, motion());
+      if (elapsed >= nextAutosave) {
+        saveProgress();
+        nextAutosave = elapsed + 2;
+      }
     } else player.moving = false;
     if (phase !== "battle") {
       drawWorld();
@@ -10934,6 +11054,7 @@ const guildGame = (() => {
   }
   function openMenu() {
     if (phase !== "free") return;
+    saveProgress();
     gameAudio.sfx("menuOpen");
     phase = "menu";
     root.dataset.phase = phase;
@@ -11027,6 +11148,10 @@ const guildGame = (() => {
     )
       return;
     const code = event.code;
+    if (movementCodes.has(code)) {
+      keyboardMovement.add(code);
+      syncMovementKeys();
+    }
     // Let the native sound button handle its own keyboard activation.
     if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-sound-toggle"))
       return;
@@ -11221,22 +11346,28 @@ const guildGame = (() => {
       openMenu();
       return;
     }
-    if (code === "KeyE" && !event.repeat) {
-      keys.clear();
-      interact();
+    if (code === "KeyE") {
+      if (!event.repeat) interact();
       return;
     }
-    keys.add(code);
   }
   document.addEventListener("keydown", handleKey);
-  document.addEventListener("keyup", (event) => { keys.delete(event.code); battleScenes.release(event.code); });
+  document.addEventListener("keyup", (event) => {
+    keyboardMovement.delete(event.code);
+    syncMovementKeys();
+    battleScenes.release(event.code);
+  });
   function clearKeys() {
+    keyboardMovement.clear();
+    touchMovement.clear();
     keys.clear();
+    updateTouchButtons();
     battleScenes.clearInput();
     if (player) player.moving = false;
   }
   window.addEventListener("blur", clearKeys);
   document.addEventListener("visibilitychange", () => {
+    if (document.hidden) saveProgress();
     clearKeys();
     previous = performance.now();
     if (document.hidden) clearTimeout(typingTimer);
@@ -11248,6 +11379,8 @@ const guildGame = (() => {
     )
       typeLetter();
   });
+  window.addEventListener("pagehide", () => saveProgress());
+  document.querySelector("#guild-save").addEventListener("click", () => saveProgress({ manual: true }));
   document.querySelector("#vista-next").addEventListener("click", finishVista);
   document
     .querySelector("#game-dialogue-next")
@@ -11308,28 +11441,67 @@ const guildGame = (() => {
   const vistaLayout = new ResizeObserver(fitVista);
   vistaLayout.observe(root);
   vistaLayout.observe(document.querySelector(".vista-copy"));
-  for (const b of document.querySelectorAll("[data-game-key]")) {
+  for (const b of touchButtons) {
+    b.addEventListener("contextmenu", event => event.preventDefault());
     b.addEventListener("pointerdown", (event) => {
       event.preventDefault();
-      if (inputLocked) return;
+      if (!active || inputLocked || document.hidden || event.button !== 0) return;
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "battle") battleScenes.handle("KeyE", false, false);
-        else if (phase === "letter") libraryLetter.finish();
-        else if (phase === "action") actionScenes.finish();
-        else if (phase === "archive") libraryArchive.handle("KeyE");
-        else if (phase === "shop") shopView.handle("KeyE");
-        else if (phase === "event") eventScenes.finish();
-        else if (phase === "vista") finishVista();
-        else if (phase === "dialogue") advanceDialogue();
-        else if (phase === "free") interact();
-      } else if (phase === "free") keys.add(code);
+        handleKey({ code, target: b, repeat: false, preventDefault() {} });
+      } else {
+        touchMovement.set(event.pointerId, { button: b, codes: code.split(" ") });
+        syncMovementKeys();
+        updateTouchButtons();
+      }
     });
-    for (const event of ["pointerup", "pointercancel", "lostpointercapture"])
-      b.addEventListener(event, () => keys.delete(b.dataset.gameKey));
+    b.addEventListener("pointermove", (event) => {
+      if (!touchMovement.has(event.pointerId) || !b.closest(".touch-directions")) return;
+      const button = document.elementFromPoint(event.clientX, event.clientY)
+        ?.closest(".touch-directions [data-game-key]");
+      touchMovement.set(event.pointerId, {
+        button,
+        codes: button ? button.dataset.gameKey.split(" ") : [],
+      });
+      syncMovementKeys();
+      updateTouchButtons();
+    });
+    for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
+      b.addEventListener(name, (event) => {
+        touchMovement.delete(event.pointerId);
+        syncMovementKeys();
+        updateTouchButtons();
+      });
   }
-  async function start(name, exit) {
+  function saveProgress({ manual = false, opening = false } = {}) {
+    if (!active || inputLocked || (!opening && !["free", "menu"].includes(phase))) return false;
+    const saved = journeySave.write({
+      name: playerName,
+      resume: opening ? "opening" : "world",
+      location, storyStep, questAccepted, hp, coins, shopOrigin,
+      player: { x: player.x, y: player.y, dir: player.dir },
+      npcs: npcs.map(person => ({
+        id: person.id, x: person.x, y: person.y, dir: person.dir,
+        talkCount: person.talkCount || 0,
+      })),
+      inventory: inventory.map(item => ({ ...item })),
+      shopStocks,
+      fieldFlags: { ...fieldFlags },
+      visited: [...visited],
+    });
+    const label = document.querySelector("#guild-save-status");
+    label.textContent = saved
+      ? `저장 완료 · ${new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}`
+      : "저장하지 못했어요. 브라우저 저장 공간을 확인해 주세요.";
+    if (manual) {
+      if (saved) gameAudio.sfx("registered");
+      notify(saved ? "여정을 저장했다. 타이틀에서 이어할 수 있다." : label.textContent);
+    }
+    return saved;
+  }
+  async function start(name, exit, saved = null) {
+    if (saved && !journeySave.valid(saved)) throw new Error("Invalid journey save");
     await ready;
     stop();
     inputLocked = true;
@@ -11341,6 +11513,8 @@ const guildGame = (() => {
     phase = "dialogue";
     elapsed = 0;
     footDistance = 0;
+    nextAutosave = 0;
+    resumingSave = !!saved;
     location = "guild";
     storyStep = "lucy";
     shopOrigin = "city";
@@ -11382,6 +11556,25 @@ const guildGame = (() => {
     });
     player = actor("hero", 360, 188, "up");
     npcs = guildPeople();
+    if (saved) {
+      playerName = saved.name;
+      cast.hero.name = saved.name;
+      location = saved.location;
+      storyStep = saved.storyStep;
+      questAccepted = saved.questAccepted;
+      hp = saved.hp;
+      coins = saved.coins;
+      shopOrigin = saved.shopOrigin;
+      shopStocks = JSON.parse(JSON.stringify(saved.shopStocks));
+      fieldFlags = { ...saved.fieldFlags };
+      inventory = saved.inventory.map(item => ({ ...item }));
+      player = actor("hero", saved.player.x, saved.player.y, saved.player.dir);
+      npcs = saved.npcs.map(person => ({ ...actor(person.id, person.x, person.y, person.dir), talkCount: person.talkCount }));
+      visited.clear();
+      saved.visited.forEach(place => visited.add(place));
+      buildMap();
+      updateObjective();
+    }
     root.hidden = false;
     menu.hidden = true;
     document.querySelector("#game-toast").hidden = true;
@@ -11389,9 +11582,16 @@ const guildGame = (() => {
     drawWorld();
     request = requestAnimationFrame(tick);
     canvas.focus({ preventScroll: true });
-    wakeAtCounter();
+    if (!saved || saved.resume === "opening") wakeAtCounter();
+    else if (location === "carriage") carriageConversation();
+    else if (location === "gate" && storyStep === "arrival") welcomeAtGate();
+    else {
+      phase = "free";
+      root.dataset.phase = phase;
+    }
   }
   function stop() {
+    saveProgress();
     active = false;
     ++transitionSerial;
     transitionAnimation?.cancel();
@@ -11410,7 +11610,7 @@ const guildGame = (() => {
     cancelAnimationFrame(request);
     clearTimeout(typingTimer);
     clearTimeout(toastTimer);
-    keys.clear();
+    clearKeys();
     dialogue = null;
     root.hidden = true;
     menu.hidden = true;
@@ -11425,6 +11625,9 @@ const guildGame = (() => {
       if (!motion()) gameAudio.voice(dialogue.lines[dialogue.index].kind, "가");
       typeLetter();
     }
+    if (!resumingSave) saveProgress({ opening: true });
+    else if (location === "library" && !fieldFlags.libraryLetterRead) welcomeLibrary();
+    if (resumingSave && phase === "free") notify("저장된 여정에서 이어간다.");
   }
   return {
     ready,
@@ -11764,20 +11967,22 @@ const storyJourney = (() => {
     nextButton.focus({ preventScroll: true });
     startTyping();
   }
-  async function beginGame() {
-    if (busy || phase !== "complete") return;
+  async function beginGame(saved = null) {
+    if (busy || phase !== (saved ? "title" : "complete")) return;
     const token = cancelWork();
     busy = true;
     phase = "game-opening";
+    title.inert = true;
     curtain.hidden = false;
     try {
       await Promise.all([fade(curtain, 1, 420), guildGame.ready]);
       if (token !== sequence) return;
       screen.hidden = true;
-      scene.classList.add("is-game-active");
+      title.hidden = true;
+      scene.classList.add("is-game-active", "is-story-active");
       scene.setAttribute("aria-label", "제르디아 왕국 모험가 길드");
       phase = "game";
-      await guildGame.start(draftName, returnToTitle);
+      await guildGame.start(saved ? saved.name : draftName, returnToTitle, saved);
       notify();
       if (!(await fade(curtain, 0, 620)) || token !== sequence) return;
       curtain.hidden = true;
@@ -11787,14 +11992,34 @@ const storyJourney = (() => {
       if (token !== sequence) return;
       guildGame.stop();
       scene.classList.remove("is-game-active");
-      showPage("complete");
-      screen.hidden = false;
-      document.querySelector("#record-note").textContent =
-        "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";
+      if (saved) {
+        phase = "title";
+        title.hidden = false;
+        title.inert = false;
+        scene.classList.remove("is-story-active");
+        scene.setAttribute("aria-label", "그린스토아 타이틀 화면");
+        const message = document.querySelector("#title-save-message");
+        message.textContent = "여정을 불러오지 못했어요. 저장 기록은 유지됩니다. 다시 이어해 주세요.";
+        message.hidden = false;
+      } else {
+        showPage("complete");
+        screen.hidden = false;
+        document.querySelector("#record-note").textContent =
+          "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";
+      }
       await fade(curtain, 0, 240);
       curtain.hidden = true;
       busy = false;
+      notify();
     }
+  }
+  function continueGame() {
+    const saved = journeySave.read();
+    if (saved) return beginGame(saved);
+    const message = document.querySelector("#title-save-message");
+    message.textContent = "이어할 수 있는 저장 기록이 없어요.";
+    message.hidden = false;
+    document.dispatchEvent(new Event("greenstoa:savechange"));
   }
   nextButton.addEventListener("click", next);
   skipButton.addEventListener("click", showName);
@@ -11804,7 +12029,7 @@ const storyJourney = (() => {
   document
     .querySelector("#name-finish")
     .addEventListener("click", returnToTitle);
-  document.querySelector("#name-begin").addEventListener("click", beginGame);
+  document.querySelector("#name-begin").addEventListener("click", () => beginGame());
   autoButton.addEventListener("click", () => {
     automatic = !automatic;
     autoButton.setAttribute("aria-pressed", String(automatic));
@@ -11873,6 +12098,7 @@ const storyJourney = (() => {
   new ResizeObserver(drawArtwork).observe(art);
   return {
     start,
+    continue: continueGame,
     get active() {
       return phase !== "title";
     },
@@ -11880,7 +12106,8 @@ const storyJourney = (() => {
 })();
 
 const defaults = {
-  sound: false,
+  sound: true,
+  audioPreferenceVersion: 1,
   volume: 35,
   motion: !matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
@@ -11890,7 +12117,9 @@ try {
     localStorage.getItem("greenstoa-settings") || "null",
   );
   if (saved && typeof saved === "object") {
-    if (typeof saved.sound === "boolean") settings.sound = saved.sound;
+    // Earlier versions defaulted to mute. Migrate that default once; new choices persist.
+    if (saved.sound === true || (saved.audioPreferenceVersion === 1 && typeof saved.sound === "boolean"))
+      settings.sound = saved.sound;
     if (typeof saved.motion === "boolean") settings.motion = saved.motion;
     if (Number.isFinite(saved.volume))
       settings.volume = Math.max(0, Math.min(100, saved.volume));
@@ -12326,7 +12555,7 @@ function saveSettings() {
 function updateInterface() {
   gameAudio.configure({ enabled: settings.sound, volume: settings.volume });
   audioUnlocked = gameAudio.unlocked;
-  const playing = settings.sound && audioUnlocked;
+  const playing = settings.sound;
   soundButton.setAttribute("aria-pressed", String(playing));
   soundButton.setAttribute("aria-label", playing ? "소리 끄기" : "소리 켜기");
   soundButton.querySelector("span").textContent = playing
@@ -12349,10 +12578,6 @@ async function activateAudio() {
   updateInterface();
   if (!settings.sound) return;
   audioUnlocked = await gameAudio.unlock();
-  if (!audioUnlocked) {
-    settings.sound = false;
-    saveSettings();
-  }
   updateInterface();
 }
 for (const button of [
@@ -12360,7 +12585,7 @@ for (const button of [
   ...document.querySelectorAll("[data-audio-toggle]"),
 ]) {
   button.addEventListener("click", async () => {
-    settings.sound = !(settings.sound && audioUnlocked);
+    settings.sound = !settings.sound;
     saveSettings();
     await activateAudio();
     if (settings.sound) gameAudio.sfx("confirm");
@@ -12390,6 +12615,11 @@ document.querySelector("#start-button").addEventListener("click", () => {
   activateAudio();
   storyJourney.start();
 });
+document.querySelector("#continue-button").addEventListener("click", () => {
+  characterSpeech.close();
+  activateAudio();
+  storyJourney.continue();
+});
 document.addEventListener("greenstoa:storychange", updateInterface);
 document.addEventListener("greenstoa:audiochange", updateInterface);
 for (const dialog of [optionsDialog]) {
@@ -12409,33 +12639,48 @@ const menuButtons = [...document.querySelectorAll(".main-menu button")];
 let selectedMenuIndex = 0;
 function selectMenu(index) {
   if (selectedMenuIndex !== index) gameAudio.sfx("select");
-  selectedMenuIndex = index;
-  menuButtons.forEach((button, i) => {
-    button.classList.toggle("is-selected", i === index);
+  const visible = menuButtons.filter(button => !button.hidden);
+  selectedMenuIndex = Math.max(0, Math.min(index, visible.length - 1));
+  menuButtons.forEach((button) => {
+    button.classList.toggle("is-selected", button === visible[selectedMenuIndex]);
   });
 }
-menuButtons.forEach((button, index) => {
-  button.addEventListener("pointerenter", () => selectMenu(index));
-  button.addEventListener("focus", () => selectMenu(index));
+menuButtons.forEach((button) => {
+  const select = () => selectMenu(menuButtons.filter(item => !item.hidden).indexOf(button));
+  button.addEventListener("pointerenter", select);
+  button.addEventListener("focus", select);
 });
+function updateContinue() {
+  const saved = journeySave.read(), button = document.querySelector("#continue-button");
+  button.hidden = !saved;
+  if (saved) {
+    const places = { guild: "모험가 길드", city: "길드 앞 광장", shop: "잡화점", carriage: "동쪽 숲길", checkpoint: "성역 검문소", gate: "그린스토아 정문", grove: "이슬잎 숲길", library: "이슬잎 도서관" };
+    document.querySelector("#continue-summary").textContent = `${saved.name} · ${places[saved.location]}`;
+  }
+  selectMenu(0);
+}
+document.addEventListener("greenstoa:savechange", updateContinue);
+window.addEventListener("storage", event => { if (event.key === journeySave.key || event.key === null) updateContinue(); });
+updateContinue();
 document.addEventListener("keydown", (event) => {
   if (optionsDialog.open || storyJourney.active) return;
   if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+    const visible = menuButtons.filter(button => !button.hidden);
     event.preventDefault();
     const next =
       (selectedMenuIndex +
         (event.key === "ArrowDown" ? 1 : -1) +
-        menuButtons.length) %
-      menuButtons.length;
+        visible.length) %
+      visible.length;
     selectMenu(next);
-    menuButtons[next].focus();
+    visible[next].focus();
   } else if (
     event.key === "Enter" &&
     !event.repeat &&
     (event.target === document.body || menuButtons.includes(event.target))
   ) {
     event.preventDefault();
-    menuButtons[selectedMenuIndex].click();
+    menuButtons.filter(button => !button.hidden)[selectedMenuIndex].click();
   }
 });
 document.addEventListener(
@@ -12448,14 +12693,14 @@ document.addEventListener(
     )
       activateAudio();
   },
-  { once: true },
+  { passive: true },
 );
 document.addEventListener(
   "keydown",
   () => {
     if (settings.sound && !audioUnlocked) activateAudio();
   },
-  { once: true },
+  { passive: true },
 );
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button");
@@ -12524,7 +12769,7 @@ document.addEventListener("click", (event) => {
       // An opening fade should stay quiet instead of flashing the click burst over it.
       if (
         event.target.closest(
-          "#start-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
+          "#start-button,#continue-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
         )
       )
         return;
