@@ -5,6 +5,19 @@
 
 로컬 서버로 확인하려면 저장소에서 `python3 -m http.server 8000`을 실행하세요.
 
+Cloudflare Pages에는 아래 파일 분리본을 사용하세요. 통합 `index.html`은 약 84MiB라
+파일당 25MB 제한을 초과합니다. 이미지 화질을 유지하면서 별도 파일로 배포하면
+가장 큰 자산도 약 3.25MiB입니다.
+
+1. `python3 scripts/build-cloudflare.py`를 실행합니다.
+2. 생성된 **dist-cloudflare 폴더 전체**를 Cloudflare Pages의 직접 업로드 화면에 올립니다.
+3. `index.html`, `CSS`, `JS`, `assets`를 함께 올립니다. 원본의 통합 HTML을 섞지 마세요.
+
+로컬 확인: `python3 -m http.server 8000 --directory dist-cloudflare` 실행 후
+`http://localhost:8000`에 접속합니다. 원본 파일 수정 후에는 같은 빌드 명령으로 다시 생성합니다.
+Git 연동 배포에서는 빌드 명령 `python3 scripts/build-cloudflare.py`, 출력 폴더
+`dist-cloudflare`를 지정합니다. 이 빌드는 원본의 단일 파일 버전을 변경하지 않습니다.
+
 `CSS/main.css`, `CSS/game.css`, `JS/main.js`, `JS/story.js`, `JS/game.js`,
 `JS/events.js`, `JS/audio.js`, `JS/sprites.js`, `JS/walk.js`, `JS/letter.js`, `JS/battle.js`, 이미지를 수정한 뒤에는
 `python3 scripts/build-standalone.py`를 실행해 `index.html`에 반영하세요.
