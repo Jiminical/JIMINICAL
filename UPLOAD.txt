@@ -1,0 +1,10 @@
+Cloudflare Pages 배포용 그린스토아
+
+직접 업로드: ZIP을 풀고 이 폴더를 Cloudflare Pages의 자산 업로드 화면에 올립니다.
+index.html과 CSS, JS, assets 폴더를 모두 함께 올려야 합니다.
+원본 저장소의 대용량 통합 index.html을 섞지 마세요.
+
+index.html: 33,587 bytes
+가장 큰 파일: assets/forest-ambush.png (3.25 MiB)
+사이트 파일 수: 66
+모든 사이트 파일이 파일당 25MB 제한 이내입니다.
