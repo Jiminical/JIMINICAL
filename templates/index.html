@@ -21,6 +21,7 @@
     <script src="JS/letter.js" defer></script>
     <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
+    <script src="JS/walk.js" defer></script>
     <script src="JS/battle.js" defer></script>
     <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
@@ -329,7 +330,7 @@
           data-sd-kania-src="assets/sd-kania.webp"
           data-demon-actions-src="assets/demon-actions.png"
           data-kania-walk-src="assets/kania-walk.png"
-          data-kania-archery-src="assets/kania-archery.png"
+          data-forest-ambush-src="assets/forest-ambush.png"
           hidden
         ></div>
         <button
@@ -674,8 +675,9 @@
         <section id="battle-screen" class="battle-screen" role="dialog"
           aria-modal="true" aria-labelledby="battle-title" hidden>
           <canvas id="battle-art" width="960" height="600" aria-label="마족과 마주 선 1인칭 전투 화면"></canvas>
+          <p id="battle-cinematic-caption" class="battle-cinematic-caption" aria-live="polite" hidden></p>
           <header class="battle-heading">
-            <p>이슬잎 도서관 앞 · 기습</p>
+            <p>성역 숲길 · 기습</p>
             <h2 id="battle-title">중급 마족 <span>균열의 추적자</span></h2>
             <div class="battle-enemy-health"><span id="battle-enemy-bar"></span></div>
           </header>

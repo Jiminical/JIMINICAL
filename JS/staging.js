@@ -37,7 +37,7 @@ const actionScenes = (() => {
     label.textContent = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
     if (state.kind === "guide")
-      state.cells = pixelAtlases.make(state.pictures.kaniaWalk, 4, 2);
+      state.cells = kaniaWalk.prepare(state.pictures.kaniaWalk);
     draw();
   }
   function cue(name, at, sound, variant = "") {
@@ -118,8 +118,7 @@ const actionScenes = (() => {
       720,
       344,
     );
-    const stepRate = 2.4,
-      frame = state.motion ? Math.floor(seconds * stepRate * 4) % 8 : 0;
+    const stepRate = kaniaWalk.phaseAt(1) * 2;
     // A visible path and planted boots give the walk a stable ground plane.
     c.save(); c.beginPath(); c.rect(0, 58, 720, 344); c.clip();
     const ground = c.createLinearGradient(0, 331, 0, 402);
@@ -131,7 +130,7 @@ const actionScenes = (() => {
       rect(x + 31, 365 + i % 4 * 7, 4, 2, "#b3bb7838");
     }
     c.fillStyle = "#091c2260"; c.beginPath(); c.ellipse(227, 388, 49, 6, 0, 0, Math.PI * 2); c.fill();
-    pixelAtlases.draw(c, state.cells, frame, 225, 388, 222);
+    const walk = kaniaWalk.draw(c, state.cells, seconds, 225, 388, 222, state.motion);
     c.restore();
     if (state.motion) {
       for (let i = 0; i < 7; i++) {
@@ -150,7 +149,7 @@ const actionScenes = (() => {
           ? "물소리가 가까워졌다. 나뭇잎 사이로 오래된 다리와 폭포가 보였다."
           : "커다란 뿌리 너머로 성역의 문이 모습을 드러냈다.";
     root.dataset.pan = t.toFixed(3);
-    root.dataset.cel = String(frame);
+    root.dataset.cel = String(walk.frame);
   }
   function draw() {
     if (!state) return;

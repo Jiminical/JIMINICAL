@@ -1,3 +1,7 @@
+/* The ambush is a cinematic forest scene, with readable captions in the black margin. */
+.battle-cinematic-caption { position:absolute; left:8%; right:8%; bottom:8%; margin:0; color:#f3e9d5; font-size:24px; line-height:1.7; text-align:center; text-shadow:2px 2px #000; pointer-events:none; }
+@media(max-width:700px) { .battle-cinematic-caption { bottom:23%; left:7%; right:7%; font-size:19px; } }
+@media(max-height:500px) and (min-width:701px) { .battle-cinematic-caption { bottom:4%; font-size:18px; } }
 /* Turn-based encounter UI: rough white frames, large floating commands. */
 .battle-screen[hidden], .battle-screen [hidden] { display: none !important; }
 .battle-screen { position: absolute; inset: 0; z-index: 14; overflow: hidden; background: #030508; color: #f8efe4; --battle-menu-width: clamp(210px, 28cqw, 350px); }
@@ -45,9 +49,9 @@
 #battle-wave-hud > div { flex: 0 0 100%; height: 3px; background: #402430; }
 #battle-wave-bar { display: block; height: 100%; background: #ed9ca9; }
 .battle-screen[data-choosing="false"] .battle-menu { pointer-events: none; }
-.battle-screen[data-state="dodge"] .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom { left: 72%; right: 28px; bottom: 65px; max-height: 65%; }
-.battle-screen[data-state="dodge"] #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 20px; }
-.battle-screen[data-cinematic="true"] .battle-bottom { right: 30px; }
+.battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"],[data-state="lastStrike"],[data-state="arrow"],[data-state="impact"]) .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom { left: 72%; right: 28px; bottom: 65px; max-height: 65%; }
+.battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"]) #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 20px; }
+.battle-screen[data-state="dissolve"] .battle-bottom, .battle-screen[data-state="won"] .battle-bottom { right: 30px; }
 .battle-screen[data-state="info"] .battle-bottom { max-height: 55%; }
 .battle-screen[data-state="info"] #battle-message { font-size: 19px; }
 .battle-screen[data-state="intro"] .battle-heading, .battle-screen[data-state="intro"] .battle-bottom, .battle-screen[data-state="intro"] .battle-key-hint { visibility: hidden; }
@@ -75,16 +79,16 @@
   .battle-menu button::before { inset: 3px; }
   #battle-item-list button { font-size: 14px; padding: 16px 13px; min-height: 78px; }
   #battle-back { font-size: 14px; padding: 16px; }
-  .battle-bottom, .battle-screen[data-state="dodge"] .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom, .battle-screen[data-cinematic="true"] .battle-bottom { left: 17px; right: 17px; bottom: 45px; max-height: 28%; gap: 11px; }
+  .battle-bottom, .battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"],[data-state="lastStrike"],[data-state="arrow"],[data-state="impact"]) .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom, .battle-screen[data-cinematic="true"] .battle-bottom { left: 17px; right: 17px; bottom: 45px; max-height: 28%; gap: 11px; }
   .battle-message { padding: 15px 16px; min-height: 106px; }
   #battle-message { font-size: 18px; line-height: 1.75; }
   .battle-screen[data-state="info"] #battle-message { font-size: 17px; }
   .battle-player-health { font-size: 15px; }
   .battle-key-hint { left: 17px; right: 17px; bottom: 10px; font-size: 10px; line-height: 1.5; }
-  .battle-screen[data-state="dodge"] #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 18px; }
+  .battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"]) #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 18px; }
   .battle-turn { right: 17px; top: 173px; font-size: 15px; letter-spacing: 1px; }
   #battle-wave-hud { left: 7%; width: 86%; top: 40%; font-size: 13px; }
-  .battle-screen[data-state="dodge"] #battle-touch-pad { position: absolute; display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(2, 39px); gap: 4px; right: 18px; bottom: 25%; touch-action: none; }
+  .battle-screen:is([data-state="dodge"],[data-state="desperation"]) #battle-touch-pad { position: absolute; display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(2, 39px); gap: 4px; right: 18px; bottom: 25%; touch-action: none; }
   #battle-touch-pad button { background: #0d1422d9; border: 2px solid #c5b6c8; color: #efe3df; font-size: 23px; touch-action: none; }
   #battle-touch-pad button:first-child { grid-column: 2; }
   #battle-touch-pad button:nth-child(2) { grid-column: 1; grid-row: 2; }
@@ -112,8 +116,8 @@
   .battle-player-health { font-size: 14px; gap: 4px; max-width: 270px; }
   .battle-player-health > div { height: 6px; }
   .battle-turn { top: 20px; right: 120px; font-size: 15px; }
-  .battle-screen[data-state="dodge"] #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 16px; }
-  .battle-screen[data-state="dodge"] .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom { bottom: 40px; }
+  .battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"]) #battle-message, .battle-screen[data-state="telegraph"] #battle-message, .battle-screen[data-state="waveEnd"] #battle-message { font-size: 16px; }
+  .battle-screen:is([data-state="dodge"],[data-state="desperation"],[data-state="overload"],[data-state="lastStrike"],[data-state="arrow"],[data-state="impact"]) .battle-bottom, .battle-screen[data-state="telegraph"] .battle-bottom, .battle-screen[data-state="waveEnd"] .battle-bottom { bottom: 40px; }
   .battle-key-hint { bottom: 8px; left: 20px; font-size: 10px; }
   #battle-wave-hud { top: 26%; left: 10%; width: 54%; font-size: 12px; }
 }

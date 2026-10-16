@@ -106,7 +106,7 @@ const guildGame = (() => {
       "sdKania",
       "demonActions",
       "kaniaWalk",
-      "kaniaArchery",
+      "forestAmbush",
     ].map((key) => loadPicture(key, assets.dataset[key + "Src"])),
   ]).then(() => {
     fieldSprites.prepare({
@@ -118,8 +118,7 @@ const guildGame = (() => {
     });
     // Decode and clean the animation frames during loading, before an encounter.
     pixelAtlases.make(pictures.demonActions, 4, 2);
-    pixelAtlases.make(pictures.kaniaWalk, 4, 2);
-    pixelAtlases.make(pictures.kaniaArchery, 4, 1);
+    kaniaWalk.prepare(pictures.kaniaWalk);
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -721,6 +720,10 @@ const guildGame = (() => {
   }
   function approachLibrary() {
     if (fieldFlags.libraryAmbushCleared) return enterLibrary();
+    startForestAmbush();
+  }
+  function startForestAmbush() {
+    if (phase !== "free" || fieldFlags.libraryAmbushCleared) return;
     keys.clear();
     player.moving = false;
     phase = "battle";
@@ -728,12 +731,12 @@ const guildGame = (() => {
     root.classList.add("is-battle");
     prompt.hidden = true;
     document.querySelector(".world-viewport").inert = true;
-    gameAudio.scene("battle");
+    gameAudio.scene("ambush");
     drawWorld();
     battleScenes.prepare({
       world: canvas,
       pictures,
-      origin: { x: 529, y: 185 },
+      origin: { x: player.x - 70, y: player.y - 55 },
       name: playerName,
       hp,
       motion: motion(),
@@ -764,7 +767,7 @@ const guildGame = (() => {
           { kind: "scout", expression: "warning", text: "중급 마족이야. 성역의 문턱까지 숨어들었군.\n보통이라면 이곳에 발을 들일 수 없는 놈인데……." },
           { kind: "scout", expression: "explaining", text: "네가 조사하러 온 ‘불미스러운 일’. 바로 이런 일이야.\n요즘 성역 안팎에서 이질적인 마력이 감지되고 있어." },
           { kind: "scout", expression: "warning", text: "도서관으로 들어가. 기록을 확인하면 실마리를 찾을 수 있을 거야.\n주변은 내가 살펴볼게." },
-        ], enterLibrary));
+        ], () => notify("마족의 기척이 사라졌다. 숲길 너머 도서관으로 향하자.")));
       },
     });
     battleScenes.play();
@@ -2063,7 +2066,9 @@ const guildGame = (() => {
     elapsed += dt;
     if (phase === "free") {
       movePlayer(dt);
-      movePeople(dt);
+      if (location === "grove" && player.y < 312 && player.x > 360 && !fieldFlags.libraryAmbushCleared)
+        startForestAmbush();
+      if (phase === "free") movePeople(dt);
       if (location === "library" && !document.hidden)
         libraryLetter.update(dt, motion());
     } else player.moving = false;

@@ -6,17 +6,18 @@ const battleScenes = (() => {
     items = document.querySelector('#battle-item-list'), back = document.querySelector('#battle-back'),
     next = document.querySelector('#battle-continue'), waveHud = document.querySelector('#battle-wave-hud'),
     touchPad = document.querySelector('#battle-touch-pad'), turnLabel = document.querySelector('#battle-turn');
-  const held = new Set(), AW = 420, AH = 190, WAVE_SECONDS = 8;
+  const held = new Set(), AW = 420, AH = 190;
   const patterns = [
-    { name: '붉은 잿비', hint: '붉은 잿비가 내린다. 빗줄기 사이의 빈틈으로 이동하자.' },
-    { name: '갈라지는 발톱', hint: '가느다란 예고선을 확인하고, 발톱이 지나갈 자리를 벗어나자.' },
-    { name: '균열의 맥동', hint: '탄환이 부채처럼 퍼진다. 작은 틈을 찾아 천천히 움직이자.' },
+    {name:'잿비 · 역류',seconds:10,hint:'아래에서 되솟는 탄환도 살펴보자. 움직이는 빈틈을 따라 피한다.'},
+    {name:'사냥꾼의 발톱',seconds:11,hint:'노란 예고선은 곧 발톱이 된다. 교차점에서 멀어지자.'},
+    {name:'균열의 나선',seconds:12,hint:'휘어지는 탄환과 옆에서 날아오는 침. 넓은 틈으로 빠져나가자.'},
+    {name:'포식의 결계',seconds:6.8,hint:'결계의 마력이 몸을 짓누른다. 끝까지 버텨야 한다.'},
   ];
   let state = null, request = 0, previous = 0;
   const clamp = (n, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
   const ease = n => { n = clamp(n); return n * n * (3 - 2 * n); };
   const motion = () => state?.motion && !document.body.classList.contains('no-motion') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const cinematic = () => ['threat','entrance','aim','arrow','impact','dissolve','approach','won'].includes(state?.stage);
+  const cinematic = () => ['lastStrike','arrow','impact','dissolve','won'].includes(state?.stage);
   function say(line) { if (message.textContent !== line) message.textContent = line; }
   function polygon(points, fill, stroke, width = 2) {
     c.beginPath(); points.forEach(([x,y],i) => i ? c.lineTo(x,y) : c.moveTo(x,y)); c.closePath();
@@ -35,24 +36,25 @@ const battleScenes = (() => {
     state.viewFrom = { x: previousView.x / canvas.width, ground: previousView.ground / canvas.height, height: previousView.height / canvas.height };
     state.stage = kind; state.age = 0; state.inputAfter = performance.now() + 160;
     root.dataset.state = kind;
-    const choosing = ['command','info','items'].includes(kind), dodging = kind === 'dodge';
+    const choosing = ['command','info','items'].includes(kind), dodging = ['dodge','desperation'].includes(kind);
     root.dataset.choosing = String(choosing); root.dataset.cinematic = String(cinematic());
     commands.hidden = kind !== 'command'; items.hidden = kind !== 'items'; back.hidden = !['info','items'].includes(kind);
     buttons.forEach(b => b.disabled = kind !== 'command');
     next.hidden = !['info','won'].includes(kind);
     next.textContent = kind === 'info' ? 'E · 돌아가기' : 'E · 카니아에게';
-    waveHud.hidden = !['telegraph','dodge','waveEnd'].includes(kind);
+    waveHud.hidden = !['telegraph','dodge','waveEnd','overload','desperation'].includes(kind);
     touchPad.hidden = !dodging;
     touchPad.querySelectorAll('button').forEach(b => b.disabled = !dodging);
-    turnLabel.textContent = choosing ? `내 차례 · ${state.turn + 1}` : ['telegraph','dodge','waveEnd'].includes(kind) ? `적의 차례 · ${state.turn}` : '';
+    turnLabel.textContent = ['overload','desperation'].includes(kind) ? '중급 마족 · 폭주' : choosing ? `내 차례 · ${state.turn + 1}` : ['telegraph','dodge','waveEnd','overload','desperation'].includes(kind) ? `적의 차례 · ${state.turn}` : '';
     document.querySelector('#battle-hint').textContent = dodging
       ? 'WASD / 방향키 이동 · Shift 천천히 · 터치: 회피 상자를 드래그'
-      : choosing ? '↑ ↓ 선택 · E 결정 · 1 / 2 / 3 · Esc 돌아가기' : '이슬잎 도서관 · 균열의 추적자';
+      : choosing ? '↑ ↓ 선택 · E 결정 · 1 / 2 / 3 · Esc 돌아가기' : '성역 숲길 · 균열의 추적자';
+    document.querySelector('#battle-cinematic-caption').hidden = kind !== 'intro';
     if (line) say(line);
     if (!dodging) clearInput();
     health();
     if (kind === 'won') next.focus({preventScroll:true});
-    if (kind === 'dodge') { canvas.tabIndex = -1; canvas.focus({preventScroll:true}); }
+    if (dodging) { canvas.tabIndex = -1; canvas.focus({preventScroll:true}); }
   }
   function select(index, focus = false) {
     if (!state) return;
@@ -63,7 +65,7 @@ const battleScenes = (() => {
   }
   function command(line) {
     state.bullets = []; state.warnings = []; state.pointer = null;
-    stage('command', line || (state.turn ? '숨을 고른다. 마족의 다음 움직임을 살펴보자.' : '붉은 날개가 도서관의 문을 가렸다.'));
+    stage('command', line || (state.turn ? '숨을 고른다. 마족의 다음 움직임을 살펴보자.' : '수풀에서 튀어나온 중급 마족이 숲길을 가로막았다.'));
     select(0, true);
   }
   function choose(action) {
@@ -104,95 +106,100 @@ const battleScenes = (() => {
     document.querySelector('#battle-wave-bar').style.width = '100%';
     stage('telegraph', patterns[state.pattern].hint);
   }
-  function bullet(x,y,vx,vy,r = 5, kind = 'ember') { state.bullets.push({x,y,vx,vy,r,kind,age:0}); }
+  function bullet(x,y,vx,vy,r=4,kind='ember',curve=0){state.bullets.push({x,y,vx,vy,r,kind,curve,age:0,trail:[]});}
+  function slash(ax,ay,bx,by,delay=.78,width=12){state.warnings.push({ax,ay,bx,by,delay,width,age:0,duration:.24});}
   function emit(index) {
-    if (state.pattern === 0) {
-      // Rows have a broad moving gap. A row is visible well before reaching the soul.
-      const gap = 75 + (index * 73 % 270);
-      for (let x = 14; x < AW; x += 25) if (Math.abs(x - gap) > 48) bullet(x, -12, Math.sin(index) * 5, 70 + index % 3 * 6, 5);
-    } else if (state.pattern === 1) {
-      // Alternating vertical and horizontal claw lanes, each warned for 0.85 seconds.
-      const vertical = index % 2 === 0, pos = vertical ? 35 + (index * 71 % 345) : 30 + (index * 31 % 125);
-      state.warnings.push({vertical,pos,age:0,fired:false});
-    } else {
-      const source = { x: 45 + (index * 91 % 330), y: -13 },
-        angle = Math.atan2(state.soul.y - source.y, state.soul.x - source.x);
-      for (let i = -2; i <= 2; i++) {
-        const a = angle + i * .25; bullet(source.x, source.y, Math.cos(a) * 77, Math.sin(a) * 77, 5, 'shard');
-      }
+    if(state.pattern===0){
+      const gap=78+(Math.sin(index*.66)*.5+.5)*264;
+      for(let x=9;x<AW;x+=19)if(Math.abs(x-gap)>34)bullet(x,-13,Math.sin(index*.6)*9,100+index%3*8,4.2);
+      if(state.age>3.5&&index%2===0){const gap2=AW-gap;for(let x=18;x<AW;x+=34)if(Math.abs(x-gap2)>43)bullet(x,AH+13,0,-82,3.5,'needle');}
+    }else if(state.pattern===1){
+      const {x,y}=state.soul;
+      if(index%3===2){slash(-20,y-110,AW+20,y+110,.82,11);slash(-20,y+110,AW+20,y-110,1.08,11);}
+      else {slash(x,-20,x,AH+20,.74,13);slash(-20,y,AW+20,y,1.03,12);}
+      if(index%2===0)for(let i=0;i<5;i++)bullet(index%4?AW+12:-12,24+i*34,index%4?-84:84,0,3.5,'shard');
+    }else if(state.pattern===2){
+      const x=80+(Math.sin(index*.9)*.5+.5)*260,gap=index%9;
+      for(let i=0;i<13;i++)if(Math.abs(i-gap)>1){const a=.20+i*(Math.PI-.4)/12;bullet(x,-17,Math.cos(a)*108,Math.sin(a)*108,4,'shard',index%2?.16:-.16);}
+      if(index%2===1){const from=index%4===1?-12:AW+12,yy=45+index*17%100,angle=Math.atan2(state.soul.y-yy,state.soul.x-from);
+        for(let i=-2;i<=2;i++){const a=angle+i*.2;bullet(from,yy,Math.cos(a)*91,Math.sin(a)*91,3.8,'needle');}}
+    }else{
+      const gap=AW/2+Math.sin(index*.75)*80;
+      for(let x=8;x<AW;x+=18)if(Math.abs(x-gap)>27)bullet(x,-10,Math.sin(index)*13,136,4,'ember');
+      if(index%2===0){const a=Math.atan2(state.soul.y-AH/2,state.soul.x-AW/2);for(let i=-3;i<=3;i++){const angle=a+i*.3;bullet(AW/2,AH/2,Math.cos(angle)*67,Math.sin(angle)*67,3.3,'shard');}}
     }
+  }
+  function distanceToSlash(x,y,s){const dx=s.bx-s.ax,dy=s.by-s.ay,t=clamp(((x-s.ax)*dx+(y-s.ay)*dy)/(dx*dx+dy*dy));return Math.hypot(x-s.ax-dx*t,y-s.ay-dy*t);}
+  function hurt(amount,pressure=false){
+    if(!pressure&&state.invincible>0)return;
+    const wouldFall=state.hp-amount<=1;
+    state.hp=Math.max(1,state.hp-amount);state.hitsThisWave++;state.invincible=pressure?.48:.66;state.hurtAt=state.elapsed;
+    gameAudio.sfx('hurt');health();
+    if(wouldFall&&state.stage==='dodge')beginDesperation(true);
+  }
+  function beginDesperation(critical=false){
+    state.critical=critical;state.pattern=3;state.bullets=[];state.warnings=[];state.pointer=null;state.spawn=0;state.pulses=0;state.pressureAt=-10;
+    gameAudio.sfx('charge');
+    document.querySelector('#battle-pattern-name').textContent=patterns[3].name;
+    stage('overload','붉은 결계가 발목을 붙든다. 마력이 직접 몸을 짓누른다……!');
   }
   function dodge(dt) {
-    const left = held.has('ArrowLeft') || held.has('KeyA'), right = held.has('ArrowRight') || held.has('KeyD'),
-      up = held.has('ArrowUp') || held.has('KeyW'), down = held.has('ArrowDown') || held.has('KeyS'),
-      dx = Number(right) - Number(left), dy = Number(down) - Number(up),
-      speed = held.has('ShiftLeft') || held.has('ShiftRight') ? 77 : 150,
-      length = Math.hypot(dx,dy) || 1;
-    if (state.pointer) {
-      const x = state.pointer.x - state.soul.x, y = state.pointer.y - state.soul.y, distance = Math.hypot(x,y);
-      if (distance > 1) { const move = Math.min(distance, speed * dt); state.soul.x += x / distance * move; state.soul.y += y / distance * move; }
-    } else { state.soul.x += dx / length * speed * dt; state.soul.y += dy / length * speed * dt; }
-    state.soul.x = clamp(state.soul.x, 8, AW - 8); state.soul.y = clamp(state.soul.y, 8, AH - 8);
-    state.invincible = Math.max(0, state.invincible - dt);
-    const cadence = state.pattern === 0 ? .92 : state.pattern === 1 ? 1.05 : .95;
-    if (state.age < WAVE_SECONDS - 1.8 && state.age >= state.spawn * cadence + .35) emit(state.spawn++);
-    for (const warning of state.warnings) {
-      warning.age += dt;
-      if (warning.age >= .85 && !warning.fired) {
-        warning.fired = true;
-        if (warning.vertical) for (let i = -1; i <= 1; i++) bullet(warning.pos + i * 13, -18, 0, 195, 6, 'claw');
-        else for (let i = -1; i <= 1; i++) bullet(-18, warning.pos + i * 13, 235, 0, 6, 'claw');
-      }
+    const left=held.has('ArrowLeft')||held.has('KeyA'),right=held.has('ArrowRight')||held.has('KeyD'),
+      up=held.has('ArrowUp')||held.has('KeyW'),down=held.has('ArrowDown')||held.has('KeyS'),
+      dx=Number(right)-Number(left),dy=Number(down)-Number(up),speed=held.has('ShiftLeft')||held.has('ShiftRight')?77:150,length=Math.hypot(dx,dy)||1;
+    if(state.pointer){const x=state.pointer.x-state.soul.x,y=state.pointer.y-state.soul.y,distance=Math.hypot(x,y);if(distance>1){const move=Math.min(distance,speed*dt);state.soul.x+=x/distance*move;state.soul.y+=y/distance*move;}}
+    else{state.soul.x+=dx/length*speed*dt;state.soul.y+=dy/length*speed*dt;}
+    state.soul.x=clamp(state.soul.x,8,AW-8);state.soul.y=clamp(state.soul.y,8,AH-8);state.invincible=Math.max(0,state.invincible-dt);
+    const final=state.stage==='desperation',duration=final?(state.critical?2.3:6.8):patterns[state.pattern].seconds,
+      cadence=[.68,.98,.80,.47][state.pattern];
+    if(state.age<duration-1.0&&state.age>=state.spawn*cadence+.28)emit(state.spawn++);
+    for(const warning of state.warnings){
+      warning.age+=dt;
+      if(warning.age>=warning.delay&&warning.age<warning.delay+warning.duration&&distanceToSlash(state.soul.x,state.soul.y,warning)<warning.width/2+4)hurt(4);
+      if(state.stage!=='dodge'&&state.stage!=='desperation')return;
     }
-    state.warnings = state.warnings.filter(w => w.age < 1.25);
-    for (const b of state.bullets) {
-      b.x += b.vx * dt; b.y += b.vy * dt; b.age += dt;
-      // Four logical pixels of player hit radius, smaller than the visible sigil.
-      if (state.invincible <= 0 && Math.hypot(b.x - state.soul.x, b.y - state.soul.y) < b.r + 4) {
-        state.hp = Math.max(0, state.hp - 3); state.hitsThisWave++; state.invincible = .85;
-        state.hurtAt = state.elapsed; gameAudio.sfx('hurt'); health();
-        if (!state.hp) { startRescue(true); return; }
-      }
+    state.warnings=state.warnings.filter(s=>s.age<s.delay+s.duration+.3);
+    for(const b of state.bullets){
+      if(b.curve){const a=b.curve*dt,cs=Math.cos(a),sn=Math.sin(a),vx=b.vx;b.vx=vx*cs-b.vy*sn;b.vy=vx*sn+b.vy*cs;}
+      b.trail.push({x:b.x,y:b.y});if(b.trail.length>5)b.trail.shift();b.x+=b.vx*dt;b.y+=b.vy*dt;b.age+=dt;
+      if(Math.hypot(b.x-state.soul.x,b.y-state.soul.y)<b.r+4)hurt(3);
+      if(state.stage!=='dodge'&&state.stage!=='desperation')return;
     }
-    state.bullets = state.bullets.filter(b => b.x > -40 && b.x < AW + 40 && b.y > -40 && b.y < AH + 40);
-    const remaining = Math.max(0, WAVE_SECONDS - state.age);
-    document.querySelector('#battle-wave-time').textContent = `${remaining.toFixed(1)}초`;
-    document.querySelector('#battle-wave-bar').style.width = remaining / WAVE_SECONDS * 100 + '%';
-    if (state.age >= WAVE_SECONDS) {
-      state.bullets = []; state.warnings = [];
-      stage('waveEnd', state.hitsThisWave ? '공격이 잦아들었다. 다시 검을 들 틈이다.' : '모든 공격을 피했다! 마족이 불쾌한 듯 날개를 펼친다.');
+    state.bullets=state.bullets.filter(b=>b.x>-40&&b.x<AW+40&&b.y>-40&&b.y<AH+40);
+    if(final&&!state.critical&&state.pulses<5&&state.age>=1.2+state.pulses*1.0){
+      // The boss's enclosing curse is a visible story attack, separate from dodgeable shots.
+      const damage=Math.ceil((state.hp-1)/(5-state.pulses));state.pulses++;state.pressureAt=state.age;hurt(damage,true);
+      say(state.pulses===5?'HP 1. 결계가 닫힌다. 마지막 발톱이 눈앞까지 다가온다――!':'결계의 압박이 거세진다. 탄환 사이에서 어떻게든 버틴다……!');
+    }
+    const remaining=Math.max(0,duration-state.age);
+    document.querySelector('#battle-wave-time').textContent=final?'버텨라':`${remaining.toFixed(1)}초`;
+    document.querySelector('#battle-wave-bar').style.width=remaining/duration*100+'%';
+    if(state.age>=duration){
+      state.bullets=[];state.warnings=[];
+      if(final){state.hp=1;health();stage('lastStrike','마지막 일격이 내려온다――!');}
+      else stage('waveEnd',state.hitsThisWave?'공격이 잦아들었다. 숨을 고르고 다시 검을 든다.':'탄막을 빠져나왔다! 마족이 더 거칠게 날개를 펼친다.');
     }
   }
-  function startRescue(critical = false) {
-    state.critical = critical; state.bullets = []; state.warnings = [];
-    gameAudio.sfx('charge');
-    stage('threat', critical ? '몸이 휘청인다. 마족이 마지막 일격을 준비한다……!' : '마족이 모든 마력을 끌어모은다. 숲 너머에서, 활시위가 당겨지는 소리가 들렸다.');
-  }
-  function update(dt) {
-    if (!state) return;
-    state.age += dt; state.elapsed += dt;
-    const age = state.age;
-    if (state.stage === 'intro' && age >= (motion() ? 3.4 : 1.3)) { root.dataset.ready = 'true'; command(); }
-    else if (state.stage === 'attack') {
-      if (age >= .4 && !state.struck) {
-        state.struck = true; state.enemyHp = Math.max(1, state.enemyHp - state.damage); health(); gameAudio.sfx('sword');
-        say(state.reaction === 'guard' ? `교차한 발톱이 검을 막았다. 갑각에 ${state.damage} 피해!` : state.reaction === 'dodge' ? `마족이 몸을 틀었다. 날개를 스쳐 ${state.damage} 피해!` : `갑각의 틈을 베었다! ${state.damage} 피해.`);
-      }
-      if (age >= 1.35) enemyTurn();
-    } else if (state.stage === 'healing' && age >= 1.4) enemyTurn();
-    else if (state.stage === 'telegraph' && age >= 1.6) stage('dodge', '표식을 움직여 공격을 피하자. 작은 중심점이 피격 범위다.');
-    else if (state.stage === 'dodge') dodge(dt);
-    else if (state.stage === 'waveEnd' && age >= 1.25) { if (state.turn >= 3) startRescue(); else command(); }
-    else if (state.stage === 'threat' && age >= 2.2) stage('entrance', '나뭇잎 사이로 녹색 망토가 모습을 드러냈다.');
-    else if (state.stage === 'entrance' && age >= 2) stage('aim', '카니아가 숨을 멈추고, 마족의 이마를 겨눈다.');
-    else if (state.stage === 'aim' && age >= 2.4) { gameAudio.sfx('arrow'); stage('arrow', '당겨진 활시위에서, 한 줄기 빛이 쏘아졌다.'); }
-    else if (state.stage === 'arrow' && age >= 1.15) {
-      state.rescued = true; state.enemyHp = 0;
-      if (!state.hp) state.hp = 1;
-      gameAudio.sfx('arrowHit'); health(); stage('impact', '화살이 마족의 이마를 정확히 꿰뚫었다!');
-    } else if (state.stage === 'impact' && age >= .75) stage('dissolve', '붉은 균열이 무너지고, 응축된 마력이 흩어진다.');
-    else if (state.stage === 'dissolve' && age >= 2.3) { gameAudio.scene('grove'); gameAudio.sfx('rescued'); stage('approach', '카니아가 활을 내리고, 서둘러 다가왔다.'); }
-    else if (state.stage === 'approach' && age >= 2.1) stage('won', '“이게 바로 네가 조사하러 온, 그 불미스러운 일이야.”\n카니아의 시선이 도서관의 문으로 향했다.');
+  function update(dt){
+    if(!state)return;state.age+=dt;state.elapsed+=dt;const age=state.age;
+    if(state.stage==='intro'){
+      const cut=motion()?age:age*1.8;
+      const caption=cut<1.65?'숲의 소리가 갑자기 멎었다.':cut<2.6?'왼편 수풀에서, 무언가가 움직였다.':cut<4.1?'붉은 형체가 수풀을 찢고 덮쳐왔다!':'중급 마족 · 균열의 추적자';
+      document.querySelector('#battle-cinematic-caption').textContent=caption;
+      if(cut>=2.58&&!state.ambushSound){state.ambushSound=true;gameAudio.scene('battle');gameAudio.sfx('battleStart');gameAudio.sfx('demon');}
+      if(cut>=5.6){root.dataset.ready='true';command();}
+    }else if(state.stage==='attack'){
+      if(age>=.4&&!state.struck){state.struck=true;state.enemyHp=Math.max(1,state.enemyHp-state.damage);health();gameAudio.sfx('sword');say(state.reaction==='guard'?`교차한 발톱이 검을 막았다. 갑각에 ${state.damage} 피해!`:state.reaction==='dodge'?`마족이 몸을 틀었다. 날개를 스쳐 ${state.damage} 피해!`:`갑각의 틈을 베었다! ${state.damage} 피해.`);}
+      if(age>=1.35)enemyTurn();
+    }else if(state.stage==='healing'&&age>=1.4)enemyTurn();
+    else if(state.stage==='telegraph'&&age>=1.6)stage('dodge',patterns[state.pattern].hint);
+    else if(['dodge','desperation'].includes(state.stage))dodge(dt);
+    else if(state.stage==='waveEnd'&&age>=1.15){if(state.turn>=3)beginDesperation();else command();}
+    else if(state.stage==='overload'&&age>=1.5){state.spawn=0;state.soul={x:AW/2,y:AH*.72};state.invincible=.5;stage('desperation','결계 안에 갇혔다. 공격을 피하며 버텨야 한다……!');}
+    else if(state.stage==='lastStrike'&&age>=.48){gameAudio.sfx('arrow');stage('arrow','――탁!');}
+    else if(state.stage==='arrow'&&age>=.18){state.rescued=true;state.enemyHp=0;health();gameAudio.sfx('arrowHit');stage('impact','어디선가 날아온 화살이 마족의 이마에 박혔다!');}
+    else if(state.stage==='impact'&&age>=.7)stage('dissolve','마족의 마력이 흩어진다. 숲이 다시 조용해졌다.');
+    else if(state.stage==='dissolve'&&age>=2.2){gameAudio.scene('grove');gameAudio.sfx('rescued');stage('won','가까스로 숨을 내쉰다.\n등 뒤에서 익숙한 목소리가 들려왔다. “괜찮아?”');}
   }
   function layout() {
     const w = canvas.width, h = canvas.height, portrait = h > w * 1.1, short = h < 430 && !portrait,
@@ -201,13 +208,11 @@ const battleScenes = (() => {
   }
   function enemyPosition() {
     const {w,h,portrait,short} = layout(),
-      wave = ['telegraph','dodge','waveEnd'].includes(state.stage),
+      wave = ['telegraph','dodge','waveEnd','overload','desperation'].includes(state.stage),
       blend = state.stage === 'telegraph' ? ease(state.age / 1.2) : wave ? 1 : 0;
     const target = { x:w*(portrait ? .3 + .2*blend : .36), ground:h*(portrait ? .53-.15*blend : short ? .66-.32*blend : .61-.21*blend),
       height:h*(portrait ? .32-.10*blend : short ? .53-.28*blend : .48-.18*blend) };
-    if (['entrance','aim','arrow','impact','dissolve'].includes(state.stage)) {
-      target.x = w*.69; target.ground = h*.51; target.height *= .83;
-    }
+    if(['lastStrike','arrow','impact'].includes(state.stage))target.height*=1.12;
     const from = state.viewFrom, progress = ease(state.age / .85);
     if (from && progress < 1 && motion()) return {
       x: from.x*w + (target.x-from.x*w)*progress,
@@ -222,23 +227,15 @@ const battleScenes = (() => {
     c.fillStyle = '#030508'; c.fillRect(0,0,w,h);
     const glow = c.createRadialGradient(w*.36,h*.34,10,w*.36,h*.4,w*.7);
     glow.addColorStop(0,'#351021'); glow.addColorStop(.38,'#11151f'); glow.addColorStop(1,'#020508'); c.fillStyle=glow;c.fillRect(0,0,w,h);
-    // Broken library doorway, layered trees and drifting dust tie the arena to the field.
-    c.save(); c.globalAlpha=.32;
-    const cx=w*.36, arch=h*.12, half=w*.22;
-    for(let side=-1;side<=1;side+=2) {
-      for(let i=0;i<5;i++) {
-        const x=cx+side*(half+i*22), bottom=horizon+i*9;
-        polygon([[x,arch+60+i*8],[x+side*12,arch+53+i*8],[x+side*14,bottom],[x-5,bottom]],'#263c42','#50615a',1);
-        for(let y=arch+87;y<bottom;y+=27){c.strokeStyle='#65705a';c.beginPath();c.moveTo(x,y);c.lineTo(x+side*12,y-4);c.stroke();}
-      }
-      for(let i=0;i<4;i++) {
-        const x=side===-1?i*w*.075:w*(.73+i*.08);
-        polygon([[x,horizon],[x+w*.02,h*.16],[x-w*.015,0],[x+w*.03,0],[x+w*.04,horizon]],'#17282a');
-        c.strokeStyle='#273d37';c.beginPath();c.moveTo(x+w*.025,h*.2);c.lineTo(x+side*w*.09,h*.07);c.stroke();
-      }
-    }
-    c.strokeStyle='#a08279';c.lineWidth=2;c.beginPath();c.moveTo(cx-half,arch+65);c.lineTo(cx-half*.64,arch+15);c.lineTo(cx,arch-12);c.lineTo(cx+half*.64,arch+15);c.lineTo(cx+half,arch+65);c.stroke();
-    c.restore();
+    // Tree silhouettes and a dim patch of the actual ambush forest persist in battle.
+    c.save();c.globalAlpha=.08;const forest=state.pictures.forestAmbush;
+    c.drawImage(forest,0,0,forest.naturalWidth,forest.naturalHeight,0,0,w,h*.65);c.restore();
+    c.save();c.globalAlpha=.35;
+    for(let side=-1;side<=1;side+=2)for(let i=0;i<5;i++){
+      const x=side<0?i*w*.055:w*(.74+i*.065),lean=side*w*.025;
+      polygon([[x,horizon],[x+lean,h*.14],[x-w*.016,0],[x+w*.02,0],[x+w*.04,horizon]],'#1c3835');
+      c.strokeStyle='#45614b';c.lineWidth=1;c.beginPath();c.moveTo(x+lean,h*.2);c.lineTo(x+side*w*.08,h*.06);c.stroke();
+    }c.restore();
     c.save(); c.strokeStyle='#5e364c'; c.lineWidth=1;
     for(let i=-7;i<=10;i++){c.globalAlpha=.24;c.beginPath();c.moveTo(w*.36+i*w*.023,horizon);c.lineTo(w*.36+i*w*.22,h*.9);c.stroke();}
     for(let i=0;i<11;i++){const p=(i+(t*.26)%1)/11,y=horizon+p*p*h*.43;c.globalAlpha=.15+p*.22;c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
@@ -252,18 +249,19 @@ const battleScenes = (() => {
     if(kind==='attack') {
       frame=age<.36?0:state.reaction==='guard'?3:state.reaction==='dodge'?(age<.8?4:5):6;
       if(motion()) x+=(state.reaction==='dodge'?Math.sin(clamp((age-.35)/.9)*Math.PI)*height*.12:Math.sin(age*29)*4*(1-ease(age/1.3)));
-    } else if(['telegraph','threat'].includes(kind)) frame=1;
-    else if(kind==='dodge') frame=Math.sin(age*3)>.3?2:1;
+    } else if(['telegraph','overload'].includes(kind)) frame=1;
+    else if(['lastStrike','arrow'].includes(kind))frame=2;
+    else if(['dodge','desperation'].includes(kind)) frame=Math.sin(age*3)>.3?2:1;
     else if(['impact','dissolve'].includes(kind)) {
-      frame=kind==='impact'?6:7;
+      frame=kind==='impact'?(age<.10?2:6):7;
       if(kind==='dissolve') {alpha=1-ease((age-.35)/1.8);ground+=age*8;}
-    } else if(['approach','won'].includes(kind)) alpha=0;
+    } else if(['won'].includes(kind)) alpha=0;
 
     c.save();
     c.globalAlpha=alpha;c.fillStyle='#000a';c.beginPath();c.ellipse(x,ground+4,height*.43,height*.045,0,0,Math.PI*2);c.fill();c.globalAlpha=1;
     const bob=motion()&&!['impact','dissolve'].includes(kind)?Math.sin(state.elapsed*2)*height*.004:0;
     if (state.lastFrame !== frame) { state.previousFrame = state.lastFrame ?? frame; state.lastFrame = frame; state.poseAt = state.elapsed; }
-    const poseBlend = motion() ? ease((state.elapsed - state.poseAt) / .16) : 1;
+    const poseBlend = kind==='impact' ? 1 : motion() ? ease((state.elapsed - state.poseAt) / .16) : 1;
     if (poseBlend < 1) pixelAtlases.draw(c,state.enemy,state.previousFrame,x,ground+bob,height,alpha*(1-poseBlend));
     pixelAtlases.draw(c,state.enemy,frame,x,ground+bob,height,alpha*poseBlend);
     if(kind==='attack'&&age>.4&&age<1.15) {
@@ -272,7 +270,7 @@ const battleScenes = (() => {
       c.fillStyle=state.reaction==='guard'?'#d5d8e2':'#ffe78f';c.font=`bold ${Math.max(24,height*.13)}px Galmuri,monospace`;c.textAlign='center';c.fillText(state.damage,x,ground-height*.73-progress*22);c.textAlign='left';
     }
     c.restore();
-    if(['threat','aim'].includes(kind)) {
+    if(['overload','lastStrike'].includes(kind)) {
       c.save();c.strokeStyle='#ff597c';c.globalAlpha=.45;c.lineWidth=2;
       const r=height*(.25+Math.sin(state.elapsed*2)*.015);
       c.beginPath();c.ellipse(x,ground-height*.48,r,r*.5,0,0,Math.PI*2);c.stroke();
@@ -282,13 +280,13 @@ const battleScenes = (() => {
     if(['impact','dissolve'].includes(kind)) {
       const t=kind==='impact'?age*.2:.15+age;
       c.save();c.globalAlpha=1-ease(t/2.8);
-      for(let i=0;i<42;i++){const a=i*2.399,dist=t*(22+i%6*8);c.fillStyle=i%3?'#eb3b6a':'#fff3ba';c.fillRect(x+Math.cos(a)*dist,ground-height*.72+Math.sin(a)*dist+t*t*17,2+i%3,2+i%3);}
-      if(kind==='impact'){c.strokeStyle='#fff1b5';c.lineWidth=3;for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.moveTo(x+Math.cos(a)*13,ground-height*.72+Math.sin(a)*13);c.lineTo(x+Math.cos(a)*(28+age*24),ground-height*.72+Math.sin(a)*(28+age*24));c.stroke();}}
+      for(let i=0;i<42;i++){const a=i*2.399,dist=t*(22+i%6*8);c.fillStyle=i%3?'#eb3b6a':'#fff3ba';c.fillRect(x+Math.cos(a)*dist,ground-height*.60+Math.sin(a)*dist+t*t*17,2+i%3,2+i%3);}
+      if(kind==='impact'){c.strokeStyle='#fff1b5';c.lineWidth=3;for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.moveTo(x+Math.cos(a)*13,ground-height*.60+Math.sin(a)*13);c.lineTo(x+Math.cos(a)*(28+age*24),ground-height*.60+Math.sin(a)*(28+age*24));c.stroke();}}
       c.restore();
     }
   }
   function drawHands() {
-    if(cinematic()||['dodge','telegraph','waveEnd'].includes(state.stage))return;
+    if(cinematic()||['dodge','telegraph','waveEnd','overload','desperation'].includes(state.stage))return;
     const {w,h,portrait}=layout(), s=Math.min(w/780,h/560),swing=state.stage==='attack'&&motion()?Math.sin(clamp(state.age/1.1)*Math.PI):0;
     c.save();c.globalAlpha=state.turn===0&&state.stage==='command'?ease(state.age/.6):1;c.translate(w*(portrait?.47:.57)-swing*w*.17,h*.76);c.rotate(-.16-swing*.85);c.scale(s,s);
     polygon([[-31,92],[-24,0],[-10,-15],[12,-12],[30,9],[27,46],[55,95]],'#263341','#5c696d',2);
@@ -299,7 +297,7 @@ const battleScenes = (() => {
     polygon([[0,-233],[8,-218],[6,-82],[0,-82]],'#7f9fa6');c.restore();
   }
   function drawArena() {
-    if(!['telegraph','dodge','waveEnd'].includes(state.stage))return;
+    if(!['telegraph','dodge','waveEnd','overload','desperation'].includes(state.stage))return;
     const {box}=layout(), appearing=state.stage==='telegraph'?ease(state.age/.65):1;
     c.save();c.translate(box.x+box.w/2,box.y+box.h/2);c.scale(appearing,appearing);c.translate(-box.w/2,-box.h/2);
     polygon([[-5,3],[box.w*.22,-3],[box.w*.49,1],[box.w*.78,-2],[box.w+4,1],[box.w+2,box.h*.48],[box.w+5,box.h-1],[box.w*.67,box.h+4],[box.w*.32,box.h+1],[-3,box.h+3],[-1,box.h*.52]],'#020609','#f3e9dc',3);
@@ -308,16 +306,31 @@ const battleScenes = (() => {
     c.strokeStyle='#25303b';c.lineWidth=.7;
     for(let x=0;x<AW;x+=30){c.beginPath();c.moveTo(x,0);c.lineTo(x,AH);c.stroke();}
     for(let y=0;y<AH;y+=30){c.beginPath();c.moveTo(0,y);c.lineTo(AW,y);c.stroke();}
-    for(const warning of state.warnings) {
-      c.save();c.strokeStyle=warning.fired?'#ff9aa3':'#d8b568';c.globalAlpha=warning.fired?.3:.45+warning.age*.45;c.lineWidth=warning.fired?34:2;
-      c.setLineDash(warning.fired?[]:[6,5]);c.beginPath();
-      if(warning.vertical){c.moveTo(warning.pos,0);c.lineTo(warning.pos,AH);}else{c.moveTo(0,warning.pos);c.lineTo(AW,warning.pos);}c.stroke();c.restore();
+    for(const warning of state.warnings){
+      const active=warning.age>=warning.delay&&warning.age<warning.delay+warning.duration,
+        fade=warning.age>warning.delay+warning.duration?1-clamp((warning.age-warning.delay-warning.duration)/.3):1;
+      c.save();c.globalAlpha=fade;c.strokeStyle=active?'#fff1d3':'#ddb979';c.lineWidth=active?warning.width:1.4;c.setLineDash(active?[]:[7,5]);
+      c.beginPath();c.moveTo(warning.ax,warning.ay);c.lineTo(warning.bx,warning.by);c.stroke();
+      if(active){c.strokeStyle='#ee426e';c.lineWidth=warning.width+7;c.globalAlpha=.3;c.stroke();}
+      c.restore();
     }
     for(const b of state.bullets){
-      c.fillStyle=b.kind==='claw'?'#fff0d0':'#f05c83';
-      if(b.kind==='ember'){polygon([[b.x,b.y-7],[b.x+5,b.y],[b.x,b.y+7],[b.x-5,b.y]],'#e74e70');c.fillStyle='#ffd7bc';c.fillRect(b.x-2,b.y-2,3,4);}
-      else if(b.kind==='shard')polygon([[b.x,b.y-8],[b.x+5,b.y+5],[b.x,b.y+3],[b.x-5,b.y+5]],'#f5b9ce','#eb547a',1);
-      else{c.fillRect(b.x-3,b.y-9,6,18);c.fillStyle='#d84968';c.fillRect(b.x-2,b.y-5,4,9);}
+      if(b.trail?.length){c.save();c.globalAlpha=.17;c.strokeStyle=b.kind==='needle'?'#a5c2f6':'#ed5c85';c.lineWidth=3;c.beginPath();b.trail.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();c.restore();}
+      c.save();c.translate(b.x,b.y);c.rotate(Math.atan2(b.vy,b.vx)-Math.PI/2);
+      if(b.kind==='ember'){polygon([[0,-7],[5,0],[0,7],[-5,0]],'#e74e70');c.fillStyle='#ffd7bc';c.fillRect(-1,-2,2,4);}
+      else if(b.kind==='needle'){polygon([[0,-9],[3,3],[0,7],[-3,3]],'#bdd5ff','#5b88d6',.7);}
+      else polygon([[0,-8],[5,5],[0,3],[-5,5]],'#f5b9ce','#eb547a',1);
+      c.restore();
+    }
+    if(state.stage==='desperation'){
+      const period=state.critical?.65:1,next=(state.age-(state.critical?0:.2))%period,
+        pulse=ease(clamp(next/period));
+      c.save();c.strokeStyle='#f05d86';c.globalAlpha=.28+.3*pulse;c.lineWidth=2;
+      c.strokeRect(4+pulse*22,4+pulse*10,AW-8-pulse*44,AH-8-pulse*20);
+      const t=state.age-state.pressureAt;
+      if(t>=0&&t<.45){c.globalAlpha=(1-t/.45)*.22;c.fillStyle='#e73466';c.fillRect(0,0,AW,AH);}
+      for(let i=0;i<10;i++){const xx=i*AW/9,yy=i%2?AH-7:7;polygon([[xx-4,yy],[xx,yy-4],[xx+4,yy],[xx,yy+4]],'#cf5674');}
+      c.restore();
     }
     if(state.stage!=='waveEnd'){
       const {x,y}=state.soul;
@@ -327,70 +340,63 @@ const battleScenes = (() => {
     }
     c.restore();c.restore();
   }
-  function intro() {
-    const {w,h}=layout(), age=state.age, duration=motion()?3.4:1.3,
-      p=clamp(age/duration), blend=ease((p-.56)/.44), focus=state.origin,
-      target=enemyPosition(), initial=state.initialView,
-      initialScale=initial.scale*w,
-      zoom=motion()?initialScale+(target.height/74-initialScale)*ease(p/.78):initialScale,
-      pan=motion()?ease((p-.4)/.55):blend,
-      centre={x:initial.x*w+(target.x-initial.x*w)*pan,y:initial.y*h+(target.ground-initial.y*h)*pan},
-      camera={x:360+(focus.x-360)*ease(p/.75),y:240+(focus.y-240)*ease(p/.75)},
-      emergence=ease(age/(duration*.4));
+  function intro(){
+    const {w,h}=layout(),age=motion()?state.age:state.age*1.8,
+      bandH=Math.min(h*.76,w*.56),top=(h-bandH)/2-h*.03,
+      blend=ease((age-3.9)/1.7),open=ease(age/.65),art=state.pictures.forestAmbush,
+      cover=Math.max(w/art.naturalWidth,bandH/art.naturalHeight),aw=art.naturalWidth*cover,ah=art.naturalHeight*cover,
+      left=(w-aw)/2,ay=top+(bandH-ah)/2;
     backdrop();
-    c.save();c.globalAlpha=1-blend;c.translate(centre.x,centre.y);c.scale(zoom,zoom);
-    c.translate(-camera.x,-camera.y);c.drawImage(state.snapshot,0,0,720,480);
-    c.fillStyle='#4c153577';c.beginPath();c.ellipse(focus.x,focus.y-15,36*emergence,15*emergence,0,0,Math.PI*2);c.fill();c.restore();
-    // One continuous enemy projection bridges the field camera and the arena.
-    // Only the scenery crossfades, so two silhouettes never overlap during entry.
-    const projected={x:centre.x+(focus.x-camera.x)*zoom,y:centre.y+(focus.y-camera.y)*zoom,height:74*emergence*zoom};
-    pixelAtlases.draw(c,state.enemy,0,projected.x+(target.x-projected.x)*blend,projected.y+(target.ground-projected.y)*blend,projected.height+(target.height-projected.height)*blend,emergence);
-    if(p>.2&&p<.85){
-      c.save();c.globalAlpha=Math.sin(clamp((p-.2)/.65)*Math.PI)*.85;
-      c.fillStyle='#09070cd9';c.fillRect(0,h*.63,w,h*.14);
-      c.font=`bold ${Math.max(28,Math.min(w*.06,56))}px Galmuri,monospace`;c.textAlign='center';c.fillStyle='#fff2d6';c.fillText('균 열 의 추 적 자',w*.5,h*.72);c.restore();
+    c.save();c.globalAlpha=1-blend;c.beginPath();c.rect(0,top,w,bandH);c.clip();
+    c.drawImage(art,left,ay,aw,ah);c.fillStyle='#06161835';c.fillRect(0,top,w,bandH);
+    const rustle=clamp((age-1.65)/.9);
+    if(age>1.65&&age<2.65){
+      const eyesX=w*.23+Math.sin(age*14)*rustle*2,eyesY=top+bandH*.59;
+      c.fillStyle='#f55d76';c.fillRect(eyesX-9,eyesY,5,2);c.fillRect(eyesX+6,eyesY-1,5,2);
+      for(let i=0;i<10;i++){const xx=w*(.08+i*.023)+Math.sin(age*12+i)*rustle*8,yy=top+bandH*(.7+(i%3)*.04);polygon([[xx,yy],[xx+12,yy-8],[xx+21,yy],[xx+7,yy+3]],i%2?'#32613d':'#5b864d');}
     }
+    c.restore();
+    if(age<.7){
+      c.save();c.globalAlpha=1-ease(age/.7);
+      const initial=state.initialView,s=initial.scale*w;
+      c.drawImage(state.snapshot,initial.x*w-360*s,initial.y*h-240*s,720*s,480*s);c.restore();
+    }
+    if(age>=2.6){
+      const lunge=ease((age-2.6)/.48),land=ease((age-3.08)/.5),target=enemyPosition(),
+        x=w*(.12+.42*lunge),ground=top+bandH*.94-Math.sin(lunge*Math.PI)*bandH*.25,
+        height=bandH*(.56+.26*lunge),px=x+(target.x-x)*blend,py=ground+(target.ground-ground)*blend,
+        ph=height+(target.height-height)*blend;
+      c.save();
+      if(blend<.01){c.beginPath();c.rect(0,top,w,bandH);c.clip();}
+      if(motion()&&age>3.08&&age<3.35)c.translate(Math.sin(age*75)*3*(1-land),0);
+      c.fillStyle='#02080ab0';c.beginPath();c.ellipse(px,py+2,ph*.37,ph*.04,0,0,Math.PI*2);c.fill();
+      pixelAtlases.draw(c,state.enemy,age<3.12?2:0,px,py,ph);
+      // The left trunk occludes the monster until it clears the bushes.
+      if(age<2.94){c.save();c.beginPath();c.beginPath();[[0,top],[w*.19,top],[w*.22,top+bandH*.18],[w*.20,top+bandH*.35],[w*.235,top+bandH*.53],[w*.21,top+bandH*.65],[w*.30,top+bandH*.82],[w*.34,top+bandH],[0,top+bandH]].forEach(([xx,yy],i)=>i?c.lineTo(xx,yy):c.moveTo(xx,yy));c.closePath();c.clip();c.drawImage(art,left,ay,aw,ah);c.restore();}
+      if(age<3.65){const t=clamp((age-2.6)/1.05);c.globalAlpha=1-t;
+        for(let i=0;i<26;i++){const a=i*2.399,xx=w*.25+Math.cos(a)*t*w*.2,yy=top+bandH*.72+Math.sin(a)*t*bandH*.25+t*t*35;c.fillStyle=i%3?'#76984e':'#c4c880';c.fillRect(xx,yy,3+i%3,2);}}
+      c.restore();
+    }
+    // Letterbox bars close first and open into the battle without a hard cut.
+    c.fillStyle='#020306';const bar=top*open*(1-blend);c.fillRect(0,0,w,Math.max(0,bar));
+    const bottom=top+bandH;c.fillRect(0,h-(h-bottom)*open*(1-blend),w,(h-bottom)*open*(1-blend)+1);
   }
-  function rescueScene() {
-    if(!cinematic()||state.stage==='threat')return;
-    const {w,h,portrait}=layout(),age=state.age,kind=state.stage,
-      focus=['entrance','aim','arrow','impact','dissolve'].includes(kind),
-      x=focus?w*.23:w*(kind==='approach'?.23+ease(age/2.1)*.13:.36),
-      ground=h*(portrait?.54:.6),height=h*(portrait?.32:.45);
-    if(focus){
-      c.save();c.globalAlpha=kind==='entrance'?ease(age/1.6):1;
-      const glow=c.createRadialGradient(x,ground-height*.5,10,x,ground-height*.5,height*.7);glow.addColorStop(0,'#65815c30');glow.addColorStop(1,'#182c2300');c.fillStyle=glow;c.fillRect(0,h*.1,w*.5,h*.6);c.restore();
-    }
-    if(kind==='entrance'){
-      const enter=ease(age/1.7);pixelAtlases.draw(c,state.walk,Math.floor(age*9.6)%8,x-(1-enter)*w*.33,ground,height,enter);
-    } else if(['aim','arrow','impact','dissolve'].includes(kind)) {
-      const frame=kind==='aim'?Math.min(2,Math.floor(age/.64)):3;
-      pixelAtlases.draw(c,state.bow,frame,x,ground,height*1.16);
-      if(kind==='aim'){
-        const enemy=enemyPosition(),target={x:enemy.x,y:enemy.ground-enemy.height*.60};
-        c.save();c.globalAlpha=ease((age-.8)/.8)*.6;c.setLineDash([4,9]);c.strokeStyle='#bce5b5';c.lineWidth=1;c.beginPath();c.moveTo(x+height*.3,ground-height*.57);c.lineTo(target.x,target.y);c.stroke();c.setLineDash([]);
-        c.strokeStyle='#f3dd9d';c.strokeRect(target.x-11,target.y-11,22,22);c.restore();
-      }
-    } else if(['approach','won'].includes(kind)) {
-      pixelAtlases.draw(c,state.walk,kind==='won'?0:Math.floor(age*9.6)%8,x,ground,height);
-    }
-    if(kind==='arrow'||(kind==='impact'&&age<.2)){
-      const enemy=enemyPosition(),target={x:enemy.x,y:enemy.ground-enemy.height*.60},start={x:w*.23+height*.5,y:ground-height*.67},
-        t=kind==='impact'?1:ease(age/1.15),ax=start.x+(target.x-start.x)*t,ay=start.y+(target.y-start.y)*t;
-      c.save();c.translate(ax,ay);c.rotate(Math.atan2(target.y-start.y,target.x-start.x));
-      if(kind==='arrow'){const trail=c.createLinearGradient(-80,0,0,0);trail.addColorStop(0,'#c8efb000');trail.addColorStop(1,'#d6f5b5aa');c.fillStyle=trail;c.fillRect(-80,-2,76,4);}
-      c.fillStyle='#ded5b1';c.fillRect(-42,-1,39,2);polygon([[2,0],[-8,-4],[-7,4]],'#ffefc0');polygon([[-34,0],[-46,-6],[-42,0],[-47,5]],'#b4d599');c.restore();
-    }
-    if(['entrance','aim'].includes(kind)){
-      c.fillStyle='#c9e8b5';c.font=`${Math.max(16,Math.min(w*.027,25))}px Galmuri,monospace`;c.textAlign='center';c.fillText('카니아',x,ground+25);c.textAlign='left';
-    }
+  function rescueScene(){
+    if(!['arrow','impact'].includes(state.stage))return;
+    const age=state.age;if(state.stage==='impact'&&age>.14)return;
+    const {w,h}=layout(),enemy=enemyPosition(),target={x:enemy.x,y:enemy.ground-enemy.height*.60},
+      start={x:w+70,y:h*.15},t=state.stage==='impact'?1:clamp(age/.18),
+      x=start.x+(target.x-start.x)*t,y=start.y+(target.y-start.y)*t;
+    c.save();c.translate(x,y);c.rotate(Math.atan2(target.y-start.y,target.x-start.x));
+    c.strokeStyle='#e4f1bd';c.lineWidth=2;c.beginPath();c.moveTo(-155,0);c.lineTo(-38,0);c.stroke();
+    c.fillStyle='#c1b899';c.fillRect(-45,-1,42,2);polygon([[3,0],[-10,-4],[-8,4]],'#fff3d5');polygon([[-35,0],[-48,-6],[-44,0],[-49,6]],'#b5d597');c.restore();
   }
   function draw() {
     if(!state)return;
     c.imageSmoothingEnabled=false;
     if(state.stage==='intro'){intro();return;}
     backdrop();drawEnemy();drawHands();drawArena();rescueScene();
-    if(state.stage==='threat'){
+    if(['overload','lastStrike'].includes(state.stage)){
       const {w,h}=layout();c.save();c.globalAlpha=.16*ease(state.age/2);c.fillStyle='#ef2d60';c.fillRect(0,0,w,h);c.restore();
     }
     if(motion()&&state.elapsed-state.hurtAt<.2){c.strokeStyle='#ff677b';c.lineWidth=5;c.strokeRect(3,3,canvas.width-6,canvas.height-6);}
@@ -411,9 +417,9 @@ const battleScenes = (() => {
       initialView={x:(worldRect.x+worldRect.width/2-viewport.x)/viewport.width,y:(worldRect.y+worldRect.height/2-viewport.y)/viewport.height,scale:worldRect.width/viewport.width/720};
     state={...options,snapshot,initialView,stage:'intro',age:0,elapsed:0,enemyHp:96,hp:clamp(options.hp,1,24),turn:0,selection:0,rescued:false,
       bullets:[],warnings:[],soul:{x:AW/2,y:AH*.68},invincible:0,hurtAt:-10,
-      enemy:pixelAtlases.make(options.pictures.demonActions,4,2),walk:pixelAtlases.make(options.pictures.kaniaWalk,4,2),bow:pixelAtlases.make(options.pictures.kaniaArchery,4,1)};
+      enemy:pixelAtlases.make(options.pictures.demonActions,4,2)};
     root.hidden=false;delete root.dataset.ready;document.querySelector('#battle-player-name').textContent=options.name;
-    items.replaceChildren();stage('intro','');fit();gameAudio.sfx('battleStart');
+    items.replaceChildren();stage('intro','');fit();
   }
   function play(){if(!state)return;cancelAnimationFrame(request);previous=performance.now();request=requestAnimationFrame(loop);}
   function finish(){if(state?.stage!=='won'||performance.now()<state.inputAfter)return;const {after,hp}=state;stop();after({hp});}
@@ -429,7 +435,7 @@ const battleScenes = (() => {
   function handle(code,repeat,shift){
     if(!state)return false;
     const moving=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','ShiftLeft','ShiftRight'];
-    if(state.stage==='dodge'&&moving.includes(code)){held.add(code);state.pointer=null;return true;}
+    if(['dodge','desperation'].includes(state.stage)&&moving.includes(code)){held.add(code);state.pointer=null;return true;}
     if(![...moving,'KeyE','Enter','Space','Escape','KeyC','Tab','Digit1','Digit2','Digit3'].includes(code))return false;
     if(code==='Tab'){
       const list=[...root.querySelectorAll('button:not([disabled])'),document.querySelector('#game-sound-toggle')].filter(b=>!b.hidden&&b.getClientRects().length&&!b.closest('[hidden]')),
@@ -446,14 +452,14 @@ const battleScenes = (() => {
   next.addEventListener('click',()=>state?.stage==='info'?command():finish());
   function point(event){const r=canvas.getBoundingClientRect(),{box}=layout();return{x:(event.clientX-r.left)/r.width*canvas.width-box.x,y:(event.clientY-r.top)/r.height*canvas.height-box.y,box};}
   canvas.addEventListener('pointerdown',event=>{
-    if(state?.stage!=='dodge')return;const p=point(event);
+    if(!['dodge','desperation'].includes(state?.stage))return;const p=point(event);
     if(p.x<0||p.y<0||p.x>p.box.w||p.y>p.box.h)return;
     canvas.setPointerCapture(event.pointerId);held.clear();state.pointer={x:p.x/p.box.w*AW,y:p.y/p.box.h*AH};event.preventDefault();
   });
-  canvas.addEventListener('pointermove',event=>{if(state?.stage!=='dodge'||!canvas.hasPointerCapture(event.pointerId))return;const p=point(event);state.pointer={x:clamp(p.x/p.box.w,0,1)*AW,y:clamp(p.y/p.box.h,0,1)*AH};});
+  canvas.addEventListener('pointermove',event=>{if(!['dodge','desperation'].includes(state?.stage)||!canvas.hasPointerCapture(event.pointerId))return;const p=point(event);state.pointer={x:clamp(p.x/p.box.w,0,1)*AW,y:clamp(p.y/p.box.h,0,1)*AH};});
   const pointerEnd=()=>{if(state)state.pointer=null;};canvas.addEventListener('pointerup',pointerEnd);canvas.addEventListener('pointercancel',pointerEnd);canvas.addEventListener('lostpointercapture',pointerEnd);
   touchPad.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('pointerdown',e=>{if(state?.stage!=='dodge')return;b.setPointerCapture(e.pointerId);held.add(b.dataset.dodge);state.pointer=null;b.classList.add('is-held');e.preventDefault();});
+    b.addEventListener('pointerdown',e=>{if(!['dodge','desperation'].includes(state?.stage))return;b.setPointerCapture(e.pointerId);held.add(b.dataset.dodge);state.pointer=null;b.classList.add('is-held');e.preventDefault();});
     for(const name of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(name,()=>{held.delete(b.dataset.dodge);b.classList.remove('is-held');});
   });
   new ResizeObserver(fit).observe(document.querySelector('#game-screen'));

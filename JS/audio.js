@@ -26,6 +26,7 @@ const gameAudio = (() => {
     guild: { wind: 0.018, water: 0, cutoff: 300 },
     shop: { wind: 0.012, water: 0, cutoff: 260 },
     library: { wind: 0.008, water: 0, cutoff: 240 },
+    ambush: { wind: 0.008, water: 0, cutoff: 160 },
     battle: { wind: 0.02, water: 0, cutoff: 390 },
     city: { wind: 0.035, water: 0.055, cutoff: 650 },
     departure: { wind: 0.07, water: 0, cutoff: 290 },
@@ -185,6 +186,7 @@ const gameAudio = (() => {
     }
     const now = context.currentTime;
     const rolling = place === "carriage" || place === "departure";
+    if (place === "ambush") return;
     if (place === "battle") {
       if (nextBeat < now - .3) nextBeat = now + .03;
       const bass = [82.41,82.41,98,73.42,82.41,110,98,73.42];
