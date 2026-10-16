@@ -2,6 +2,7 @@
 const gameAudio = (() => {
   let context,
     master,
+    effectsBus,
     voiceBus,
     sceneryBus,
     ambience,
@@ -18,6 +19,9 @@ const gameAudio = (() => {
   let battleBus, battleWanted = false, battleStopping = false, battlePlay = null,
     battleFadeTimer = 0, battleMode = "command", samplesLoading = null;
   const battleLevel = () => battleMode === "danger" ? .82 : battleMode === "dodge" ? .74 : .62;
+  const townTrack = document.querySelector("#town-music"), townPlaces = new Set(["guild", "city", "shop"]);
+  const townLevel = .66;
+  let townBus, townWanted = false, townStopping = false, townPlay = null, townFadeTimer = 0;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -158,6 +162,34 @@ const gameAudio = (() => {
     );
     syncJourney();
     syncBattle();
+    syncTown();
+  }
+  function syncTown() {
+    if (!townBus || !townTrack) return;
+    if (townStopping) { if (!usable()) townTrack.pause(); return; }
+    if (!townWanted || !usable()) { townTrack.pause(); townBus.gain.setTargetAtTime(0, context.currentTime, .04); return; }
+    if (townTrack.paused && !townPlay) {
+      townBus.gain.cancelScheduledValues(context.currentTime);
+      townBus.gain.setTargetAtTime(townLevel, context.currentTime, .65);
+      townPlay = townTrack.play().catch(() => {}).finally(() => { townPlay = null; });
+    }
+  }
+  function startTown() {
+    clearTimeout(townFadeTimer); townStopping = false; townWanted = true;
+    if (townBus && usable()) {
+      townBus.gain.cancelScheduledValues(context.currentTime);
+      townBus.gain.setTargetAtTime(townLevel, context.currentTime, .65);
+    }
+    syncTown();
+  }
+  function stopTown(fade = .75, reset = false) {
+    townWanted = false; townStopping = false; clearTimeout(townFadeTimer);
+    const finish = () => { townStopping = false; townTrack?.pause(); if (reset && townTrack) townTrack.currentTime = 0; };
+    if (fade > 0 && townBus && !townTrack.paused && usable()) {
+      townStopping = true; const now = context.currentTime;
+      townBus.gain.cancelScheduledValues(now); townBus.gain.setValueAtTime(townBus.gain.value, now);
+      townBus.gain.linearRampToValueAtTime(0, now+fade); townFadeTimer = setTimeout(finish, fade*1000);
+    } else finish();
   }
   function preloadCombat() {
     if (!context || samplesLoading || !combatAssets) return samplesLoading;
@@ -171,14 +203,19 @@ const gameAudio = (() => {
     }));
     return samplesLoading;
   }
-  function sample(name, level = 1, rate = 1) {
+  function sample(name, level = 1, rate = 1, length = null) {
     const buffer = samples.get(name);
     if (!buffer || !usable()) return false;
     const source = context.createBufferSource(), gain = context.createGain();
     source.buffer = buffer; source.playbackRate.value = rate; gain.gain.value = level;
-    source.connect(gain); gain.connect(master);
+    source.connect(gain); gain.connect(effectsBus);
     track(source, "effect", gain);
-    source.addEventListener("ended", () => gain.disconnect()); source.start();
+    source.addEventListener("ended", () => gain.disconnect());
+    if(length!==null){
+      const at=context.currentTime,duration=Math.min(buffer.duration,length)/rate;
+      gain.gain.setValueAtTime(level,at+Math.max(0,duration-.08));gain.gain.linearRampToValueAtTime(0,at+duration);
+      source.start(at,0,Math.min(buffer.duration,length));
+    }else source.start();
     return true;
   }
   function syncBattle() {
@@ -219,8 +256,10 @@ const gameAudio = (() => {
   }
   function battlePhase(phase) {
     if (phase === "lastStrike") { stopBattle(.45); return; }
-    battleMode = ["overload", "desperation"].includes(phase) ? "danger" : phase === "dodge" ? "dodge" : "command";
-    if (battleWanted && battleBus && !battleStopping && usable()) {
+    const nextMode = ["overload", "desperation"].includes(phase) ? "danger" : phase === "dodge" ? "dodge" : "command",
+      changed = battleMode !== nextMode;
+    battleMode = nextMode;
+    if (changed && battleWanted && battleBus && !battleStopping && usable()) {
       const now = context.currentTime; battleBus.gain.cancelScheduledValues(now);
       battleBus.gain.setTargetAtTime(battleLevel(), now, .35);
     }
@@ -286,6 +325,8 @@ const gameAudio = (() => {
     return (landscapes[place] || landscapes.title).wind;
   }
   function scene(next) {
+    if (townPlaces.has(next)) startTown();
+    else if (townWanted || next === "title") stopTown(next === "title" ? .2 : .75, next === "title");
     if (["ambush", "battle", "title", "library"].includes(next) && journeyWanted)
       stopJourney(next === "ambush" ? 0.55 : 0.2);
     if (next === "ambush") {
@@ -419,7 +460,9 @@ const gameAudio = (() => {
         context = new Audio();
         master = context.createGain();
         master.gain.value = 0;
-        // Dialogue has its own +9 dB bus; UI and impact effects keep their mix.
+        // Raise effects by about 4.3 dB without lifting music or dialogue.
+        effectsBus = context.createGain(); effectsBus.gain.value = 1.65; effectsBus.connect(master);
+        // Dialogue retains its own +9 dB bus.
         voiceBus = context.createGain();
         voiceBus.gain.value = 2.8;
         voiceBus.connect(master);
@@ -432,6 +475,8 @@ const gameAudio = (() => {
         context.createMediaElementSource(journeyTrack).connect(musicBus);
         battleBus = context.createGain(); battleBus.gain.value = 0; battleBus.connect(master);
         context.createMediaElementSource(battleTrack).connect(battleBus);
+        townBus = context.createGain(); townBus.gain.value = 0; townBus.connect(master);
+        context.createMediaElementSource(townTrack).connect(townBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -517,6 +562,23 @@ const gameAudio = (() => {
     noise(0.045, 0.14 * strength, 2600, delay + 0.04, { group, crisp: true });
     tone(1370, 0.075, { group, delay: delay + 0.06, wave: "sine", level: 0.045 * strength, end: 890, filter: 2200 });
   }
+  function comicCry() {
+    // A nasal "wa, wa, waaa" with a drooping final note and cartoon vibrato.
+    for (const [delay,hz,length] of [[.035,622,.19],[.29,466,.21],[.56,311,.58]]) {
+      const at=context.currentTime+delay,osc=context.createOscillator(),vibrato=context.createOscillator(),
+        depth=context.createGain(),filter=context.createBiquadFilter(),gain=context.createGain();
+      osc.type="sawtooth";osc.frequency.setValueAtTime(hz,at);osc.frequency.exponentialRampToValueAtTime(hz*.55,at+length);
+      vibrato.frequency.value=7;depth.gain.value=hz*.035;vibrato.connect(depth);depth.connect(osc.frequency);
+      filter.type="bandpass";filter.Q.value=1.7;filter.frequency.setValueAtTime(1150,at);filter.frequency.exponentialRampToValueAtTime(430,at+length);
+      gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(.19,at+.022);gain.gain.setTargetAtTime(0,at+length*.67,.055);
+      osc.connect(filter);filter.connect(gain);gain.connect(effectsBus);
+      track(osc,"comic",gain);track(vibrato,"comic",gain);
+      osc.addEventListener("ended",()=>{filter.disconnect();depth.disconnect();gain.disconnect();});
+      osc.start(at);vibrato.start(at);osc.stop(at+length+.08);vibrato.stop(at+length+.08);
+    }
+    noise(.06,.13,1250,0,{crisp:true,group:"comic"});noise(.055,.10,1000,.23,{crisp:true,group:"comic"});
+    tone(155,.19,{wave:"triangle",level:.08,end:72,delay:1.04,filter:600,group:"comic"});
+  }
   function tone(hz, length, options = {}) {
     if (!usable() || playing.size >= (options.group === "scene" ? 16 : 28))
       return;
@@ -547,7 +609,7 @@ const gameAudio = (() => {
     oscillator.connect(lowpass);
     lowpass.connect(gain);
     gain.connect(
-      group === "voice" ? voiceBus : group === "scene" ? sceneryBus : master,
+      group === "voice" ? voiceBus : group === "scene" ? sceneryBus : effectsBus,
     );
     oscillator.start(at);
     oscillator.stop(at + length + 0.006);
@@ -579,7 +641,7 @@ const gameAudio = (() => {
     gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
     source.connect(filter);
     filter.connect(gain);
-    gain.connect(group === "scene" ? sceneryBus : master);
+    gain.connect(group === "scene" ? sceneryBus : effectsBus);
     source.start(at, Math.random());
     source.stop(at + length + 0.006);
     track(source, group, gain);
@@ -610,6 +672,11 @@ const gameAudio = (() => {
       battleBus.gain.setTargetAtTime(battleLevel()*.5, lastVoice, .035);
       battleBus.gain.setTargetAtTime(battleLevel(), lastVoice+.2, .35);
     }
+    if (townWanted && townBus && !townStopping) {
+      townBus.gain.cancelScheduledValues(lastVoice);
+      townBus.gain.setTargetAtTime(townLevel*.4,lastVoice,.04);
+      townBus.gain.setTargetAtTime(townLevel,lastVoice+.2,.5);
+    }
     const mood = ["concerned", "weary", "embarrassed"].includes(expression)
       ? 0.92
       : ["boasting", "incredulous", "warning"].includes(expression)
@@ -638,6 +705,11 @@ const gameAudio = (() => {
       name === "footstep" ? 0.13 : name === "select" ? 0.045 : 0.065;
     if (now - (recent.get(key) ?? -Infinity) < minimum) return;
     recent.set(key, now);
+    if (battleWanted && battleBus && !battleStopping && ["demon","sword","parry","charge"].includes(name)) {
+      battleBus.gain.cancelScheduledValues(now);
+      battleBus.gain.setTargetAtTime(battleLevel()*.52,now,.012);
+      battleBus.gain.setTargetAtTime(battleLevel(),now+(name==="demon"?.6:.2),.22);
+    }
     switch (name) {
       case "select":
         tone(860, 0.035, { wave: "square", level: 0.035, end: 1050 });
@@ -646,14 +718,21 @@ const gameAudio = (() => {
         [440,330,220,110].forEach((hz,i)=>tone(hz,.14,{wave:"square",level:.12,delay:i*.08,end:hz*.7}));
         noise(.32,.3,550); break;
       case "demon":
-        sample("demon", 1.1, .82);
-        tone(74,.38,{wave:"sawtooth",level:.16,end:48,filter:600});noise(.2,.2,340);break;
+        sample("demon", variant === "short" ? .8 : .95, 1, variant === "short" ? 1.0 : null);
+        tone(62,.75,{wave:"sawtooth",level:.11,end:38,filter:480});noise(.38,.22,380);break;
       case "volley":
-        sample("volley", .12, variant === "claw" ? .65 : .9);
+        sample("volley", variant === "surge" ? .35 : .28, variant === "spiral" ? 1.35 : variant === "surge" ? .75 : 1.1);
+        noise(.035,.12,variant === "surge" ? 1400 : 2800,0,{crisp:true});
+        break;
+      case "claw":
+        sample("sword", .45, .75);noise(.09,.19,2100,0,{crisp:true});
+        break;
+      case "warning":
+        tone(680,.10,{wave:"sine",level:.065,end:1100,filter:1800});
         break;
       case "sword":
-        if (!sample("sword", 1.2)) noise(.15,.4,2600,0,{crisp:true});
-        tone(740,.17,{wave:"triangle",level:.075,end:180});break;
+        if (!sample("sword", 1.2)) noise(.12,.4,3500,0,{crisp:true});
+        [2350,3525,4700].forEach((hz,i)=>tone(hz,.22-i*.04,{wave:"sine",level:.07/(i+1),end:hz*.93,filter:6500}));break;
       case "parry":
         sample("parry", .8, 1.35);
         [1160,1740].forEach(hz=>tone(hz,.19,{wave:"sine",level:.1}));break;
@@ -664,11 +743,11 @@ const gameAudio = (() => {
         sample("charge", .8, .85);
         tone(83,.9,{wave:"sawtooth",level:.1,end:260,filter:900});break;
       case "arrow":
-        if (!sample("arrow", 1.3, 1.1)) noise(.18,.35,3200,0,{crisp:true});
-        tone(1200,.12,{level:.06,end:340});break;
+        if (!sample("arrow", 1.2, 1.16)) noise(.15,.35,4400,0,{crisp:true});
+        tone(3600,.13,{wave:"sine",level:.065,end:1100,filter:7000});break;
       case "arrowHit":
-        sample("arrowHit", 1.3, .85);
-        noise(.09,.3,1050);tone(180,.2,{level:.16,end:48});break;
+        sample("arrowHit", 1.25, 1);
+        noise(.035,.3,3700,0,{crisp:true});tone(118,.17,{level:.19,end:38,filter:520});break;
       case "rescued":
         [392,494,659,784].forEach((hz,i)=>tone(hz,.28,{wave:"triangle",level:.09,delay:i*.09}));break;
       case "next":
@@ -745,9 +824,7 @@ const gameAudio = (() => {
         tone(300, 0.13, { wave: "square", level: 0.09, end: 620 });
         break;
       case "cry":
-        [0, 0.18].forEach((delay) =>
-          tone(460, 0.16, { wave: "triangle", level: 0.12, end: 180, delay }),
-        );
+        comicCry();
         break;
       case "birds":
         [0, 0.14, 0.36].forEach((delay, i) =>
@@ -824,9 +901,11 @@ const gameAudio = (() => {
   journeyTrack?.addEventListener("loadedmetadata", syncJourney);
   journeyTrack?.addEventListener("canplay", syncJourney);
   battleTrack?.addEventListener("canplay", syncBattle);
+  townTrack?.addEventListener("canplay", syncTown);
   const retryMusic = () => {
     if (journeyWanted && journeyTrack?.paused) syncJourney();
     if (battleWanted && battleTrack?.paused) syncBattle();
+    if (townWanted && townTrack?.paused) syncTown();
   };
   document.addEventListener("pointerdown", retryMusic, { passive: true });
   document.addEventListener("keydown", retryMusic, { passive: true });
@@ -841,6 +920,7 @@ const gameAudio = (() => {
     stopBattle,
     battlePhase,
     getCombatState: () => ({ active: battleWanted, mode: battleMode, samples: samples.size }),
+    getTownState: () => ({ active: townWanted, offset: townTrack?.currentTime ?? 0 }),
     getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,

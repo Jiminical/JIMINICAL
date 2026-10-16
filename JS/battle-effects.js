@@ -24,8 +24,84 @@ const battleEffects = (() => {
     }
     c.globalAlpha=1;
   }
-  function draw(ctx,{w,h,enemy,enemySheet,frame,stage,age,reaction,damage,motion}){
-    if(!['attack','impact'].includes(stage))return;
+  function arrowShaft(x,y,angle,size,shake=0){
+    const length=Math.max(26,size*.24),cs=Math.cos(angle),sn=Math.sin(angle),
+      at=(along,across)=>[x+cs*along-sn*(across+shake),y+sn*along+cs*(across+shake)],
+      shape=(points,color)=>polygon(points.map(([a,b])=>at(a,b)),color);
+    shape([[-length,-2],[-4,-2],[-4,2],[-length,2]],'#42384d');
+    shape([[-length,-1],[-4,-1],[-4,0],[-length,0]],'#ead39f');
+    shape([[4,0],[-7,-4],[-5,0],[-7,4]],'#f8fff5');
+    shape([[3,0],[-5,1],[-7,4]],'#9ec7cf');
+    shape([[-length+8,0],[-length-4,-6],[-length-2,-1]],'#8ca89a');
+    shape([[-length+8,1],[-length-4,6],[-length-2,1]],'#d5e2bf');
+    shape([[-length+5,-1],[-length-3,-4],[-length-2,-2]],'#f4e8ba');
+  }
+  function forehead(enemy,sheet,frame){
+    const anchors=[[.51,.35],[.46,.32],[.49,.37],[.50,.34],[.23,.34],[.77,.35],[.66,.16],[.36,.44]],
+      f=sheet.frames[frame%sheet.frames.length],head=anchors[frame%anchors.length],s=enemy.height/sheet.height;
+    return {x:enemy.x+(f.art.width*head[0]-f.anchor)*s,y:enemy.ground-(f.bottom-f.art.height*head[1])*s};
+  }
+  function arrowStrike({enemy,enemySheet,frame,previousFrame,poseBlend,stage,age,motion},scale,width,height){
+    const actor={...enemy,ground:enemy.ground+(stage==='dissolve'?age*8:0)},
+      target=forehead(actor,enemySheet,frame),previous=forehead(actor,enemySheet,previousFrame??frame),blend=poseBlend??1,
+      x=(previous.x+(target.x-previous.x)*blend)/scale,y=(previous.y+(target.y-previous.y)*blend)/scale,size=enemy.height/scale,
+      start={x:width+35,y:height*.15},angle=Math.atan2(y-start.y,x-start.x),
+      cs=Math.cos(angle),sn=Math.sin(angle);
+    if(stage==='arrow'){
+      const t=clamp(age/.18),xx=start.x+(x-start.x)*t,yy=start.y+(y-start.y)*t;
+      if(motion){
+        for(let i=0;i<3;i++){
+          const length=45+i*17,side=(i-1)*3;
+          c.globalAlpha=[.65,.85,.35][i];
+          polygon([[xx-cs*length-sn*side,yy-sn*length+cs*side],
+            [xx-cs*6-sn*side,yy-sn*6+cs*side],
+            [xx-cs*18-sn*(side+1),yy-sn*18+cs*(side+1)]],i===1?'#fff7d2':'#84c7cf');
+        }
+        c.globalAlpha=1;
+      }
+      arrowShaft(xx,yy,angle,size);
+      return;
+    }
+    const dissolve=stage==='dissolve',time=dissolve?1.2+age:age;
+    // The shaft remains lodged in the forehead and fades with the enemy.
+    c.save(); c.globalAlpha=dissolve?1-ease((age-.35)/1.8):1;
+    arrowShaft(x+cs*3,y+sn*3,angle,size,motion&&time<.27?Math.sin(time*105)*(1-time/.27)*1.7:0);
+    c.restore();
+    if(dissolve)return;
+    if(!motion){if(age<.28)star(x,y,size*.055,'#f5edc7');return;}
+    if(age<.12&&enemySheet){
+      m.clearRect(0,0,width,height);m.globalCompositeOperation='source-over';
+      pixelAtlases.draw(m,enemySheet,frame,enemy.x/scale,enemy.ground/scale,enemy.height/scale);
+      m.globalCompositeOperation='source-in';m.fillStyle='#fff4d7';m.fillRect(0,0,width,height);
+      c.globalAlpha=(1-age/.12)*.72;c.drawImage(mask,0,0);c.globalAlpha=1;
+    }
+    if(age<.16){
+      const length=size*.6,thickness=(1-age/.16)*3;
+      polygon([[x-cs*length-sn*thickness,y-sn*length+cs*thickness],
+        [x+cs*length,y+sn*length],[x-cs*length+sn*thickness,y-sn*length-cs*thickness]],'#fff1c0');
+    }
+    const flash=1-ease(age/.27);
+    if(flash>0){
+      star(x,y,size*.20*flash,'#76a9bc');star(x,y,size*.135*flash,'#f2d194');
+      star(x,y,size*.075*flash,'#fffef0');
+    }
+    if(age>.035&&age<.56){
+      const p=clamp((age-.035)/.525),radius=size*(.055+p*.33);
+      c.globalAlpha=(1-p)*.8;c.strokeStyle='#d5ead3';c.lineWidth=p<.3?2:1;
+      c.beginPath();for(let i=0;i<=12;i++){const a=i*Math.PI/6;c.lineTo(Math.round(x+Math.cos(a)*radius),Math.round(y+Math.sin(a)*radius*.61));}c.stroke();c.globalAlpha=1;
+    }
+    if(age<1.05)for(let i=0;i<26;i++){
+      const a=i*2.399,speed=size*(.18+(i%5)*.05),t=age,
+        xx=x+Math.cos(a)*speed*t,yy=y+Math.sin(a)*speed*t+t*t*size*.28,
+        r=(1-ease(t/1.05))*(1.4+i%3);
+      c.globalAlpha=1-ease((t-.4)/.65);
+      if(i%3===0){polygon([[xx-r,yy],[xx,yy-r*1.6],[xx+r,yy],[xx,yy+r]],'#403b56');c.fillStyle='#d5977a';c.fillRect(Math.round(xx),Math.round(yy-r),1,1);}
+      else star(xx,yy,r,i%2?'#f7e3a2':'#aacfd2');
+    }
+    c.globalAlpha=1;
+  }
+  function draw(ctx,{w,h,enemy,enemySheet,frame,previousFrame,poseBlend,stage,age,reaction,damage,motion}){
+    if(!['attack','arrow','impact','dissolve'].includes(stage))return;
     const scale=2,width=Math.ceil(w/scale),height=Math.ceil(h/scale);
     if(layer.width!==width||layer.height!==height){layer.width=mask.width=width;layer.height=mask.height=height;}
     c.clearRect(0,0,width,height);c.imageSmoothingEnabled=false;
@@ -68,15 +144,8 @@ const battleEffects = (() => {
         c.font=`${Math.max(16,Math.round(size*.15))}px Galmuri,monospace`;c.lineWidth=3;c.strokeStyle='#080b12';c.strokeText(String(damage),x,numberY);c.fillStyle=guard?'#d4d7e7':glance?'#b8cadc':'#ffe9a6';c.fillText(String(damage),x,numberY);
         c.font=`${Math.max(8,Math.round(size*.058))}px Galmuri,monospace`;c.strokeText(guard?'방어':glance?'스침':'적중',x,numberY+size*.12);c.fillText(guard?'방어':glance?'스침':'적중',x,numberY+size*.12);c.globalAlpha=1;
       }
-    }else if(stage==='impact'&&age<.8){
-      const impactY=(enemy.ground-enemy.height*.60)/scale,p=ease(age/.8);
-      c.globalAlpha=1-p;
-      if(motion){sparks(x,impactY,age,size*.65,true);c.globalAlpha=1-p;}
-      star(x,impactY,Math.max(0,1-ease(age/.3))*size*.15,'#eaffca');
-      if(motion)for(let i=0;i<8;i++){const a=i*Math.PI/4,r=size*(.06+p*.30);star(x+Math.cos(a)*r,impactY+Math.sin(a)*r,2,'#c8efbb');}
-      c.globalAlpha=1;
-    }
+    }else arrowStrike({enemy,enemySheet,frame,previousFrame,poseBlend,stage,age,motion},scale,width,height);
     ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(layer,0,0,width*scale,height*scale);ctx.restore();
   }
-  return {draw};
+  return {draw,forehead};
 })();

@@ -77,7 +77,7 @@ const journeyCinematic = (() => {
     // point controls position and size; no turns or spline overshoot exist.
     const t = clamp((seconds - cuts[1]) / (duration - cuts[1])), depth = 1 + t * .53,
       ground = .46 + .49 / depth;
-    return { x: .65 + (ground - .46) * .4, y: ground, width: .072 / depth };
+    return { x: .65 + (ground - .46) * .4, y: ground, width: .094 / depth };
   }
   function carriage(c, seconds, w, h, moving) {
     const position = roadPosition(seconds), width = position.width * w,

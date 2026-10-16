@@ -9,7 +9,7 @@ from pathlib import Path
 import base64
 import io
 import re
-from PIL import Image
+from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parent.parent
 page = (ROOT / "templates/index.html").read_text()
@@ -17,7 +17,8 @@ styles = "\n".join((ROOT / "CSS" / name).read_text() for name in ("main.css", "g
 script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "terrain.js", "lore.js", "archive.js", "staging.js", "letter.js", "shops.js", "sprites.js", "item-view.js", "weapon.js", "landscape.js", "journey.js", "walk.js", "menu-art.js", "battle-effects.js", "battle.js", "save.js", "game.js", "story.js", "main.js"))
 # Re-encode PNGs losslessly inside the portable file to leave room for the
 # additional scenery/audio under GitHub's 100 MiB per-file limit. Source assets
-# stay unchanged; decoded RGBA pixels must be identical, including transparency.
+# stay unchanged. Visible RGB and every alpha value must remain identical; the
+# encoder can optimise irrelevant RGB values hidden under fully transparent pixels.
 asset_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp|mp3)", page + "\n" + styles)))
 for ref in asset_refs:
     asset_path = ROOT / ref.removeprefix("../")
@@ -26,11 +27,17 @@ for ref in asset_refs:
     if asset_path.suffix == ".png":
         with Image.open(asset_path) as source:
             packed = io.BytesIO()
-            source.save(packed, format="WEBP", lossless=True, method=6, exact=True)
+            source.save(packed, format="WEBP", lossless=True, method=6, exact=False)
             candidate = packed.getvalue()
             if len(candidate) < len(data):
                 restored = Image.open(io.BytesIO(candidate)).convert("RGBA")
-                assert source.convert("RGBA").tobytes() == restored.tobytes(), asset_path
+                expected = source.convert("RGBA")
+                alpha = expected.getchannel("A")
+                assert alpha.tobytes() == restored.getchannel("A").tobytes(), asset_path
+                visible = alpha.point(lambda value: 255 if value else 0)
+                for channel in "RGB":
+                    difference = ImageChops.difference(expected.getchannel(channel), restored.getchannel(channel))
+                    assert ImageChops.multiply(difference, visible).getbbox() is None, asset_path
                 data, mime = candidate, "image/webp"
     encoded = base64.b64encode(data).decode("ascii")
     data_uri = "data:" + mime + ";base64," + encoded

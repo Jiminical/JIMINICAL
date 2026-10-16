@@ -155,6 +155,7 @@ const actionScenes = (() => {
   }
   function stop() {
     cancelAnimationFrame(request);
+    if(state?.kind === "rogue")gameAudio.stopTransient("comic");
     state = null;
     root.hidden = true;
     label.textContent = "";
