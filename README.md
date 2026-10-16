@@ -17,7 +17,12 @@ Cloudflare Workers의 GitHub 연동 배포는 아래 설정을 사용합니다.
 | Worker 이름 | `greenstoa` |
 
 Cloudflare의 **애플리케이션 생성 → Continue with GitHub**에서 `JIMINICAL`을 선택합니다.
-프로젝트 이름을 `greenstoa`로 지정하고, 고급 설정의 프로덕션 브랜치를 위 값으로 선택합니다.
+프로젝트 이름을 `greenstoa`로 지정해 생성합니다. 생성 화면에 브랜치 선택이 없다면
+생성 후 **설정 → 빌드 → 브랜치 제어(Branch control)**에서 프로덕션 브랜치를
+`codex/greenstoa-interactions-20261016`으로 지정하고 저장합니다.
+처음 `main`에서 실행된 빌드는 빌드 설정 파일이 없어 실패할 수 있습니다.
+기존 빌드의 **재시도**는 해당 빌드의 커밋을 다시 사용합니다. 브랜치를 바꾼 뒤에는
+선택한 브랜치에 새 커밋을 푸시하고, 그 커밋으로 생성된 새 빌드를 확인하세요.
 Cloudflare가 `package-lock.json`으로 의존성을 설치하고, Node 빌드가
 `dist-cloudflare`에 파일 분리본을 만든 뒤 Wrangler가 이 폴더만 업로드합니다.
 `wrangler.jsonc`의 Worker 이름은 Cloudflare의 이름과 같아야 합니다.
