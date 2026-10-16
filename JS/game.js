@@ -20,6 +20,8 @@ const guildGame = (() => {
   const menu = document.querySelector("#guild-menu");
   const itemList = document.querySelector("#guild-item-list");
   const itemDetail = document.querySelector("#guild-item-detail");
+  const itemInspection = document.querySelector("#item-inspection");
+  let inspectionInputAfter = 0;
   const objective = document.querySelector("#game-objective");
   const menuButton = document.querySelector("#guild-menu-open");
   const prompt = document.querySelector("#game-interaction");
@@ -144,6 +146,7 @@ const guildGame = (() => {
       leafTaken: false,
       springUsed: false,
       libraryReached: false,
+      libraryLetterRead: false,
     };
   const visited = new Set(["guild"]);
   let typingTimer = 0,
@@ -279,6 +282,7 @@ const guildGame = (() => {
     dialogueBox.hidden = true;
     prompt.hidden = true;
     menu.hidden = true;
+    hideItemInspection();
     hideTrading();
     hideReading();
     hideLibraryLetter();
@@ -664,7 +668,6 @@ const guildGame = (() => {
     visitCity(false);
   }
   function enterLibrary() {
-    const first = !fieldFlags.libraryReached;
     const welcome = () =>
       speak([
         {
@@ -684,7 +687,21 @@ const guildGame = (() => {
         fieldFlags.libraryReached = true;
       },
       () => {
-        if (first) showLibraryLetter(welcome);
+        if (!fieldFlags.libraryLetterRead)
+          libraryLetter.deliver({
+            motion: motion(),
+            after: () => {
+              fieldFlags.libraryLetterRead = true;
+              inventory.push({
+                id: "libraryLetter",
+                name: "추광더리우스 3세의 편지",
+                count: 1,
+                description: document.querySelector("#library-letter-message").textContent +
+                  "\n\n" + document.querySelector("#library-letter-signature").textContent,
+              });
+              welcome();
+            },
+          });
         else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
       },
     );
@@ -700,26 +717,26 @@ const guildGame = (() => {
     root.classList.remove("is-reading");
     document.querySelector(".world-viewport").inert = false;
   }
-  function hideLibraryLetter() {
-    libraryLetter.hide();
+  function hideLibraryLetter(reset = false) {
+    if (reset) libraryLetter.reset();
+    else libraryLetter.hide();
     root.classList.remove("is-letter");
     document.querySelector(".world-viewport").inert = false;
   }
-  function showLibraryLetter(after) {
+  function showLibraryLetter() {
+    if (!libraryLetter.waiting) return;
     keys.clear();
     phase = "letter";
     root.dataset.phase = phase;
     root.classList.add("is-letter");
     document.querySelector(".world-viewport").inert = true;
-    libraryLetter.show({
-      motion: motion(),
-      after: () => {
+    libraryLetter.open({
+      close: () => {
         if (!active) return;
         hideLibraryLetter();
         phase = "free";
         root.dataset.phase = phase;
         canvas.focus({ preventScroll: true });
-        after?.();
       },
     });
   }
@@ -1624,6 +1641,9 @@ const guildGame = (() => {
     return people;
   }
   function nearby() {
+    if (location === "library" && libraryLetter.waiting)
+      return { id: "library-letter", name: "머리 위의 편지 살펴보기",
+        ...libraryLetter.position(player), kind: "letter" };
     let best = null,
       dist = 48;
     const directions = {
@@ -1648,6 +1668,10 @@ const guildGame = (() => {
     const target = nearby();
     if (!target) {
       notify("이야기할 사람이나 물건 가까이에서 E");
+      return;
+    }
+    if (target.kind === "letter") {
+      showLibraryLetter();
       return;
     }
     const doors = [
@@ -1945,6 +1969,7 @@ const guildGame = (() => {
     drawPropOutlines();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
+      if (location === "library") libraryLetter.draw(ctx, player);
       const target = nearby();
       prompt.textContent = target ? `E · ${target.name}` : "";
       prompt.hidden = !target;
@@ -1952,7 +1977,7 @@ const guildGame = (() => {
         const x = Math.round(target.x),
           person =
             target.kind === "npc" ? npcs.find((n) => n.id === target.id) : null,
-          y = person
+          y = target.kind === "letter" ? Math.round(target.y) - 27 : person
             ? Math.max(
                 2,
                 Math.round(person.y + (counterFor(person)?.shift || 0)) -
@@ -1976,6 +2001,8 @@ const guildGame = (() => {
     if (phase === "free") {
       movePlayer(dt);
       movePeople(dt);
+      if (location === "library" && !document.hidden)
+        libraryLetter.update(dt, motion());
     } else player.moving = false;
     drawWorld();
     drawVista();
@@ -1993,6 +2020,7 @@ const guildGame = (() => {
     itemList.replaceChildren();
     itemDetail.textContent = "";
     document.querySelector("#guild-item-action").hidden = true;
+    document.querySelector("#guild-item-inspect").hidden = true;
     if (menuTab === "items") {
       selectedItem = Math.max(0, Math.min(selectedItem, inventory.length - 1));
       inventory.forEach((item, i) => {
@@ -2016,6 +2044,8 @@ const guildGame = (() => {
           : item.id === "map"
             ? "지도 펼치기 · E"
             : "살펴보기 · E";
+        document.querySelector("#guild-item-inspect").hidden =
+          !fieldWorld.items[item.id]?.heal && item.id !== "map";
       }
     } else if (menuTab === "quest") {
       const h = document.createElement("p");
@@ -2052,6 +2082,42 @@ const guildGame = (() => {
     keys.clear();
     canvas.focus({ preventScroll: true });
   }
+  function hideItemInspection() {
+    itemInspection.hidden = true;
+    document.querySelector(".guild-menu-panel").inert = false;
+  }
+  function inspectItem() {
+    if (phase !== "menu" || menuTab !== "items") return;
+    const item = inventory[selectedItem];
+    if (!item) return;
+    keys.clear();
+    phase = "inspect";
+    root.dataset.phase = phase;
+    itemInspection.dataset.item = item.id;
+    document.querySelector("#item-inspection-title").textContent = item.name;
+    const heal = fieldWorld.items[item.id]?.heal;
+    document.querySelector("#item-inspection-meta").textContent =
+      (heal ? `소모품 · 체력 ${heal} 회복` :
+        ["dispatch", "credentials", "libraryLetter"].includes(item.id) ? "문서" :
+          item.id === "map" ? "지도" : "여행의 소지품") + ` · 소지 ${item.count}개`;
+    document.querySelector("#item-inspection-description").textContent =
+      item.description || fieldWorld.items[item.id]?.description || "여행 중에 챙긴 소지품이다.";
+    document.querySelector(".guild-menu-panel").inert = true;
+    itemInspection.hidden = false;
+    inspectionInputAfter = performance.now() + 180;
+    gameAudio.sfx("paper");
+    document.querySelector("#item-inspection-close").focus({ preventScroll: true });
+  }
+  function closeItemInspection() {
+    if (phase !== "inspect" || performance.now() < inspectionInputAfter) return;
+    hideItemInspection();
+    phase = "menu";
+    root.dataset.phase = phase;
+    gameAudio.sfx("menuClose");
+    const inspect = document.querySelector("#guild-item-inspect");
+    (inspect.hidden ? document.querySelector("#guild-item-action") : inspect)
+      .focus({ preventScroll: true });
+  }
   function useItem() {
     if (menuTab !== "items") return;
     const item = inventory[selectedItem];
@@ -2075,8 +2141,7 @@ const guildGame = (() => {
       itemDetail.textContent =
         item.name + "을(를) 사용했다.\n체력이 " + restored + " 회복되었다.";
     } else {
-      gameAudio.sfx("paper");
-      itemDetail.textContent = item.description;
+      inspectItem();
     }
   }
   function handleKey(event) {
@@ -2093,6 +2158,28 @@ const guildGame = (() => {
     // Let the native sound button handle its own Enter activation.
     if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "inspect") {
+      if (["Enter", "Space"].includes(code) && event.target.closest?.("#item-inspection button"))
+        return;
+      if (code === "Tab") {
+        event.preventDefault();
+        const buttons = [document.querySelector("#item-inspection-description"),
+          document.querySelector("#item-inspection-close")],
+          index = buttons.indexOf(document.activeElement);
+        buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
+      } else if (["KeyE", "KeyC", "Enter", "Escape"].includes(code)) {
+        event.preventDefault();
+        if (!event.repeat) closeItemInspection();
+      } else if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", "Space"].includes(code)) {
+        const card = itemInspection.querySelector("article");
+        event.preventDefault();
+        if (code === "Home") card.scrollTop = 0;
+        else if (code === "End") card.scrollTop = card.scrollHeight;
+        else card.scrollTop += (code === "ArrowUp" || code === "PageUp" ? -1 : 1) *
+          (code.startsWith("Page") || code === "Space" ? card.clientHeight * 0.75 : 40);
+      }
+      return;
+    }
     if (phase === "letter") {
       if (libraryLetter.handle(code, event.repeat, event.shiftKey))
         event.preventDefault();
@@ -2174,6 +2261,8 @@ const guildGame = (() => {
       focusable[next].focus();
       return;
     }
+    if (phase === "menu" && ["Enter", "Space"].includes(code) &&
+      event.target.closest?.("#guild-menu button")) return;
     if (
       ![
         "KeyW",
@@ -2293,6 +2382,8 @@ const guildGame = (() => {
   document
     .querySelector("#guild-item-action")
     .addEventListener("click", useItem);
+  document.querySelector("#guild-item-inspect").addEventListener("click", inspectItem);
+  document.querySelector("#item-inspection-close").addEventListener("click", closeItemInspection);
   document.querySelector("#guild-exit-title").addEventListener("click", () => {
     if (onExit) onExit();
   });
@@ -2379,6 +2470,7 @@ const guildGame = (() => {
       leafTaken: false,
       springUsed: false,
       libraryReached: false,
+      libraryLetterRead: false,
     };
     visited.clear();
     buildMap();
@@ -2428,7 +2520,8 @@ const guildGame = (() => {
     hideEvent();
     hideTrading();
     hideReading();
-    hideLibraryLetter();
+    hideLibraryLetter(true);
+    hideItemInspection();
     hideAction();
     gameAudio.stopTransient();
     gameAudio.scene("title");
@@ -2467,6 +2560,8 @@ const guildGame = (() => {
         event: eventScenes.kind,
         action: actionScenes.kind,
         archive: libraryArchive.active ? libraryArchive.tab : null,
+        letter: libraryLetter.delivery,
+        inspectedItem: phase === "inspect" ? inventory[selectedItem]?.id : null,
         vista: cinematic?.key || null,
         expression: dialogue?.lines[dialogue.index].expression || "neutral",
         player: player

@@ -1,51 +1,90 @@
-// The final-area letter stays open until the player has finished reading it.
+// A small parchment arrives in the world. Reading begins only after interaction.
 const libraryLetter = (() => {
   const root = document.querySelector("#library-letter"),
     paper = document.querySelector("#library-letter-paper"),
     next = document.querySelector("#library-letter-next");
   let state = null;
-  function arrive(current) {
-    if (state !== current) return;
-    root.dataset.arrived = "true";
-    current.arrived = true;
-    next.textContent = "편지 접기 · E";
-    next.focus({ preventScroll: true });
+  const duration = 1.8;
+  function position(player) {
+    return {
+      x: player.x,
+      y: Math.max(30, player.y - fieldSprites.bodyHeight("hero") - 17),
+    };
   }
-  function show(options) {
-    hide();
-    const current = (state = {
+  function deliver(options) {
+    reset();
+    state = {
       ...options,
-      arrived: false,
-      inputAfter: performance.now() + 220,
-    });
+      stage: options.motion ? "flying" : "waiting",
+      elapsed: 0,
+    };
+    root.dataset.delivery = state.stage;
+    gameAudio.sfx("paper");
+  }
+  function update(dt, animated) {
+    if (!state || state.stage === "reading") return;
+    state.elapsed += dt;
+    state.motion = animated;
+    if (state.stage === "flying" && (!animated || state.elapsed >= duration)) {
+      state.stage = "waiting";
+      root.dataset.delivery = "waiting";
+      gameAudio.sfx("paper");
+    }
+  }
+  function draw(ctx, player) {
+    if (!state || state.stage === "reading") return;
+    const end = position(player),
+      progress = Math.min(1, state.elapsed / duration),
+      t = 1 - Math.pow(1 - progress, 2),
+      u = 1 - t,
+      flying = state.stage === "flying";
+    const x = flying
+        ? u * u * u * 752 + 3 * u * u * t * 620 + 3 * u * t * t * (end.x - 75) + t * t * t * end.x
+        : end.x,
+      y = flying
+        ? u * u * u * 60 + 3 * u * u * t * 30 + 3 * u * t * t * (end.y - 70) + t * t * t * end.y
+        : end.y + (state.motion ? Math.round(Math.sin(state.elapsed * 2.5)) : 0);
+    ctx.save();
+    ctx.translate(Math.round(x), Math.round(y));
+    if (flying) ctx.rotate(Math.sin(t * Math.PI * 3) * (1 - t) * 0.55);
+    ctx.shadowColor = "#fff0b6";
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = "#ac8149";
+    ctx.fillRect(-11, -8, 22, 16);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#f5dfaa";
+    ctx.fillRect(-10, -7, 20, 14);
+    ctx.fillStyle = "#d2ac70";
+    ctx.fillRect(-12, -8, 24, 3);
+    ctx.fillRect(-12, 5, 24, 3);
+    ctx.fillStyle = "#a08553";
+    ctx.fillRect(-6, -3, 12, 1);
+    ctx.fillRect(-6, 0, 8, 1);
+    ctx.fillStyle = "#904936";
+    ctx.fillRect(3, 0, 4, 4);
+    ctx.fillStyle = "#dda273";
+    ctx.fillRect(4, 1, 1, 1);
+    ctx.restore();
+  }
+  function open(options) {
+    if (state?.stage !== "waiting") return;
+    state.stage = "reading";
+    state.close = options.close;
+    state.inputAfter = performance.now() + 220;
     root.hidden = false;
-    root.dataset.arrived = "false";
-    next.textContent = "편지 펼치기 · E";
+    root.dataset.delivery = "reading";
+    root.dataset.arrived = "true";
+    paper.scrollTop = 0;
+    next.textContent = "편지 접기 · E";
     gameAudio.sfx("paper");
     next.focus({ preventScroll: true });
-    if (!options.motion) return arrive(current);
-    current.flight = paper.animate(
-      [
-        { transform: "translate(95vw, -65vh) rotate(32deg) scale(0.28)", opacity: 0 },
-        { transform: "translate(28vw, -12vh) rotate(-12deg) scale(0.7)", opacity: 1, offset: 0.5 },
-        { transform: "translate(-2vw, 2vh) rotate(3deg) scale(1.02)", opacity: 1, offset: 0.84 },
-        { transform: "translate(0, 0) rotate(0) scale(1)", opacity: 1 },
-      ],
-      { duration: 1250, easing: "cubic-bezier(.22,.7,.28,1)" },
-    );
-    current.flight.finished.then(() => arrive(current)).catch(() => {});
   }
   function finish() {
-    if (!state || performance.now() < state.inputAfter) return;
-    if (!state.arrived) {
-      state.flight?.finish();
-      arrive(state);
-      state.inputAfter = performance.now() + 180;
-      return;
-    }
-    const after = state.after;
-    hide();
+    if (state?.stage !== "reading" || performance.now() < state.inputAfter) return;
+    const { close, after } = state;
+    reset();
     gameAudio.sfx("paper");
+    close?.();
     after?.();
   }
   function handle(code, repeat, shift) {
@@ -65,11 +104,22 @@ const libraryLetter = (() => {
     return true;
   }
   function hide() {
-    state?.flight?.cancel();
-    state = null;
     root.hidden = true;
     delete root.dataset.arrived;
+    if (state?.stage === "reading") {
+      state.stage = "waiting";
+      root.dataset.delivery = "waiting";
+    }
+  }
+  function reset() {
+    hide();
+    state = null;
+    delete root.dataset.delivery;
   }
   next.addEventListener("click", finish);
-  return { show, hide, finish, handle };
+  return {
+    deliver, update, draw, position, open, hide, reset, finish, handle,
+    get waiting() { return state?.stage === "waiting"; },
+    get delivery() { return state?.stage || null; },
+  };
 })();

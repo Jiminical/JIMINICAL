@@ -699,6 +699,9 @@
                 <button id="guild-item-action" class="guild-button" hidden>
                   살펴보기
                 </button>
+                <button id="guild-item-inspect" class="guild-button" hidden>
+                  살펴보기
+                </button>
               </div>
             </div>
             <footer>
@@ -708,6 +711,17 @@
               </button>
             </footer>
           </div>
+          <section id="item-inspection" class="item-inspection" role="dialog"
+            aria-modal="true" aria-labelledby="item-inspection-title"
+            aria-describedby="item-inspection-description" hidden>
+            <article class="item-inspection-card game-window">
+              <p class="item-inspection-kicker">소지품 살펴보기</p>
+              <h2 id="item-inspection-title"></h2>
+              <p id="item-inspection-meta"></p>
+              <p id="item-inspection-description" tabindex="0"></p>
+              <button id="item-inspection-close" class="guild-button" type="button">소지품으로 · E</button>
+            </article>
+          </section>
         </section>
       </section>
       <div id="scene-curtain" aria-hidden="true" hidden></div>
