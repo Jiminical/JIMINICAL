@@ -18,6 +18,7 @@
     <script src="JS/lore.js" defer></script>
     <script src="JS/archive.js" defer></script>
     <script src="JS/staging.js" defer></script>
+    <script src="JS/letter.js" defer></script>
     <script src="JS/shops.js" defer></script>
     <script src="JS/sprites.js" defer></script>
     <script src="JS/game.js" defer></script>
@@ -611,6 +612,26 @@
             <p id="action-label"></p>
             <button id="action-next" class="guild-button">E · 계속</button>
           </div>
+        </section>
+        <section
+          id="library-letter"
+          class="library-letter"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="library-letter-title"
+          aria-describedby="library-letter-message library-letter-signature"
+          hidden
+        >
+          <article id="library-letter-paper" class="library-letter-paper">
+            <span class="letter-seal" aria-hidden="true">✦</span>
+            <p class="letter-kicker">이슬잎 도서관에 도착한 편지</p>
+            <h2 id="library-letter-title">여정의 마지막 기록</h2>
+            <div class="letter-contents">
+              <p id="library-letter-message">이 곳은 그린스토아 프롤로그의 최종 지역입니다. 세계관 정보, 인물 도감, 프롤로그 웹툰을 감상하실 수 있습니다.</p>
+              <p id="library-letter-signature">-추광더리우스 3세</p>
+            </div>
+            <button id="library-letter-next" class="guild-button" type="button">편지 접기 · E</button>
+          </article>
         </section>
         <section
           id="library-reader"

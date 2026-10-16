@@ -82,14 +82,14 @@ const actionScenes = (() => {
     });
   }
   function guideCels(image) {
-    // Keep the relaxed arm-down drawing throughout the walk. The old four
-    // independently drawn poses changed the face, shoulders and arm silhouette.
+    // Keep one drawing so the face and body proportions stay consistent.
+    // Overscan below the picture window prevents a gap at the upward footfall.
     const cell = portraitCells(image)[1],
-      scale = 280 / cell.h;
+      scale = 300 / cell.h;
     const base = document.createElement("canvas");
     base.width = 720;
-    base.height = 344;
-    const b = base.getContext("2d");
+    base.height = 376;
+    const b = base.getContext("2d", { willReadFrequently: true });
     b.imageSmoothingEnabled = false;
     b.drawImage(
       image,
@@ -98,24 +98,37 @@ const actionScenes = (() => {
       cell.w,
       cell.h,
       Math.round(160 - cell.head * scale),
-      82,
+      64,
       cell.w * scale,
-      280,
+      300,
     );
-    const lifts = [0, 0, -1, -1, 0, 0, -1, -1],
-      sways = [0, 0, 1, 1, 0, 0, -1, -1];
-    // Eight discrete pixel cels: a one-pixel footfall and a delayed one-pixel
-    // shift through the cloak/hair. Head size and the face drawing stay fixed.
+    // The extracted art has translucent clothing pixels. Use the same solid
+    // alpha treatment as field sprites, preserving only the outside silhouette.
+    const pixels = b.getImageData(0, 0, base.width, base.height);
+    for (let i = 3; i < pixels.data.length; i += 4)
+      pixels.data[i] = pixels.data[i] >= 96 ? 255 : 0;
+    b.putImageData(pixels, 0, 0);
+    const lifts = [0, -1, -2, -1, 0, -1, -2, -1],
+      sways = [0, 1, 2, 1, 0, -1, -2, -1];
+    // Two footfalls per cycle. Move the torso rigidly, with a small delayed
+    // follow-through only in the trailing ponytail and cloak.
     return lifts.map((lift, frame) => {
       const cel = document.createElement("canvas");
       cel.width = 720;
-      cel.height = 344;
+      cel.height = 376;
       const paint = cel.getContext("2d");
       paint.imageSmoothingEnabled = false;
-      for (let y = 0; y < 344; y++) {
-        const sway = Math.round(sways[frame] * clamp((y - 190) / 120));
-        paint.drawImage(base, 0, y, 720, 1, sway, y + lift, 720, 1);
+      paint.drawImage(base, 0, lift);
+      paint.save();
+      paint.beginPath();
+      paint.rect(0, 0, 100, cel.height);
+      paint.clip();
+      paint.clearRect(0, 0, 100, cel.height);
+      for (let y = 0; y < base.height; y++) {
+        const sway = Math.round(sways[frame] * clamp((y - 150) / 170));
+        paint.drawImage(base, 0, y, 112, 1, sway, y + lift, 112, 1);
       }
+      paint.restore();
       return cel;
     });
   }
@@ -126,7 +139,7 @@ const actionScenes = (() => {
   }
   function drawRogue() {
     const rogue = state.actors.find((a) => a.id === "rogue"),
-      moving = seconds >= 1.65;
+      moving = state.motion && seconds >= 1.65;
     const zoom = state.motion
       ? 1 + 1.15 * ease(seconds / 0.65) * (1 - ease((seconds - 1.55) / 0.7))
       : 1;
@@ -141,12 +154,12 @@ const actionScenes = (() => {
       state.motion && seconds >= 0.8 && seconds <= 1.3
         ? Math.round(Math.sin(((seconds - 0.8) / 0.5) * Math.PI) * 13)
         : 0;
-    const run = state.motion ? clamp((seconds - 1.65) / 2.3) : 1;
+    const run = state.motion ? clamp((seconds - 1.65) / 2.3) : 0;
     const runner = {
       ...rogue,
       x: rogue.x + (360 - rogue.x) * ease(run),
       y: rogue.y + 190 * run,
-      dir: moving ? "down" : "down",
+      dir: "down",
     };
     [...state.actors.filter((a) => a.id !== "rogue"), runner]
       .sort((a, b) => a.y - b.y)
@@ -157,13 +170,16 @@ const actionScenes = (() => {
           a === runner ? jump : 0,
         ),
       );
-    if (state.motion)
-      for (let i = 0; i < 4; i++) {
-        const fall = (Math.floor(seconds * 10) + i * 3) % 12;
-        const x = runner.x + (i % 2 ? 9 : -9),
-          y = runner.y - 51 - jump + fall;
-        rect(x, y, 2, 3, "#dbffff");
-        rect(x, y + 3, 2, 2, "#6dd6e7");
+    if (!state.motion || seconds >= 0.55)
+      for (let i = 0; i < 2; i++) {
+        const fall = state.motion ? (Math.floor((seconds - 0.55) * 12) + i * 3) % 6 : 1;
+        // Front sprite eyes are at (23, 18) and (32, 18), relative to its
+        // 56 × 80 canvas. Tears start just beneath them and stay on the cheeks.
+        const x = runner.x + (i ? 4 : -5),
+          y = runner.y - 56 - jump + fall;
+        rect(x, runner.y - 56 - jump, 1, 2, "#b9f4ff");
+        rect(x, y, 1, 2, "#dbffff");
+        rect(x, y + 2, 1, 1, "#6dd6e7");
       }
     c.restore();
     root.dataset.jump = String(jump);
@@ -194,7 +210,8 @@ const actionScenes = (() => {
       720,
       344,
     );
-    const frame = state.motion ? Math.floor(seconds * 8.8) % 8 : 0;
+    const stepRate = 2.2,
+      frame = state.motion ? Math.floor(seconds * stepRate * 4) % 8 : 0;
     // The lower edge is hidden beneath the fixed caption bar, with overscan.
     c.save();
     c.beginPath();
@@ -209,7 +226,7 @@ const actionScenes = (() => {
           y = 73 + i * 44;
         rect(x, y, 3, 1, "#eff7c779");
       }
-      cue("step" + Math.floor(seconds * 2.2), 0, "footstep", "earth");
+      cue("step" + Math.floor(seconds * stepRate), 0, "footstep", "earth");
       cue("birds", 2.6, "birds");
     }
     label.textContent =

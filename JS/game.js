@@ -281,6 +281,7 @@ const guildGame = (() => {
     menu.hidden = true;
     hideTrading();
     hideReading();
+    hideLibraryLetter();
     cancelPortraitMotion();
     gameAudio.stopVoice();
     clearTimeout(typingTimer);
@@ -664,6 +665,17 @@ const guildGame = (() => {
   }
   function enterLibrary() {
     const first = !fieldFlags.libraryReached;
+    const welcome = () =>
+      speak([
+        {
+          kind: "rael",
+          text: "어서 와요. 이슬잎 도서관에 오신 걸 환영해요.\n먼 길의 끝에서는 잠깐 책을 읽으며 쉬어 가셔도 좋아요.",
+        },
+        {
+          kind: "rael",
+          text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
+        },
+      ]);
     travelTo(
       "library",
       () => {
@@ -672,18 +684,8 @@ const guildGame = (() => {
         fieldFlags.libraryReached = true;
       },
       () => {
-        notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
-        if (first)
-          speak([
-            {
-              kind: "rael",
-              text: "어서 와요. 이슬잎 도서관에 오신 걸 환영해요.\n먼 길의 끝에서는 잠깐 책을 읽으며 쉬어 가셔도 좋아요.",
-            },
-            {
-              kind: "rael",
-              text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
-            },
-          ]);
+        if (first) showLibraryLetter(welcome);
+        else notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
       },
     );
   }
@@ -697,6 +699,29 @@ const guildGame = (() => {
     libraryArchive.hide();
     root.classList.remove("is-reading");
     document.querySelector(".world-viewport").inert = false;
+  }
+  function hideLibraryLetter() {
+    libraryLetter.hide();
+    root.classList.remove("is-letter");
+    document.querySelector(".world-viewport").inert = false;
+  }
+  function showLibraryLetter(after) {
+    keys.clear();
+    phase = "letter";
+    root.dataset.phase = phase;
+    root.classList.add("is-letter");
+    document.querySelector(".world-viewport").inert = true;
+    libraryLetter.show({
+      motion: motion(),
+      after: () => {
+        if (!active) return;
+        hideLibraryLetter();
+        phase = "free";
+        root.dataset.phase = phase;
+        canvas.focus({ preventScroll: true });
+        after?.();
+      },
+    });
   }
   function openArchive(tab = "world") {
     keys.clear();
@@ -1005,6 +1030,14 @@ const guildGame = (() => {
       cw * scale,
       ch * scale,
     );
+    if (kind === "scout") {
+      // Kania's extracted dark cloak must stay opaque in dialogue and the codex
+      // as well as in her walking scene.
+      const pixels = c.getImageData(0, 0, target.width, target.height);
+      for (let i = 3; i < pixels.data.length; i += 4)
+        pixels.data[i] = pixels.data[i] >= 96 ? 255 : 0;
+      c.putImageData(pixels, 0, 0);
+    }
   }
   function lineComplete() {
     if (!dialogue) return;
@@ -1768,7 +1801,10 @@ const guildGame = (() => {
       const shape = fieldTerrain.outline(location, target.id);
       if (!shape) continue;
       ctx.save();
-      ctx.globalAlpha = (nearest?.id === target.id ? 0.63 : 0.18) + pulse * 0.1;
+      const near = nearest?.id === target.id;
+      ctx.globalAlpha = near ? 0.9 + pulse * 0.08 : 0.3 + pulse * 0.05;
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = near ? 4 : 2;
       ctx.drawImage(shape, 0, 0);
       ctx.restore();
     }
@@ -1868,15 +1904,18 @@ const guildGame = (() => {
       ctx.clip();
     }
     if (phase === "free" && a !== player) {
-      const near = Math.hypot(a.x - player.x, a.y - player.y) < 75;
-      ctx.globalAlpha =
-        (near ? 0.64 : 0.28) + (motion() ? Math.sin(elapsed * 2) * 0.1 : 0);
+      const near = nearby()?.id === a.id,
+        pulse = motion() ? (Math.sin(elapsed * 1.8) + 1) / 2 : 0.5;
+      ctx.globalAlpha = near ? 0.9 + pulse * 0.08 : 0.3 + pulse * 0.05;
+      ctx.shadowColor = "#ffffff";
+      ctx.shadowBlur = near ? 4 : 2;
       ctx.drawImage(
         fieldSprites.outline(a.id, a.dir, frame),
         x - fieldSprites.width / 2,
         y - fieldSprites.anchorY,
       );
       ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
     }
     ctx.drawImage(
       makeSprite(a.id, a.dir, frame),
@@ -2054,6 +2093,11 @@ const guildGame = (() => {
     // Let the native sound button handle its own Enter activation.
     if (code === "Enter" && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "letter") {
+      if (libraryLetter.handle(code, event.repeat, event.shiftKey))
+        event.preventDefault();
+      return;
+    }
     if (phase === "archive") {
       if (
         ["Enter", "Space"].includes(code) &&
@@ -2301,7 +2345,8 @@ const guildGame = (() => {
       b.setPointerCapture(event.pointerId);
       const code = b.dataset.gameKey;
       if (code === "KeyE") {
-        if (phase === "action") actionScenes.finish();
+        if (phase === "letter") libraryLetter.finish();
+        else if (phase === "action") actionScenes.finish();
         else if (phase === "archive") libraryArchive.handle("KeyE");
         else if (phase === "shop") shopView.handle("KeyE");
         else if (phase === "event") eventScenes.finish();
@@ -2383,6 +2428,7 @@ const guildGame = (() => {
     hideEvent();
     hideTrading();
     hideReading();
+    hideLibraryLetter();
     hideAction();
     gameAudio.stopTransient();
     gameAudio.scene("title");
