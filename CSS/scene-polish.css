@@ -53,3 +53,79 @@
     padding-bottom: 16px;
   }
 }
+/* A full-screen film canvas; the first twenty seconds belong to the landscape. */
+.game-vista.is-journey {
+  display: block;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+  background: #000;
+}
+.game-vista.is-journey .vista-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  margin: 0;
+}
+.game-vista.is-journey .vista-copy {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  pointer-events: none;
+}
+.is-journey .vista-kicker {
+  position: absolute;
+  top: max(30px, calc(var(--journey-top, 20%) - 35px));
+  left: 5%;
+  margin: 0;
+  text-align: left;
+  color: #d0d8ce;
+  font-size: clamp(10px, 1.15cqw, 15px);
+  letter-spacing: .2em;
+}
+.game-vista.is-journey .vista-copy h2 {
+  position: absolute;
+  top: 46%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  margin: 0;
+  color: #fff8df;
+  font-size: clamp(29px, 5.2cqw, 66px);
+  letter-spacing: .16em;
+  text-shadow: 0 2px 2px #173433, 0 0 20px #172c32;
+}
+.is-journey #vista-caption {
+  position: absolute;
+  top: 55%;
+  left: 5%;
+  right: 5%;
+  color: #ffefc8;
+  font-size: clamp(13px, 1.8cqw, 23px);
+  letter-spacing: .15em;
+  text-shadow: 0 2px 3px #172c32;
+}
+.is-journey #vista-next {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  margin: 0;
+  padding: 8px 12px;
+  font-size: 11px;
+  border: 1px solid #d3ddcf52;
+  color: #b5bcaf;
+  background: #111a1590;
+  pointer-events: auto;
+}
+.is-journey #vista-next:is(:hover, :focus-visible) {
+  color: #fff3d7;
+  border-color: #d3ddcf;
+}
+.is-journey #vista-next:focus-visible {
+  outline: 1px solid #c9d4b682;
+  outline-offset: 3px;
+}

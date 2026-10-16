@@ -20,11 +20,11 @@ for ref in sorted(set(re.findall(r'(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|web
  mime={'.png':'image/png','.webp':'image/webp','.woff2':'font/woff2','.svg':'image/svg+xml'}[path.suffix]
  styles=styles.replace(ref,'data:'+mime+';base64,'+base64.b64encode(path.read_bytes()).decode('ascii'))
 styles='/* Galmuri font license:\n'+(ROOT/'assets/fonts/LICENSE.txt').read_text(encoding='utf-8')+'\n*/\n'+styles
-refs=sorted(set(re.findall(r'assets/[a-zA-Z0-9_./-]+\.(?:png|webp)',page)))
+refs=sorted(set(re.findall(r'assets/[a-zA-Z0-9_./-]+\.(?:png|webp|mp3)',page)))
 entries=[]
 for ref in refs:
     path=ROOT/ref
-    mime='image/webp' if path.suffix=='.webp' else 'image/png'
+    mime={'.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg'}[path.suffix]
     uri=f'data:{mime};base64,'+base64.b64encode(path.read_bytes()).decode('ascii')
     entries.append(f'window.__greenstoaMedia[{ref!r}]={uri!r};\n')
 chunks=[];current=''

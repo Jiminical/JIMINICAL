@@ -36,6 +36,15 @@ test('a successful write announces the new save', () => {
   document.addEventListener('greenstoa:savechange', () => events++);
   save.write(state); assert.equal(events, 1);
 });
+test('journey music position round-trips while older saves remain loadable', () => {
+  const { save, state } = setup();
+  assert.equal(save.write(state), true);
+  assert.equal(save.read().journeyMusic, undefined);
+  assert.equal(save.write({ ...state, journeyMusic: { active: true, offset: 73.25 } }), true);
+  assert.equal(save.read().journeyMusic.offset, 73.25);
+  for (const music of [null, { active: 'yes', offset: 0 }, { active: true, offset: -1 }, { active: true, offset: NaN }])
+    assert.equal(save.write({ ...state, journeyMusic: music }), false);
+});
 test('opening checkpoints remain valid and restricted to the guild', () => {
   const { save, state } = setup();
   assert.equal(save.write({ ...state, resume: 'opening', location: 'guild' }), true);

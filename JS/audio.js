@@ -1,4 +1,4 @@
-// All audio is synthesized locally. Nothing is fetched or started before a gesture.
+// Synthesized effects plus the supplied journey theme, played after a gesture.
 const gameAudio = (() => {
   let context,
     master,
@@ -9,6 +9,10 @@ const gameAudio = (() => {
     waterBed,
     noiseBuffer,
     crispBuffer;
+  const journeyTrack = document.querySelector("#journey-music");
+  let musicBus, journeyWanted = false, journeySeek = null, musicPlay = null,
+    musicFadeTimer = 0, musicStopping = false;
+  const musicLevel = 1.5;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -147,11 +151,71 @@ const gameAudio = (() => {
       now,
       0.012,
     );
+    syncJourney();
+  }
+  function syncJourney() {
+    if (!journeyTrack || !musicBus) return;
+    if (musicStopping) {
+      if (!usable()) journeyTrack.pause();
+      return;
+    }
+    if (!journeyWanted || !usable()) {
+      journeyTrack.pause();
+      musicBus.gain.setTargetAtTime(0, context.currentTime, 0.035);
+      return;
+    }
+    if (!journeyTrack.paused && !musicPlay) seekJourney();
+    if (journeyTrack.paused && !musicPlay) {
+      musicBus.gain.cancelScheduledValues(context.currentTime);
+      musicBus.gain.setTargetAtTime(musicLevel, context.currentTime, 0.7);
+      musicPlay = journeyTrack.play().then(seekJourney).catch(() => {}).finally(() => { musicPlay = null; });
+    }
+  }
+  function seekJourney() {
+    // Metadata may arrive before the media clock is ready; seek after play starts.
+    if (!journeyWanted || journeySeek === null || journeyTrack.readyState < 2 || !Number.isFinite(journeyTrack.duration)) return;
+    const offset = journeySeek % journeyTrack.duration;
+    journeySeek = null;
+    journeyTrack.currentTime = offset;
+  }
+  function startJourney(offset = 0) {
+    clearTimeout(musicFadeTimer);
+    musicStopping = false;
+    if (!journeyWanted) {
+      journeySeek = Math.max(0, Number(offset) || 0);
+      journeyWanted = true;
+    }
+    if (musicBus && usable()) {
+      musicBus.gain.cancelScheduledValues(context.currentTime);
+      musicBus.gain.setTargetAtTime(musicLevel, context.currentTime, 0.7);
+    }
+    syncJourney();
+  }
+  function stopJourney(fade = 0) {
+    journeyWanted = false;
+    journeySeek = null;
+    clearTimeout(musicFadeTimer);
+    musicStopping = false;
+    const finish = () => {
+      musicStopping = false;
+      journeyTrack?.pause();
+      if (journeyTrack) journeyTrack.currentTime = 0;
+    };
+    if (fade > 0 && musicBus && !journeyTrack.paused && usable()) {
+      musicStopping = true;
+      const now = context.currentTime;
+      musicBus.gain.cancelScheduledValues(now);
+      musicBus.gain.setValueAtTime(musicBus.gain.value, now);
+      musicBus.gain.linearRampToValueAtTime(0, now + fade);
+      musicFadeTimer = setTimeout(finish, fade * 1000);
+    } else finish();
   }
   function ambientLevel() {
     return (landscapes[place] || landscapes.title).wind;
   }
   function scene(next) {
+    if (["ambush", "battle", "title", "library"].includes(next) && journeyWanted)
+      stopJourney(next === "ambush" ? 0.55 : 0.2);
     if (place === next && sceneryClock) return;
     place = next;
     if (!ambience) return;
@@ -292,6 +356,10 @@ const gameAudio = (() => {
         sceneryBus = context.createGain();
         sceneryBus.gain.value = 1;
         sceneryBus.connect(master);
+        musicBus = context.createGain();
+        musicBus.gain.value = 0;
+        musicBus.connect(master);
+        context.createMediaElementSource(journeyTrack).connect(musicBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -459,6 +527,11 @@ const gameAudio = (() => {
     sceneryBus.gain.cancelScheduledValues(lastVoice);
     sceneryBus.gain.setTargetAtTime(0.5, lastVoice, 0.018);
     sceneryBus.gain.setTargetAtTime(1, lastVoice + 0.14, 0.16);
+    if (journeyWanted && musicBus && !musicStopping) {
+      musicBus.gain.cancelScheduledValues(lastVoice);
+      musicBus.gain.setTargetAtTime(0.65, lastVoice, 0.045);
+      musicBus.gain.setTargetAtTime(musicLevel, lastVoice + 0.2, 0.55);
+    }
     const mood = ["concerned", "weary", "embarrassed"].includes(expression)
       ? 0.92
       : ["boasting", "incredulous", "warning"].includes(expression)
@@ -660,12 +733,20 @@ const gameAudio = (() => {
     } else syncScenery();
     applyVolume();
   });
+  journeyTrack?.addEventListener("loadedmetadata", syncJourney);
+  journeyTrack?.addEventListener("canplay", syncJourney);
+  const retryJourney = () => { if (journeyWanted && journeyTrack?.paused) syncJourney(); };
+  document.addEventListener("pointerdown", retryJourney, { passive: true });
+  document.addEventListener("keydown", retryJourney, { passive: true });
   return {
     configure,
     unlock,
     voice,
     sfx,
     scene,
+    startJourney,
+    stopJourney,
+    getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,
     get unlocked() {

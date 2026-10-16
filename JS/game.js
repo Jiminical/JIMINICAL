@@ -104,6 +104,8 @@ const guildGame = (() => {
       "checkpoint",
       "gate",
       "forest",
+      "journey",
+      "journeyCarriage",
       "sanctuary",
       "events",
       "eventProps",
@@ -137,6 +139,7 @@ const guildGame = (() => {
     kaniaWalk.prepare(pictures.guideKania);
     firstPersonArms.prepare(pictures.firstPersonArms);
     itemSpecimens.prepare(pictures.itemSpecimens);
+    journeyCinematic.prepare(pictures.journey, pictures.journeyCarriage);
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -179,6 +182,7 @@ const guildGame = (() => {
   let footDistance = 0;
   let nextAutosave = 0;
   let resumingSave = false;
+  let restoredMusic = null;
   const background = document.createElement("canvas");
   background.width = W;
   background.height = H;
@@ -296,6 +300,8 @@ const guildGame = (() => {
     cinematic = null;
     vista.hidden = true;
     vista.classList.remove("is-sanctuary");
+    vista.classList.remove("is-journey");
+    delete vista.dataset.shot;
     delete vista.dataset.pan;
     root.classList.remove("is-vista");
     delete root.dataset.vista;
@@ -409,9 +415,9 @@ const guildGame = (() => {
   }
   const vistas = {
     forest: {
-      kicker: "제르디아 동쪽 · 성역으로 향하는 길",
-      title: "숲이 깊어질수록",
-      text: "바퀴 소리가 물소리에 묻혔다.\n끝을 가늠할 수 없는 나무들이 길 위로 그늘을 드리웠다.",
+      kicker: "제르디아 · 흐르는 호수의 왕국",
+      title: "여정의 시작",
+      text: "그린스토아를 향하여",
     },
     sanctuary: {
       kicker: "어머니 나무의 품 아래",
@@ -420,11 +426,13 @@ const guildGame = (() => {
     },
   };
   function showVista(key, after) {
+    if (key === "forest") gameAudio.startJourney();
     return transitionTo(
       () => {
         cinematic = { key, after, started: null, frame: -1, revealed: false };
         vista.classList.toggle("is-sanctuary", key === "sanctuary");
-        const art = pictures[key],
+        vista.classList.toggle("is-journey", key === "forest");
+        const art = pictures[key === "forest" ? "journey" : key],
           ratio =
             key === "forest" ? 2.15 : art.naturalWidth / art.naturalHeight;
         vistaArt.width = Math.min(960, art.naturalWidth);
@@ -456,14 +464,14 @@ const guildGame = (() => {
   }
   function fitVista() {
     if (root.hidden || vista.hidden || !cinematic) return;
-    if (cinematic.key === "sanctuary") {
+    if (["sanctuary", "forest"].includes(cinematic.key)) {
       const holder = document.querySelector(".vista-image");
       holder.style.width = "100%";
       holder.style.height = "100%";
       vistaArt.width = Math.max(
         1,
         Math.min(
-          1440,
+          cinematic.key === "forest" ? 960 : 1440,
           Math.round(vista.clientWidth * Math.min(devicePixelRatio || 1, 1.5)),
         ),
       );
@@ -515,6 +523,20 @@ const guildGame = (() => {
       cinematic.started === null ? 0 : Math.max(0, elapsed - cinematic.started);
     if (cinematic.key === "sanctuary") {
       drawSanctuary(seconds);
+      return;
+    }
+    if (cinematic.key === "forest") {
+      const frame = motion() ? Math.floor(seconds * 30) : "still";
+      if (frame === cinematic.frame) return;
+      cinematic.frame = frame;
+      const view = journeyCinematic.draw(vistaContext, seconds, motion());
+      vista.dataset.shot = view.shot;
+      vista.dataset.pan = view.progress.toFixed(3);
+      vista.style.setProperty("--journey-top", (view.box.y / vistaArt.height * 100) + "%");
+      document.querySelector("#vista-kicker").style.opacity = String(view.opening);
+      document.querySelector("#vista-title").style.opacity = String(view.title);
+      document.querySelector("#vista-caption").style.opacity = String(view.title);
+      document.querySelector("#vista-next").textContent = "E · 건너뛰기";
       return;
     }
     const frame = motion() ? Math.floor(seconds * 12) : 0;
@@ -2091,6 +2113,8 @@ const guildGame = (() => {
       drawWorld();
       drawVista();
     }
+    if (phase === "vista" && cinematic?.key === "forest" && cinematic.started !== null &&
+      elapsed - cinematic.started >= (motion() ? journeyCinematic.duration : 6)) finishVista();
     request = requestAnimationFrame(tick);
   }
   function renderMenu() {
@@ -2584,6 +2608,7 @@ const guildGame = (() => {
       shopStocks,
       fieldFlags: { ...fieldFlags },
       visited: [...visited],
+      journeyMusic: gameAudio.getJourneyState(),
     });
     const label = document.querySelector("#guild-save-status");
     label.textContent = saved
@@ -2610,6 +2635,7 @@ const guildGame = (() => {
     footDistance = 0;
     nextAutosave = 0;
     resumingSave = !!saved;
+    restoredMusic = saved?.journeyMusic ?? null;
     location = "guild";
     storyStep = "lucy";
     shopOrigin = "city";
@@ -2722,6 +2748,8 @@ const guildGame = (() => {
     }
     if (!resumingSave) saveProgress({ opening: true });
     else if (location === "library" && !fieldFlags.libraryLetterRead) welcomeLibrary();
+    if (resumingSave && !fieldFlags.libraryAmbushCleared && ["checkpoint", "gate", "grove"].includes(location) &&
+      (restoredMusic?.active ?? true)) gameAudio.startJourney(restoredMusic?.offset ?? 0);
     if (resumingSave && phase === "free") notify("저장된 여정에서 이어간다.");
   }
   return {

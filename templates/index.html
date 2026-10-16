@@ -27,6 +27,7 @@
     <script src="JS/item-view.js" defer></script>
     <script src="JS/weapon.js" defer></script>
     <script src="JS/landscape.js" defer></script>
+    <script src="JS/journey.js" defer></script>
     <script src="JS/walk.js" defer></script>
     <script src="JS/menu-art.js" defer></script>
     <script src="JS/battle-effects.js" defer></script>
@@ -54,7 +55,7 @@
           data-sprite-src="assets/greenstoa-elf-idle.png"
           role="button"
           tabindex="0"
-          aria-label="숲의 안내자와 대화하기"
+          aria-label="마르에리와 대화하기"
           aria-controls="character-speech"
           aria-haspopup="dialog"
           aria-expanded="false"
@@ -178,7 +179,7 @@
           hidden
         >
           <div class="speech-header">
-            <span id="speech-speaker">숲의 안내자</span
+            <span id="speech-speaker">마르에리</span
             ><button id="speech-close" aria-label="말풍선 닫기">×</button>
           </div>
           <p id="speech-line" role="status" aria-live="polite"></p>
@@ -315,6 +316,7 @@
         aria-label="제르디아 왕국 모험가 길드"
         hidden
       >
+        <audio id="journey-music" src="assets/audio/adventure-across-the-kingdom.mp3" preload="none" loop></audio>
         <div
           id="guild-assets"
           data-lucy-src="assets/ld-lucy.webp"
@@ -326,6 +328,8 @@
           data-checkpoint-src="assets/map-checkpoint.webp"
           data-gate-src="assets/map-gate.webp"
           data-forest-src="assets/vista-forest.webp"
+          data-journey-src="assets/vista-zerdia.webp"
+          data-journey-carriage-src="assets/journey-carriage.png"
           data-sanctuary-src="assets/mother-tree.webp"
           data-events-src="assets/event-scenes.webp"
           data-event-props-src="assets/event-props.webp"

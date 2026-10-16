@@ -18,6 +18,8 @@ const journeySave = (() => {
       point(save.player) && integer(save.hp, 1, 24) && integer(save.coins, 0, 999999) &&
       typeof save.questAccepted === "boolean" && ["city", "grove"].includes(save.shopOrigin) &&
       save.fieldFlags && flags.every(flag => typeof save.fieldFlags[flag] === "boolean") &&
+      (save.journeyMusic === undefined || (save.journeyMusic && typeof save.journeyMusic.active === "boolean" &&
+        Number.isFinite(save.journeyMusic.offset) && save.journeyMusic.offset >= 0 && save.journeyMusic.offset <= 86400)) &&
       Array.isArray(save.visited) && save.visited.length <= locations.size && save.visited.every(place => locations.has(place)) &&
       Array.isArray(save.inventory) && save.inventory.length <= items.size &&
       new Set(save.inventory.map(item => item?.id)).size === save.inventory.length &&
