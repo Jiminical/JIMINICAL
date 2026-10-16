@@ -7724,7 +7724,9 @@ const actionScenes = (() => {
     if (!state.interactive) next.focus({ preventScroll: true });
   }
   function finish(automatic = false) {
-    if (!state || (!automatic && performance.now() < inputAfter)) return;
+    // An interactive guide ends through its own question/exit choice. That
+    // explicit choice must work even when reduced motion reveals it at once.
+    if (!state || (!automatic && !state.interactive && performance.now() < inputAfter)) return;
     const after = state.after;
     stop();
     after();
@@ -9630,6 +9632,7 @@ const guildGame = (() => {
   const keys = new Set();
   const movementCodes = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ShiftLeft"]);
   const keyboardMovement = new Set();
+  const keyboardPressed = new Set();
   const touchMovement = new Map();
   const touchButtons = [...document.querySelectorAll("[data-game-key]")];
   function syncMovementKeys() {
@@ -10786,7 +10789,7 @@ const guildGame = (() => {
     dialogueText.textContent = dialogue.letters.join("");
     nextLabel.textContent =
       dialogue.index === dialogue.lines.length - 1 && dialogue.choices
-        ? "E 선택"
+        ? dialogue.choices.some(choice => choice.cancel) ? "E 선택 · C 대화 마치기" : "E 선택"
         : "E 다음";
     if (dialogue.index === dialogue.lines.length - 1 && dialogue.choices)
       renderChoices();
@@ -10856,22 +10859,37 @@ const guildGame = (() => {
     updateObjective();
   }
   function renderChoices() {
+    const owner = dialogue;
     choicesBox.hidden = false;
     choicesBox.replaceChildren();
     dialogue.choices.forEach((choice, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = (i === selectedChoice ? "▸ " : "  ") + choice.label;
-      b.className = i === selectedChoice ? "is-current" : "";
-      b.addEventListener("click", () => choose(i));
+      b.addEventListener("click", () => { if (dialogue === owner) choose(i); });
+      b.addEventListener("focus", () => {
+        if (dialogue === owner && selectedChoice !== i) selectChoice(i);
+      });
       choicesBox.append(b);
     });
-    choicesBox.querySelector(".is-current")?.scrollIntoView({ block: "nearest" });
+    selectChoice(selectedChoice);
+  }
+  function selectChoice(index, focus = false) {
+    if (!dialogue?.choices || choicesBox.hidden) return;
+    selectedChoice = (index + dialogue.choices.length) % dialogue.choices.length;
+    [...choicesBox.children].forEach((button, i) => {
+      const current = i === selectedChoice;
+      button.textContent = (current ? "▸ " : "  ") + dialogue.choices[i].label;
+      button.classList.toggle("is-current", current);
+      button.tabIndex = current ? 0 : -1;
+    });
+    const selected = choicesBox.children[selectedChoice];
+    if (focus) selected.focus({ preventScroll: true });
+    selected.scrollIntoView({ block: "nearest" });
   }
   function choose(index) {
     if (
       !dialogue ||
-      !dialogue.choices ||
+      !dialogue.choices?.[index] ||
       dialogue.shown < dialogue.letters.length
     )
       return;
@@ -11240,6 +11258,19 @@ const guildGame = (() => {
   }
 
   function kaniaConversation({ walking = false } = {}) {
+    if (!walking) {
+      const scout = npcs.find(person => person.id === "scout"), first = !scout?.talkCount;
+      if (scout) scout.talkCount = Math.min(999999, (scout.talkCount || 0) + 1);
+      if (fieldFlags.libraryAmbushCleared && first) speak([
+        { kind: "hero", text: "그 초록빛 화살… 네가 쏜 거지?\n정말 끝인 줄 알았어. 고마워." },
+        { kind: "scout", expression: "explaining", text: "화살촉에 마력을 모았어.\n빗나갈 수 없는 한 발이 필요했으니까." },
+        { kind: "scout", expression: "welcoming", text: "살아 돌아왔잖아. 그걸로 됐어.\n도서관으로 가. 주변은 내가 살펴볼게." },
+      ]);
+      else speak([{ kind: "scout", expression: "welcoming", text: fieldFlags.libraryAmbushCleared
+        ? "도서관은 다리 너머에 있어.\n뒤는 내가 지킬 테니, 천천히 가."
+        : "천천히 둘러봐.\n길을 잃거나 이상한 낌새가 느껴지면 나를 부르고." }]);
+      return;
+    }
     const asked = new Set();
     const topics = [
       {
@@ -11275,35 +11306,27 @@ const guildGame = (() => {
         ],
       },
     ];
-    if (!walking && fieldFlags.libraryAmbushCleared) topics.push({
-      label: "그 초록 화살, 네가 쏜 거야?",
-      lines: [
-        { kind: "hero", text: "그 초록빛 화살… 네가 쏜 거지?\n정말 끝인 줄 알았어. 고마워." },
-        { kind: "scout", expression: "explaining", text: "화살촉에 마력을 모았어.\n빗나갈 수 없는 한 발이 필요했으니까." },
-        { kind: "scout", expression: "welcoming", text: "살아 돌아왔잖아. 그걸로 됐어.\n다음엔 혼자 버티려 하지 마. 뒤에는 나도 있으니." },
-      ],
-    });
     const finish = () => {
-      if (walking) {
-        phase = "action";
-        root.dataset.phase = phase;
-        actionScenes.finish();
-      } else speak([{ kind: "scout", expression: "welcoming", text: "그래. 천천히 둘러봐.\n필요한 일이 있으면 나를 부르고." }]);
+      phase = "action";
+      root.dataset.phase = phase;
+      actionScenes.finish();
     };
-    const questions = (first = false) => speak(
-      [{ kind: "scout", expression: "welcoming", text: first
-        ? walking ? "정문까지는 조금 걸어야 해.\n궁금한 게 있으면 물어봐. 길은 내가 보고 있으니."
-          : "무슨 일이야?\n잠깐 이야기할 시간이라면 있어."
-        : "…더 궁금한 게 있어?" }],
-      null,
-      [...topics.map((topic, i) => ({
-        label: (asked.has(i) ? "✓ " : "") + topic.label,
-        action: () => {
-          asked.add(i);
-          speak(topic.lines, () => questions());
-        },
-      })), { label: walking ? "풍경을 보며 정문까지 함께 걷는다" : "다음에 또 이야기하자", action: finish }],
-    );
+    const questions = (first = false) => {
+      if (asked.size === topics.length) { finish(); return; }
+      speak(
+        [{ kind: "scout", expression: "welcoming", text: first
+          ? "정문까지는 조금 걸어야 해.\n궁금한 게 있으면 물어봐. 길은 내가 보고 있으니."
+          : "…더 궁금한 게 있어?" }],
+        null,
+        [...topics.filter(topic => !asked.has(topic)).map(topic => ({
+          label: topic.label,
+          action: () => {
+            asked.add(topic);
+            speak(topic.lines, () => questions());
+          },
+        })), { label: "풍경을 보며 정문까지 함께 걷는다", cancel: true, action: finish }],
+      );
+    };
     questions(true);
   }
 
@@ -11943,6 +11966,10 @@ const guildGame = (() => {
     )
       return;
     const code = event.code;
+    // Some keyboards emit another keydown without repeat=true. A release is
+    // required before the same physical key can advance dialogue again.
+    const repeat = event.repeat || (event.type === "keydown" && keyboardPressed.has(code));
+    if (event.type === "keydown") keyboardPressed.add(code);
     if (movementCodes.has(code)) {
       keyboardMovement.add(code);
       syncMovementKeys();
@@ -11953,7 +11980,7 @@ const guildGame = (() => {
     if (phase === "battle") {
       if (["Enter", "Space"].includes(code) &&
         event.target.closest?.("#battle-screen button:not([disabled])")) return;
-      if (battleScenes.handle(code, event.repeat, event.shiftKey)) event.preventDefault();
+      if (battleScenes.handle(code, repeat, event.shiftKey)) event.preventDefault();
       return;
     }
     if (phase === "inspect") {
@@ -11967,7 +11994,7 @@ const guildGame = (() => {
         buttons[(index + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus();
       } else if (["KeyE", "KeyC", "Enter", "Escape"].includes(code)) {
         event.preventDefault();
-        if (!event.repeat) closeItemInspection();
+        if (!repeat) closeItemInspection();
       } else if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", "Space"].includes(code)) {
         const card = itemInspection.querySelector("article");
         event.preventDefault();
@@ -11979,7 +12006,7 @@ const guildGame = (() => {
       return;
     }
     if (phase === "letter") {
-      if (libraryLetter.handle(code, event.repeat, event.shiftKey))
+      if (libraryLetter.handle(code, repeat, event.shiftKey))
         event.preventDefault();
       return;
     }
@@ -11989,7 +12016,7 @@ const guildGame = (() => {
         event.target.closest?.("#library-reader button")
       )
         return;
-      if (libraryArchive.handle(code, event.repeat, event.shiftKey))
+      if (libraryArchive.handle(code, repeat, event.shiftKey))
         event.preventDefault();
       return;
     }
@@ -12005,7 +12032,7 @@ const guildGame = (() => {
           .focus({ preventScroll: true });
       } else if (["KeyE", "Enter", "Escape"].includes(code)) {
         event.preventDefault();
-        if (!event.repeat) actionScenes.finish();
+        if (!repeat) actionScenes.finish();
       } else if (
         ["KeyW", "KeyA", "KeyS", "KeyD", "KeyC", "ShiftLeft"].includes(code)
       )
@@ -12033,7 +12060,7 @@ const guildGame = (() => {
         ].includes(code)
       ) {
         event.preventDefault();
-        shopView.handle(code, event.repeat, event.shiftKey);
+        shopView.handle(code, repeat, event.shiftKey);
       }
       return;
     }
@@ -12081,12 +12108,12 @@ const guildGame = (() => {
       return;
     event.preventDefault();
     if (phase === "event") {
-      if (!event.repeat && ["KeyE", "Enter", "Escape"].includes(code))
+      if (!repeat && ["KeyE", "Enter", "Escape"].includes(code))
         eventScenes.finish();
       return;
     }
     if (phase === "menu") {
-      if (event.repeat) return;
+      if (repeat) return;
       if (code === "KeyC" || code === "Escape") {
         closeMenu();
         return;
@@ -12117,7 +12144,7 @@ const guildGame = (() => {
       return;
     }
     if (phase === "dialogue") {
-      if (event.repeat) return;
+      if (repeat) return;
       if (
         dialogue?.choices &&
         !choicesBox.hidden &&
@@ -12127,33 +12154,37 @@ const guildGame = (() => {
           code === "ArrowDown")
       ) {
         const offset = code === "KeyW" || code === "ArrowUp" ? -1 : 1;
-        selectedChoice = (selectedChoice + offset + dialogue.choices.length) % dialogue.choices.length;
         gameAudio.sfx("select");
-        renderChoices();
+        selectChoice(selectedChoice + offset, true);
+      } else if (["KeyC", "Escape"].includes(code) && dialogue?.choices && !choicesBox.hidden) {
+        const cancel = dialogue.choices.findIndex(choice => choice.cancel);
+        if (cancel !== -1) choose(cancel);
       } else if (code === "KeyE" || code === "Enter") advanceDialogue();
       return;
     }
     if (phase === "vista") {
-      if (!event.repeat && (code === "KeyE" || code === "Enter")) finishVista();
+      if (!repeat && (code === "KeyE" || code === "Enter")) finishVista();
       return;
     }
     if (phase !== "free") return;
-    if (code === "KeyC" && !event.repeat) {
+    if (code === "KeyC" && !repeat) {
       openMenu();
       return;
     }
     if (code === "KeyE") {
-      if (!event.repeat) interact();
+      if (!repeat) interact();
       return;
     }
   }
   document.addEventListener("keydown", handleKey);
   document.addEventListener("keyup", (event) => {
+    keyboardPressed.delete(event.code);
     keyboardMovement.delete(event.code);
     syncMovementKeys();
     battleScenes.release(event.code);
   });
   function clearKeys() {
+    keyboardPressed.clear();
     keyboardMovement.clear();
     touchMovement.clear();
     keys.clear();

@@ -149,7 +149,9 @@ const actionScenes = (() => {
     if (!state.interactive) next.focus({ preventScroll: true });
   }
   function finish(automatic = false) {
-    if (!state || (!automatic && performance.now() < inputAfter)) return;
+    // An interactive guide ends through its own question/exit choice. That
+    // explicit choice must work even when reduced motion reveals it at once.
+    if (!state || (!automatic && !state.interactive && performance.now() < inputAfter)) return;
     const after = state.after;
     stop();
     after();
