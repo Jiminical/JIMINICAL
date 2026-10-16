@@ -18,6 +18,14 @@ Cloudflare Pages에는 아래 파일 분리본을 사용하세요. 통합 `index
 Git 연동 배포에서는 빌드 명령 `python3 scripts/build-cloudflare.py`, 출력 폴더
 `dist-cloudflare`를 지정합니다. 이 빌드는 원본의 단일 파일 버전을 변경하지 않습니다.
 
+브라우저 업로드가 계속 대기한다면 `python3 scripts/build-cloudflare-compact.py`로
+업로드 파일 수를 줄인 버전을 만들 수 있습니다. `dist-cloudflare-compact` 안의
+`index.html`과 `media-1.js`~`media-5.js` **6개 파일을 모두 함께** 올립니다.
+코드·폰트·커서는 HTML에, 원본 이미지 데이터는 25MB보다 작은 미디어 묶음에
+담습니다. 화질과 게임 내용은 유지되며 `_headers`나 추가 폴더가 필요하지 않습니다.
+이 구성은 업로드 요청 수를 줄이지만, Cloudflare 계정·브라우저·네트워크 오류를
+해결했다고 보장하지는 않습니다.
+
 `CSS/main.css`, `CSS/game.css`, `JS/main.js`, `JS/story.js`, `JS/game.js`,
 `JS/events.js`, `JS/audio.js`, `JS/sprites.js`, `JS/walk.js`, `JS/letter.js`, `JS/battle.js`, 이미지를 수정한 뒤에는
 `python3 scripts/build-standalone.py`를 실행해 `index.html`에 반영하세요.
