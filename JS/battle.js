@@ -48,6 +48,7 @@ const battleScenes = (() => {
     }
     state.viewFrom = { x: previousView.x / canvas.width, ground: previousView.ground / canvas.height, height: previousView.height / canvas.height };
     state.stage = kind; state.age = 0; state.inputAfter = performance.now() + 160;
+    gameAudio.battlePhase(kind);
     root.dataset.state = kind;
     const finale=finaleStages.has(kind);
     root.dataset.finale=String(finale);story.hidden=!finale;
@@ -130,6 +131,7 @@ const battleScenes = (() => {
   function bullet(x,y,vx,vy,r=4,kind='ember',curve=0){state.bullets.push({x,y,vx,vy,r,kind,curve,age:0,trail:[]});}
   function slash(ax,ay,bx,by,delay=.78,width=12){state.warnings.push({ax,ay,bx,by,delay,width,age:0,duration:.24});}
   function emit(index) {
+    if (index % 2 === 0) gameAudio.sfx('volley', state.pattern === 1 ? 'claw' : 'magic');
     if(state.pattern===0){
       const gap=78+(Math.sin(index*.66)*.5+.5)*264;
       for(let x=9;x<AW;x+=19)if(Math.abs(x-gap)>34)bullet(x,-13,Math.sin(index*.6)*9,100+index%3*8,4.2);
@@ -210,7 +212,7 @@ const battleScenes = (() => {
       if(cut>=2.58&&!state.ambushSound){state.ambushSound=true;gameAudio.scene('battle');gameAudio.sfx('battleStart');gameAudio.sfx('demon');}
       if(cut>=5.6){root.dataset.ready='true';command();}
     }else if(state.stage==='attack'){
-      if(age>=.4&&!state.struck){state.struck=true;state.enemyHp=Math.max(1,state.enemyHp-state.damage);health();gameAudio.sfx('sword');say(state.reaction==='guard'?`교차한 발톱이 검을 막았다. 갑각에 ${state.damage} 피해!`:state.reaction==='dodge'?`마족이 몸을 틀었다. 날개를 스쳐 ${state.damage} 피해!`:`갑각의 틈을 베었다! ${state.damage} 피해.`);}
+      if(age>=.4&&!state.struck){state.struck=true;state.enemyHp=Math.max(1,state.enemyHp-state.damage);health();gameAudio.sfx('sword');if(state.reaction==='guard')gameAudio.sfx('parry');say(state.reaction==='guard'?`교차한 발톱이 검을 막았다. 갑각에 ${state.damage} 피해!`:state.reaction==='dodge'?`마족이 몸을 틀었다. 날개를 스쳐 ${state.damage} 피해!`:`갑각의 틈을 베었다! ${state.damage} 피해.`);}
       if(age>=1.6)enemyTurn();
     }else if(state.stage==='healing'&&age>=1.4)enemyTurn();
     else if(state.stage==='telegraph'&&age>=1.6)stage('dodge',patterns[state.pattern].hint);
@@ -453,7 +455,7 @@ const battleScenes = (() => {
   function finish(){if(state?.stage!=='won'||performance.now()<state.inputAfter)return;const {after,hp}=state;stop();after({hp});}
   function clearInput(){held.clear();if(state)state.pointer=null;touchPad.querySelectorAll('button').forEach(b=>b.classList.remove('is-held'));}
   function release(code){held.delete(code);}
-  function stop(){cancelAnimationFrame(request);clearInput();state=null;root.hidden=true;delete root.dataset.ready;delete root.dataset.state;}
+  function stop(){cancelAnimationFrame(request);clearInput();gameAudio.stopBattle();state=null;root.hidden=true;delete root.dataset.ready;delete root.dataset.state;}
   function confirm(){
     if(!state||performance.now()<state.inputAfter)return;
     if(state.stage==='command')choose(buttons[state.selection].dataset.battleCommand);

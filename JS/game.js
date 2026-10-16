@@ -105,6 +105,8 @@ const guildGame = (() => {
       "gate",
       "forest",
       "journey",
+      "journeyGorge",
+      "journeyRoad",
       "journeyCarriage",
       "sanctuary",
       "events",
@@ -139,7 +141,7 @@ const guildGame = (() => {
     kaniaWalk.prepare(pictures.guideKania);
     firstPersonArms.prepare(pictures.firstPersonArms);
     itemSpecimens.prepare(pictures.itemSpecimens);
-    journeyCinematic.prepare(pictures.journey, pictures.journeyCarriage);
+    journeyCinematic.prepare(pictures);
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});

@@ -1,4 +1,4 @@
-// Synthesized effects plus the supplied journey theme, played after a gesture.
+// Journey music, licensed battle music/samples, and synthesized pixel ambience.
 const gameAudio = (() => {
   let context,
     master,
@@ -13,6 +13,11 @@ const gameAudio = (() => {
   let musicBus, journeyWanted = false, journeySeek = null, musicPlay = null,
     musicFadeTimer = 0, musicStopping = false;
   const musicLevel = 1.5;
+  const battleTrack = document.querySelector("#battle-music"),
+    combatAssets = document.querySelector("#combat-audio-assets"), samples = new Map();
+  let battleBus, battleWanted = false, battleStopping = false, battlePlay = null,
+    battleFadeTimer = 0, battleMode = "command", samplesLoading = null;
+  const battleLevel = () => battleMode === "danger" ? .82 : battleMode === "dodge" ? .74 : .62;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -152,6 +157,73 @@ const gameAudio = (() => {
       0.012,
     );
     syncJourney();
+    syncBattle();
+  }
+  function preloadCombat() {
+    if (!context || samplesLoading || !combatAssets) return samplesLoading;
+    samplesLoading = Promise.all(Object.entries(combatAssets.dataset).map(async ([key, url]) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) return;
+        const buffer = await context.decodeAudioData(await response.arrayBuffer());
+        samples.set(key.replace(/Src$/, ""), buffer);
+      } catch { /* Synthesized effects remain available if an asset is unavailable. */ }
+    }));
+    return samplesLoading;
+  }
+  function sample(name, level = 1, rate = 1) {
+    const buffer = samples.get(name);
+    if (!buffer || !usable()) return false;
+    const source = context.createBufferSource(), gain = context.createGain();
+    source.buffer = buffer; source.playbackRate.value = rate; gain.gain.value = level;
+    source.connect(gain); gain.connect(master);
+    track(source, "effect", gain);
+    source.addEventListener("ended", () => gain.disconnect()); source.start();
+    return true;
+  }
+  function syncBattle() {
+    if (!battleTrack || !battleBus) return;
+    if (battleStopping) { if (!usable()) battleTrack.pause(); return; }
+    if (!battleWanted || !usable()) {
+      battleTrack.pause(); battleBus.gain.setTargetAtTime(0, context.currentTime, .025); return;
+    }
+    if (battleTrack.paused && !battlePlay) {
+      battleBus.gain.cancelScheduledValues(context.currentTime);
+      battleBus.gain.setTargetAtTime(battleLevel(), context.currentTime, .18);
+      battlePlay = battleTrack.play().catch(() => {}).finally(() => { battlePlay = null; });
+    }
+  }
+  function startBattle() {
+    clearTimeout(battleFadeTimer); battleStopping = false;
+    if (!battleWanted) { battleTrack.currentTime = 0; battleMode = "command"; }
+    battleWanted = true;
+    if (battleBus && usable()) {
+      battleBus.gain.cancelScheduledValues(context.currentTime);
+      battleBus.gain.setTargetAtTime(battleLevel(), context.currentTime, .16);
+    }
+    syncBattle();
+  }
+  function stopBattle(fade = 0) {
+    battleWanted = false; clearTimeout(battleFadeTimer); battleStopping = false;
+    const finish = () => {
+      battleStopping = false; battleTrack?.pause();
+      if (battleTrack) battleTrack.currentTime = 0;
+    };
+    if (fade > 0 && battleBus && !battleTrack.paused && usable()) {
+      battleStopping = true;
+      const now = context.currentTime; battleBus.gain.cancelScheduledValues(now);
+      battleBus.gain.setValueAtTime(battleBus.gain.value, now);
+      battleBus.gain.linearRampToValueAtTime(0, now + fade);
+      battleFadeTimer = setTimeout(finish, fade * 1000);
+    } else finish();
+  }
+  function battlePhase(phase) {
+    if (phase === "lastStrike") { stopBattle(.45); return; }
+    battleMode = ["overload", "desperation"].includes(phase) ? "danger" : phase === "dodge" ? "dodge" : "command";
+    if (battleWanted && battleBus && !battleStopping && usable()) {
+      const now = context.currentTime; battleBus.gain.cancelScheduledValues(now);
+      battleBus.gain.setTargetAtTime(battleLevel(), now, .35);
+    }
   }
   function syncJourney() {
     if (!journeyTrack || !musicBus) return;
@@ -216,6 +288,12 @@ const gameAudio = (() => {
   function scene(next) {
     if (["ambush", "battle", "title", "library"].includes(next) && journeyWanted)
       stopJourney(next === "ambush" ? 0.55 : 0.2);
+    if (next === "ambush") {
+      preloadCombat();
+      if (battleTrack.preload !== "auto") { battleTrack.preload = "auto"; battleTrack.load(); }
+    }
+    if (next === "battle") startBattle();
+    else if (battleWanted) stopBattle(.25);
     if (place === next && sceneryClock) return;
     place = next;
     if (!ambience) return;
@@ -252,15 +330,7 @@ const gameAudio = (() => {
     const rolling = place === "carriage" || place === "departure";
     if (place === "ambush") return;
     if (place === "battle") {
-      if (nextBeat < now - .3) nextBeat = now + .03;
-      const bass = [82.41,82.41,98,73.42,82.41,110,98,73.42];
-      while (nextBeat < now + .12) {
-        const delay = Math.max(0, nextBeat - now);
-        tone(bass[beat % bass.length], .14, {group:"scene",delay,wave:"triangle",level:.13,filter:750});
-        if (beat % 2 === 0) tone(bass[beat % bass.length] * 4, .08, {group:"scene",delay,wave:"square",level:.025,filter:1800});
-        noise(.035,.055,beat % 2 ? 1800 : 450,delay,{group:"scene",crisp:true});
-        beat++; nextBeat += .205;
-      }
+      // The full chiptune carries the rhythm; avoid a second unsynchronised loop.
       return;
     }
     // A short lookahead keeps hoofbeats steady without queuing sounds after a cut.
@@ -360,6 +430,8 @@ const gameAudio = (() => {
         musicBus.gain.value = 0;
         musicBus.connect(master);
         context.createMediaElementSource(journeyTrack).connect(musicBus);
+        battleBus = context.createGain(); battleBus.gain.value = 0; battleBus.connect(master);
+        context.createMediaElementSource(battleTrack).connect(battleBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -419,6 +491,7 @@ const gameAudio = (() => {
         };
       }
       await context.resume();
+      preloadCombat();
       applyVolume();
       if (!sceneryClock) syncScenery();
       return context.state === "running";
@@ -532,6 +605,11 @@ const gameAudio = (() => {
       musicBus.gain.setTargetAtTime(0.65, lastVoice, 0.045);
       musicBus.gain.setTargetAtTime(musicLevel, lastVoice + 0.2, 0.55);
     }
+    if (battleWanted && battleBus && !battleStopping) {
+      battleBus.gain.cancelScheduledValues(lastVoice);
+      battleBus.gain.setTargetAtTime(battleLevel()*.5, lastVoice, .035);
+      battleBus.gain.setTargetAtTime(battleLevel(), lastVoice+.2, .35);
+    }
     const mood = ["concerned", "weary", "embarrassed"].includes(expression)
       ? 0.92
       : ["boasting", "incredulous", "warning"].includes(expression)
@@ -568,19 +646,29 @@ const gameAudio = (() => {
         [440,330,220,110].forEach((hz,i)=>tone(hz,.14,{wave:"square",level:.12,delay:i*.08,end:hz*.7}));
         noise(.32,.3,550); break;
       case "demon":
+        sample("demon", 1.1, .82);
         tone(74,.38,{wave:"sawtooth",level:.16,end:48,filter:600});noise(.2,.2,340);break;
+      case "volley":
+        sample("volley", .12, variant === "claw" ? .65 : .9);
+        break;
       case "sword":
-        noise(.15,.4,2600,0,{crisp:true});tone(740,.17,{wave:"triangle",level:.1,end:180});break;
+        if (!sample("sword", 1.2)) noise(.15,.4,2600,0,{crisp:true});
+        tone(740,.17,{wave:"triangle",level:.075,end:180});break;
       case "parry":
+        sample("parry", .8, 1.35);
         [1160,1740].forEach(hz=>tone(hz,.19,{wave:"sine",level:.1}));break;
       case "hurt":
-        noise(.13,.4,650);tone(147,.18,{wave:"square",level:.1,end:55});break;
+        if (!sample("hurt", .65)) noise(.13,.4,650);
+        tone(147,.18,{wave:"square",level:.08,end:55});break;
       case "charge":
+        sample("charge", .8, .85);
         tone(83,.9,{wave:"sawtooth",level:.1,end:260,filter:900});break;
       case "arrow":
-        noise(.18,.35,3200,0,{crisp:true});tone(1200,.12,{level:.08,end:340});break;
+        if (!sample("arrow", 1.3, 1.1)) noise(.18,.35,3200,0,{crisp:true});
+        tone(1200,.12,{level:.06,end:340});break;
       case "arrowHit":
-        noise(.09,.5,1050);tone(180,.2,{level:.16,end:48});break;
+        sample("arrowHit", 1.3, .85);
+        noise(.09,.3,1050);tone(180,.2,{level:.16,end:48});break;
       case "rescued":
         [392,494,659,784].forEach((hz,i)=>tone(hz,.28,{wave:"triangle",level:.09,delay:i*.09}));break;
       case "next":
@@ -735,9 +823,13 @@ const gameAudio = (() => {
   });
   journeyTrack?.addEventListener("loadedmetadata", syncJourney);
   journeyTrack?.addEventListener("canplay", syncJourney);
-  const retryJourney = () => { if (journeyWanted && journeyTrack?.paused) syncJourney(); };
-  document.addEventListener("pointerdown", retryJourney, { passive: true });
-  document.addEventListener("keydown", retryJourney, { passive: true });
+  battleTrack?.addEventListener("canplay", syncBattle);
+  const retryMusic = () => {
+    if (journeyWanted && journeyTrack?.paused) syncJourney();
+    if (battleWanted && battleTrack?.paused) syncBattle();
+  };
+  document.addEventListener("pointerdown", retryMusic, { passive: true });
+  document.addEventListener("keydown", retryMusic, { passive: true });
   return {
     configure,
     unlock,
@@ -746,6 +838,9 @@ const gameAudio = (() => {
     scene,
     startJourney,
     stopJourney,
+    stopBattle,
+    battlePhase,
+    getCombatState: () => ({ active: battleWanted, mode: battleMode, samples: samples.size }),
     getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,
