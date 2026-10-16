@@ -14,9 +14,10 @@ Cloudflare Workers의 GitHub 연동 배포는 아래 설정을 사용합니다.
 | 루트 디렉터리 | `/` (저장소 루트) |
 | 빌드 명령 | `npm run build` |
 | 배포 명령 | `npm run deploy` |
-| Worker 이름 | `005` |
+| Worker 이름 | `greenstoa` |
 
-Cloudflare의 **005 → 설정 → 빌드 → 연결**에서 GitHub 저장소를 연결합니다.
+Cloudflare의 **애플리케이션 생성 → Continue with GitHub**에서 `JIMINICAL`을 선택합니다.
+프로젝트 이름을 `greenstoa`로 지정하고, 고급 설정의 프로덕션 브랜치를 위 값으로 선택합니다.
 Cloudflare가 `package-lock.json`으로 의존성을 설치하고, Node 빌드가
 `dist-cloudflare`에 파일 분리본을 만든 뒤 Wrangler가 이 폴더만 업로드합니다.
 `wrangler.jsonc`의 Worker 이름은 Cloudflare의 이름과 같아야 합니다.
