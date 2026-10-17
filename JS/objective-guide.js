@@ -10,6 +10,7 @@ function createObjectiveGuideModel() {
     const stages = {
       guild:["leave-guild","길드에서 나와 광장의 기사단 마차로 가기"],
       city:["board-carriage","여행 준비를 마치고 광장 아래쪽 마차에 탑승하기"],
+      cliff:["board-carriage","광장으로 돌아가 기사단 마차에 탑승하기"],
       carriage:["journey","동쪽 숲길을 지나 그린스토아로 향하기"],
       checkpoint:["checkpoint","카니아에게 모험가증과 의뢰서 보여 주기"],
       gate:["enter-grove","정문을 지나 그린스토아 숲길로 들어가기"],
@@ -94,4 +95,3 @@ const objectiveGuide = (() => {
     dismiss() { model.dismiss(); update(); onChange(); }
   };
 })();
-

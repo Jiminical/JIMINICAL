@@ -1,7 +1,7 @@
 // One local save slot. Only settled world states are written by game.js.
 const journeySave = (() => {
   const key = "greenstoa-journey-v1";
-  const locations = new Set(["guild", "city", "shop", "carriage", "checkpoint", "gate", "grove", "library"]);
+  const locations = new Set(["guild", "city", "cliff", "shop", "carriage", "checkpoint", "gate", "grove", "library"]);
   const steps = new Set(["lucy", "accepted", "departure", "carriage", "checkpoint", "arrival", "arrived"]);
   const directions = new Set(["up", "down", "left", "right"]);
   const people = new Set(["lucy", "bran", "mia", "nara", "tobin", "leon", "rogue", "scout", "rose", "rael", "edan", "sena"]);

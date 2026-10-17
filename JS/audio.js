@@ -19,7 +19,7 @@ const gameAudio = (() => {
   let battleBus, battleWanted = false, battleStopping = false, battlePlay = null,
     battleFadeTimer = 0, battleMode = "command", samplesLoading = null;
   const battleLevel = () => battleMode === "danger" ? .82 : battleMode === "dodge" ? .74 : .62;
-  const townTrack = document.querySelector("#town-music"), townPlaces = new Set(["guild", "city", "shop"]);
+  const townTrack = document.querySelector("#town-music"), townPlaces = new Set(["guild", "city", "cliff", "shop"]);
   const townLevel = .66;
   let townBus, townWanted = false, townStopping = false, townPlay = null, townFadeTimer = 0;
   let enabled = false,
@@ -42,6 +42,7 @@ const gameAudio = (() => {
     ambush: { wind: 0.008, water: 0, cutoff: 160 },
     battle: { wind: 0.02, water: 0, cutoff: 390 },
     city: { wind: 0.035, water: 0.055, cutoff: 650 },
+    cliff: { wind: 0.075, water: 0.16, cutoff: 850 },
     departure: { wind: 0.07, water: 0, cutoff: 290 },
     carriage: { wind: 0.12, water: 0, cutoff: 330 },
     checkpoint: { wind: 0.08, water: 0.045, cutoff: 950 },

@@ -143,6 +143,7 @@ const guildGame = (() => {
       "sdHero",
       "sdLeads",
       "city",
+      "cliff",
       "grove",
       "shop",
       "fieldCast",
@@ -213,6 +214,7 @@ const guildGame = (() => {
   let nextAutosave = 0;
   let resumingSave = false;
   let restoredMusic = null;
+  let boundaryContact = null;
   const background = document.createElement("canvas");
   background.width = W;
   background.height = H;
@@ -399,6 +401,7 @@ const guildGame = (() => {
       hideEvent();
       hideAction();
       location = destination;
+      boundaryContact = null;
       setup();
       buildMap();
       updateObjective();
@@ -1309,6 +1312,22 @@ const guildGame = (() => {
     selected.scrollIntoView({ block: "nearest" });
     updateDialogueScroll();
   }
+  function followFieldPath(path) {
+    boundaryContact = path.id;
+    clearKeys();
+    player.moving = false;
+    if (path.destination === "cliff") {
+      travelTo("cliff", () => {
+        player = actor("hero", 360, 108, "down");
+        npcs = [];
+      }, () => speak([{text: fieldPaths.text(fieldPaths.targets("cliff").find(path=>path.id==="river-cliff"))}]));
+    } else if (path.destination === "city") {
+      travelTo("city", () => {
+        player = actor("hero", 360, 432, "up");
+        npcs = fieldPeople("city");
+      });
+    } else speak([{text: fieldPaths.text(path, fieldFlags)}]);
+  }
   // Both long replies and clipped choices use the same visible way to read on.
   function dialogueScrollTarget() {
     if (!dialogueScrollMedia.matches || dialogueBox.hidden || !dialogue ||
@@ -1879,6 +1898,7 @@ const guildGame = (() => {
               : n.y,
       kind: "npc",
     }));
+    people.push(...fieldPaths.targets(location));
     if (fieldWorld.maps[location])
       return [
         ...people,
@@ -1938,6 +1958,10 @@ const guildGame = (() => {
     }
     if (target.kind === "letter") {
       showLibraryLetter();
+      return;
+    }
+    if (target.kind === "path") {
+      followFieldPath(target);
       return;
     }
     const doors = [
@@ -2040,6 +2064,7 @@ const guildGame = (() => {
       ]);
   }
   function blocked(x, y) {
+    if (fieldPaths.blocked(location, x, y)) return true;
     if (fieldTerrain.blocked(location, x, y)) return true;
     return npcs.some((n) => Math.abs(n.x - x) < 14 && Math.abs(n.y - y) < 9);
   }
@@ -2050,6 +2075,7 @@ const guildGame = (() => {
       oldY = player.y;
     let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0) + stick.x,
       dy = (keys.has("KeyS") ? 1 : 0) - (keys.has("KeyW") ? 1 : 0) + stick.y;
+    if (boundaryContact && !fieldPaths.near(location, boundaryContact, player)) boundaryContact = null;
     player.moving = !!(dx || dy);
     if (!player.moving) return;
     if (Math.abs(dx) > Math.abs(dy)) player.dir = dx < 0 ? "left" : "right";
@@ -2066,6 +2092,8 @@ const guildGame = (() => {
       if (!blocked(player.x + dx / steps, player.y)) player.x += dx / steps;
       if (!blocked(player.x, player.y + dy / steps)) player.y += dy / steps;
     }
+    const path = fieldPaths.contact(location, player, dy);
+    if (path && path.id !== boundaryContact) { followFieldPath(path); return; }
     footDistance += Math.hypot(player.x - oldX, player.y - oldY);
     if (footDistance >= (keys.has("ShiftLeft") ? 24 : 22)) {
       footDistance = 0;
@@ -2221,6 +2249,7 @@ const guildGame = (() => {
       ctx.drawImage(background, 0, H - 1, W, 1, 0, H, W, 2);
     }
     drawScenery();
+    fieldPaths.draw(ctx, location, elapsed, motion());
     drawPropOutlines();
     [...npcs, player].sort((a, b) => a.y - b.y).forEach(drawActor);
     if (phase === "free") {
@@ -2229,10 +2258,10 @@ const guildGame = (() => {
       prompt.textContent = target ? `E · ${target.name}` : "";
       prompt.hidden = !target;
       if (target) {
-        const x = Math.round(target.x),
+        const x = Math.round(target.x) + (target.kind === "path" ? 18 : 0),
           person =
             target.kind === "npc" ? npcs.find((n) => n.id === target.id) : null,
-          y = target.kind === "letter" ? Math.round(target.y) - 27 : person
+          y = target.kind === "path" ? Math.max(2, Math.round(target.y) - 18) : target.kind === "letter" ? Math.round(target.y) - 27 : person
             ? Math.max(
                 2,
                 Math.round(person.y + (counterFor(person)?.shift || 0)) -
@@ -2255,7 +2284,7 @@ const guildGame = (() => {
     elapsed += dt;
     if (phase === "free") {
       movePlayer(dt);
-      if (location === "grove" && player.y < 312 && player.x > 360 && !fieldFlags.libraryAmbushCleared)
+      if (phase === "free" && location === "grove" && player.y < 312 && player.x > 360 && !fieldFlags.libraryAmbushCleared)
         startForestAmbush();
       if (phase === "free") movePeople(dt);
       if (location === "library" && !document.hidden)
@@ -2328,7 +2357,7 @@ const guildGame = (() => {
         itemList.append(toggle);
       }
       itemDetail.textContent = questAccepted
-        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 이슬잎 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
+        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city", "cliff"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 이슬잎 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
@@ -2829,6 +2858,7 @@ const guildGame = (() => {
     footDistance = 0;
     nextAutosave = 0;
     resumingSave = !!saved;
+    boundaryContact = null;
     restoredMusic = saved?.journeyMusic ?? null;
     objectiveGuide.reset(saved?.objectiveGuide);
     objectiveGuide.bind({ onSettingsChange: () => saveProgress() });
@@ -2886,6 +2916,7 @@ const guildGame = (() => {
       fieldFlags = { ...saved.fieldFlags };
       inventory = saved.inventory.map(item => ({ ...item }));
       player = actor("hero", saved.player.x, saved.player.y, saved.player.dir);
+      fieldPaths.settle(location, player);
       npcs = saved.npcs.map(person => ({ ...actor(person.id, person.x, person.y, person.dir), talkCount: person.talkCount }));
       // Older saves may contain the previous plaza patrol position.
       if (location === "city") for (const npc of npcs) if (npc.id === "edan") { npc.x = 500; npc.y = 365; npc.dir = "right"; }

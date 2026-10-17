@@ -12,6 +12,11 @@ const fieldWorld = (() => {
         { id: "fountain", name: "광장의 분수", x: 363, y: 307 },
       ],
     },
+    cliff: {
+      names: ["제르디아 왕국", "남쪽 절벽 전망대"],
+      npcs: [],
+      targets: [],
+    },
     grove: {
       names: ["그린스토아 입구", "이슬잎 숲길"],
       npcs: [["sena", 143, 280, "left"]],

@@ -50,6 +50,12 @@ test('opening checkpoints remain valid and restricted to the guild', () => {
   assert.equal(save.write({ ...state, resume: 'opening', location: 'guild' }), true);
   assert.equal(save.write({ ...state, resume: 'opening' }), false);
 });
+test('new cliff field keeps the existing v1 save format and legacy locations', () => {
+  const {save,state}=setup();
+  assert.equal(save.write({...state,location:'cliff',player:{x:360,y:108,dir:'down'},npcs:[],visited:['guild','city','cliff']}),true);
+  assert.equal(save.read().version,1);assert.equal(save.read().location,'cliff');
+  assert.equal(save.write(state),true);assert.equal(save.read().location,'grove');
+});
 
 test('optional objective settings preserve legacy saves and dismissed state', () => {
   const { save, state } = setup();
