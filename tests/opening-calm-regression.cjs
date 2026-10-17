@@ -11,9 +11,11 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   });
   const p=await ctx.newPage();p.on('pageerror',e=>report.errors.push(tag+': '+e.message));p.on('response',r=>{if(r.status()>=400)report.errors.push(tag+': '+r.status()+' '+r.url())});
   await p.goto(report.url);await p.evaluate(()=>guildGame.ready);await p.locator('#start-button').click();
-  await p.waitForFunction(()=>!document.querySelector('#opening-music').paused&&gameAudio.getOpeningState().active);
   await p.locator('#story-auto').click();
-  const early=await p.evaluate(()=>gameAudio.getOpeningState());await p.waitForTimeout(650);const mid=await p.evaluate(()=>gameAudio.getOpeningState());await p.waitForTimeout(2100);const full=await p.evaluate(()=>{const d=new Float32Array(2048);window.__openingProbe.analyser.getFloatTimeDomainData(d);return{...gameAudio.getOpeningState(),rms:Math.sqrt(d.reduce((s,x)=>s+x*x,0)/d.length),duration:document.querySelector('#opening-music').duration}});
+  // play() clears paused before a network stream actually starts. Measure the
+  // fade from the advancing media clock, rather than from the download request.
+  await p.waitForFunction(()=>gameAudio.getOpeningState().active&&gameAudio.getOpeningState().offset>0&&gameAudio.getOpeningState().gain>0);
+  const early=await p.evaluate(()=>gameAudio.getOpeningState());await p.waitForTimeout(650);const mid=await p.evaluate(()=>gameAudio.getOpeningState());await p.waitForFunction(()=>gameAudio.getOpeningState().offset>2.65&&gameAudio.getOpeningState().gain>.8);const full=await p.evaluate(()=>{const d=new Float32Array(2048);window.__openingProbe.analyser.getFloatTimeDomainData(d);return{...gameAudio.getOpeningState(),rms:Math.sqrt(d.reduce((s,x)=>s+x*x,0)/d.length),duration:document.querySelector('#opening-music').duration}});
   report.measurements.push({tag,early,mid,full});
   check(tag+' opening song starts with a real fade in',early.gain<.2&&mid.gain>early.gain+.08&&full.gain>.8&&full.offset>2.5);
   check(tag+' decoded opening song reaches its audio bus',full.rms>1e-5&&full.duration>30);
