@@ -1,4 +1,4 @@
-// Journey music, licensed battle music/samples, and synthesized pixel ambience.
+// Supplied scene music, licensed combat samples and synthesized pixel ambience.
 const gameAudio = (() => {
   let context,
     master,
@@ -24,6 +24,12 @@ const gameAudio = (() => {
   let townBus, townWanted = false, townStopping = false, townPlay = null, townFadeTimer = 0;
   const openingTrack = document.querySelector("#opening-music"), openingLevel = .82;
   let openingBus, openingWanted = false, openingStopping = false, openingPlay = null, openingFadeTimer = 0;
+  const greenstoaTrack = document.querySelector("#greenstoa-music"), greenstoaLevel = .72,
+    greenstoaPlaces = new Set(["gate", "grove", "library"]);
+  // Reuse Pixel Memories without embedding its MP3 twice in portable builds.
+  if (greenstoaTrack?.dataset.sharedSource) greenstoaTrack.src = document.getElementById(greenstoaTrack.dataset.sharedSource).getAttribute("src");
+  let greenstoaBus, greenstoaReady = false, greenstoaWanted = false,
+    greenstoaStopping = false, greenstoaPlay = null, greenstoaFadeTimer = 0;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -168,6 +174,62 @@ const gameAudio = (() => {
     syncBattle();
     syncTown();
     syncOpening();
+    syncGreenstoa();
+  }
+  function syncGreenstoa() {
+    if (!greenstoaTrack || !greenstoaBus) return;
+    if (greenstoaStopping) { if (!usable()) greenstoaTrack.pause(); return; }
+    if (!greenstoaWanted || !usable()) {
+      greenstoaTrack.pause();
+      greenstoaBus.gain.cancelScheduledValues(context.currentTime);
+      greenstoaBus.gain.setValueAtTime(0, context.currentTime);
+      return;
+    }
+    if (greenstoaTrack.paused && !greenstoaPlay) {
+      greenstoaPlay = greenstoaTrack.play().then(() => {
+        if (!greenstoaWanted || !usable()) { greenstoaTrack.pause(); return; }
+        const now = context.currentTime;
+        greenstoaBus.gain.cancelScheduledValues(now);
+        greenstoaBus.gain.setValueAtTime(0, now);
+        greenstoaBus.gain.linearRampToValueAtTime(greenstoaLevel, now + 1.2);
+      }).catch(() => {}).finally(() => { greenstoaPlay = null; });
+    }
+  }
+  function startGreenstoa() {
+    clearTimeout(greenstoaFadeTimer);
+    greenstoaStopping = false;
+    greenstoaWanted = true;
+    if (greenstoaBus && usable() && !greenstoaTrack.paused) {
+      greenstoaBus.gain.cancelScheduledValues(context.currentTime);
+      greenstoaBus.gain.setTargetAtTime(greenstoaLevel, context.currentTime, .2);
+    }
+    syncGreenstoa();
+  }
+  function stopGreenstoa(fade = 0, reset = false) {
+    greenstoaWanted = false;
+    greenstoaStopping = false;
+    clearTimeout(greenstoaFadeTimer);
+    const finish = () => {
+      greenstoaStopping = false;
+      greenstoaTrack?.pause();
+      if (reset && greenstoaTrack) greenstoaTrack.currentTime = 0;
+      if (greenstoaBus) {
+        greenstoaBus.gain.cancelScheduledValues(context.currentTime);
+        greenstoaBus.gain.setValueAtTime(0, context.currentTime);
+      }
+    };
+    if (fade > 0 && greenstoaBus && !greenstoaTrack.paused && usable()) {
+      greenstoaStopping = true;
+      const now = context.currentTime;
+      greenstoaBus.gain.cancelScheduledValues(now);
+      greenstoaBus.gain.setValueAtTime(greenstoaBus.gain.value, now);
+      greenstoaBus.gain.linearRampToValueAtTime(0, now + fade);
+      greenstoaFadeTimer = setTimeout(finish, fade * 1000);
+    } else finish();
+  }
+  function setGreenstoaReady(ready) {
+    greenstoaReady = !!ready;
+    if (!greenstoaReady) stopGreenstoa(0, true);
   }
   function syncOpening() {
     if (!openingBus || !openingTrack) return;
@@ -283,7 +345,9 @@ const gameAudio = (() => {
     if (battleTrack.paused && !battlePlay) {
       battleBus.gain.cancelScheduledValues(context.currentTime);
       battleBus.gain.setTargetAtTime(battleLevel(), context.currentTime, .18);
-      battlePlay = battleTrack.play().catch(() => {}).finally(() => { battlePlay = null; });
+      battlePlay = battleTrack.play().then(() => {
+        if (!battleWanted || !usable()) battleTrack.pause();
+      }).catch(() => {}).finally(() => { battlePlay = null; });
     }
   }
   function startBattle() {
@@ -381,6 +445,11 @@ const gameAudio = (() => {
     return (landscapes[place] || landscapes.title).wind;
   }
   function scene(next) {
+    if (next === "title") greenstoaReady = false;
+    if (greenstoaReady && greenstoaPlaces.has(next)) {
+      if (journeyWanted || musicStopping) stopJourney(.35);
+      startGreenstoa();
+    } else if (greenstoaWanted || next === "title") stopGreenstoa(next === "title" ? .2 : .3, next === "title");
     if (next === "prologue") startOpening();
     else if (openingWanted || openingStopping) stopOpening(next === "title" ? .2 : 0);
     if (townPlaces.has(next)) startTown();
@@ -537,6 +606,8 @@ const gameAudio = (() => {
         context.createMediaElementSource(townTrack).connect(townBus);
         openingBus = context.createGain(); openingBus.gain.value = 0; openingBus.connect(master);
         context.createMediaElementSource(openingTrack).connect(openingBus);
+        greenstoaBus = context.createGain(); greenstoaBus.gain.value = 0; greenstoaBus.connect(master);
+        context.createMediaElementSource(greenstoaTrack).connect(greenstoaBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -967,11 +1038,13 @@ const gameAudio = (() => {
   battleTrack?.addEventListener("canplay", syncBattle);
   townTrack?.addEventListener("canplay", syncTown);
   openingTrack?.addEventListener("canplay", syncOpening);
+  greenstoaTrack?.addEventListener("canplay", syncGreenstoa);
   const retryMusic = () => {
     if (journeyWanted && journeyTrack?.paused) syncJourney();
     if (battleWanted && battleTrack?.paused) syncBattle();
     if (townWanted && townTrack?.paused) syncTown();
     if (openingWanted && openingTrack?.paused) syncOpening();
+    if (greenstoaWanted && greenstoaTrack?.paused) syncGreenstoa();
   };
   document.addEventListener("pointerdown", retryMusic, { passive: true });
   document.addEventListener("keydown", retryMusic, { passive: true });
@@ -984,11 +1057,13 @@ const gameAudio = (() => {
     startJourney,
     stopJourney,
     stopOpening,
+    setGreenstoaReady,
     stopBattle,
     battlePhase,
     getCombatState: () => ({ active: battleWanted, mode: battleMode, samples: samples.size }),
     getTownState: () => ({ active: townWanted, offset: townTrack?.currentTime ?? 0 }),
     getOpeningState: () => ({ active: openingWanted, offset: openingTrack?.currentTime ?? 0, gain: openingBus?.gain.value ?? 0 }),
+    getGreenstoaState: () => ({ ready: greenstoaReady, active: greenstoaWanted, offset: greenstoaTrack?.currentTime ?? 0, gain: greenstoaBus?.gain.value ?? 0 }),
     getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,

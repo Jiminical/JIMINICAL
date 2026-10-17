@@ -76,7 +76,7 @@ assert '<script id="greenstoa-script">' in page
 assert 'data-sprite-src="data:image/webp;base64,' in page
 assert 'data-art-src="data:image/webp;base64,' in page
 assert 'data-late-src="data:image/webp;base64,' in page
-for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
+for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-rogue', 'city', 'grove', 'shop', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 for attribute in ('demon-actions', 'item-specimens', 'first-person-arms', 'forest-ambush', 'journey-carriage'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page

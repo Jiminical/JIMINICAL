@@ -4,7 +4,7 @@ The sourced music and downloaded effects below are released under **CC0 1.0**:
 https://creativecommons.org/publicdomain/zero/1.0/
 Commercial use, redistribution and adaptation are permitted.
 
-## Battle theme
+## Previous battle theme (retained source, no longer selected)
 
 - Juhani Junkala / SubspaceAudio — **Level 3**, *Retro Game Music Pack*
   (published as *5 Chiptunes (Action)*).
@@ -65,7 +65,20 @@ Commercial use, redistribution and adaptation are permitted.
 
 `adventure-across-the-kingdom.mp3` is the user's supplied
 **Adventure Across the Kingdom**. Its original bytes are preserved.
-The CC0 statements above apply only to the separately sourced battle assets.
+The CC0 statements above apply only to the separately sourced music/effects.
+
+## Opening, battle and Greenstoa music supplied by the project owner
+
+- **Pixel Memories** (`pixel-memories.mp3`): the supplied original MP3, used
+  for the opening narration and, by the owner's request, Greenstoa music. These
+  two scene players share the same source file; the opening fade/stop behavior
+  is preserved.
+- **魔界突破戦** (`makai-toppa-sen.mp3`): the supplied original MP3, used for
+  battle. Pixel Memories starts in Greenstoa after the Mother Tree cinematic,
+  including the gate, grove and library. Battle temporarily takes over, then
+  the Greenstoa theme resumes.
+- Both supplied files are preserved byte-for-byte. No CC0 license is asserted
+  for these supplied tracks.
 
 The rogue's comic three-note sob, dialogue blips, UI tones, footsteps and environmental beds are
 synthesized locally in `JS/audio.js`.

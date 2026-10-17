@@ -141,13 +141,11 @@ const guildGame = (() => {
       "events",
       "eventProps",
       "sdHero",
-      "sdLeads",
+      "sdRogue",
       "city",
       "cliff",
       "grove",
       "shop",
-      "fieldCast",
-      "sdField",
       "arda",
       "sdArda",
       "library",
@@ -162,8 +160,7 @@ const guildGame = (() => {
   ]).then(() => {
     fieldSprites.prepare({
       hero: pictures.sdHero,
-      leads: pictures.sdLeads,
-      field: pictures.sdField,
+      rogue: pictures.sdRogue,
       arda: pictures.sdArda,
       kania: pictures.sdKania,
       ...Object.fromEntries(Object.entries(characterChats).map(([id, person]) => [id, pictures["sd" + person.asset]])),
@@ -904,6 +901,7 @@ const guildGame = (() => {
         kind,
         interactive: kind === "guide",
         world: background,
+        natureKey: location,
         pictures,
         motion: motion(),
         actors: [...npcs, player].map((a) => ({ ...a })),
@@ -1690,12 +1688,15 @@ const guildGame = (() => {
       { kind: "scout", expression: "welcoming", text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—" },
       { kind: "scout", expression: "welcoming", text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—" },
       { kind: "scout", expression: "welcoming", text: "이종족연합국, 그린스토아다." },
-    ], () => showVista("sanctuary", () => resumeWorld(() => {
+    ], () => showVista("sanctuary", () => {
       storyStep = "arrived";
-      npcs = [actor("scout", 442, 312, "left")];
-      updateObjective();
-      notify("그린스토아에 도착했다.");
-    })));
+      gameAudio.setGreenstoaReady(true);
+      resumeWorld(() => {
+        npcs = [actor("scout", 442, 312, "left")];
+        updateObjective();
+        notify("그린스토아에 도착했다.");
+      });
+    }));
   }
 
   function kaniaConversation({ walking = false } = {}) {
@@ -2867,6 +2868,7 @@ const guildGame = (() => {
       cast.hero.name = saved.name;
       location = saved.location;
       storyStep = saved.storyStep;
+      gameAudio.setGreenstoaReady(storyStep === "arrived");
       questAccepted = saved.questAccepted;
       hp = saved.hp;
       coins = saved.coins;
@@ -2939,7 +2941,7 @@ const guildGame = (() => {
     }
     if (!resumingSave) saveProgress({ opening: true });
     else if (location === "library" && !fieldFlags.libraryLetterRead) welcomeLibrary();
-    if (resumingSave && !fieldFlags.libraryAmbushCleared && ["checkpoint", "gate", "grove"].includes(location) &&
+    if (resumingSave && storyStep !== "arrived" && !fieldFlags.libraryAmbushCleared && ["checkpoint", "gate", "grove"].includes(location) &&
       (restoredMusic?.active ?? true)) gameAudio.startJourney(restoredMusic?.offset ?? 0);
     if (resumingSave && phase === "free") notify("저장된 여정에서 이어간다.");
   }

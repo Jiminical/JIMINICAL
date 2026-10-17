@@ -18,12 +18,14 @@ const {gunzipSync}=require('zlib');
  assert.deepEqual(Buffer.from(jangwiField,'base64'),fs.readFileSync(path.join(root,'assets/sd-jangwi.webp')));
  const muirshuField=html.match(/data-sd-muirshu-src="data:image\/webp;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(muirshuField,'base64'),fs.readFileSync(path.join(root,'assets/sd-muirshu.webp')));
- for(const [attr,file]of [['cast','ld-hero.webp'],['field-cast','ld-librarians.webp']]) {
+ for(const [attr,file]of [['cast','ld-hero.webp'],['sd-rogue','sd-rogue.webp']]) {
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file)));
  }
  const opening=html.match(/id="opening-music" src="data:audio\/mpeg;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(opening,'base64'),fs.readFileSync(path.join(root,'assets/audio/pixel-memories.mp3')));
+ const battle=html.match(/id="battle-music" src="data:audio\/mpeg;base64,([^" ]+)"/)[1];
+ assert.deepEqual(Buffer.from(battle,'base64'),fs.readFileSync(path.join(root,'assets/audio/makai-toppa-sen.mp3')));
  assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: active portrait sheets and original opening music byte-identical, below 100 MiB');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
  try {
@@ -33,6 +35,7 @@ const {gunzipSync}=require('zlib');
   await page.goto(url,{waitUntil:'load',timeout:120000});
   await page.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});
   await page.evaluate(()=>guildGame.ready);
+  assert.equal(await page.evaluate(()=>document.querySelector('#greenstoa-music').src===document.querySelector('#opening-music').src),true);
   await page.evaluate(async()=>{document.querySelector('#title-screen').hidden=true;await guildGame.start('여행자',()=>{});guildGame.unlock();});
   assert.equal(await page.locator('#dialogue-portrait').getAttribute('data-character'),'lucy');
   assert.deepEqual(errors,[]);console.log('PASS loaded original opening and all game assets: '+url);

@@ -8,7 +8,7 @@ const fieldSprites = (() => {
     hero: { sheet: "hero", row: 0, height: 72 },
     lucy: { sheet: "leads", row: 0, height: 70 },
     scout: { sheet: "kania", row: 0, height: 74 },
-    rogue: { sheet: "leads", row: 2, height: 72 },
+    rogue: { sheet: "rogue", row: 0, height: 72 },
     leon: { sheet: "leads", row: 3, height: 72 },
     bran: { sheet: "guild", row: 0, height: 72 },
     mia: { sheet: "guild", row: 1, height: 70 },
@@ -135,7 +135,7 @@ const fieldSprites = (() => {
     sheets = Object.fromEntries(
       Object.entries(images).map(([name, image]) => [
         name,
-        analyse(image, name === "kania" || name === "arda" || characterChats[name] ? 1 : 4),
+        analyse(image, name === "kania" || name === "arda" || name === "rogue" || characterChats[name] ? 1 : 4),
       ]),
     );
     for (const [kind, person] of Object.entries(cast)) {
