@@ -109,9 +109,9 @@ const guildGame = (() => {
     },
     // Keep the original actor key so existing saves and codex entries survive.
     rose: { name: "아르다", portrait: 0, fieldPortrait: true },
-    rael: { name: "라엘", portrait: 0, fieldPortrait: true },
+    rael: { name: "뮈르슈", portrait: 0, fieldPortrait: true },
     edan: { name: "기루스", portrait: 2, fieldPortrait: true },
-    sena: { name: "새나", portrait: 1, fieldPortrait: true },
+    sena: { name: "장위", portrait: 1, fieldPortrait: true },
   };
   for (const [id, person] of Object.entries(characterChats)) cast[id].name = person.name;
   const pictures = {};
@@ -591,8 +591,10 @@ const guildGame = (() => {
     if (frame === cinematic.frame) return;
     cinematic.frame = frame;
     const art = pictures.sanctuary;
-    // Hold the final framing from the moment the painting appears. Only the
-    // water layer moves; there is no camera pan or moving canopy.
+    // Keep the slow reveal through the painting; only the water animates
+    // within it, so the canopy does not wobble during the camera movement.
+    const progress = complete ? 1 : Math.min(1, seconds / 32);
+    const ease = progress * progress * (3 - 2 * progress);
     const scale = Math.max(
       vistaArt.width / art.naturalWidth,
       (vistaArt.height * 1.5) / art.naturalHeight,
@@ -602,11 +604,11 @@ const guildGame = (() => {
     vistaContext.imageSmoothingEnabled = false;
     vistaContext.save();
     vistaContext.scale(vistaArt.width/sw,vistaArt.height/sh);
-    vistaContext.translate(-(art.naturalWidth-sw)/2,-(art.naturalHeight-sh));
+    vistaContext.translate(-(art.naturalWidth-sw)/2,-Math.min(art.naturalHeight-sh, Math.round((art.naturalHeight-sh)*ease)));
     vistaContext.drawImage(art,0,0);
     livingNature.draw(vistaContext,art,"sanctuary",seconds,motion());
     vistaContext.restore();
-    vista.dataset.pan = "0.000";
+    vista.dataset.pan = progress.toFixed(3);
     const cue = (start, end) =>
       complete
         ? 0
@@ -725,11 +727,13 @@ const guildGame = (() => {
       speak([
         {
           kind: "rael",
-          text: "어서 와요. 이슬잎 도서관에 오신 걸 환영해요.\n먼 길의 끝에서는 잠깐 책을 읽으며 쉬어 가셔도 좋아요.",
+          expression: "playful",
+          text: "이슬잎 도서관에 온 걸 환영해. 난 뮈르슈야.\n먼 길을 왔나? 그럼 잠깐 앉아서 쉬어 보라고.",
         },
         {
           kind: "rael",
-          text: "왼편에는 세계의 기록, 가운데에는 인물 도감, 오른편에는 건국 이야기를 담은 삽화집이 있어요.\n언제든 펼쳐 보세요. 이곳의 책은 모든 이에게 열려 있으니까요.",
+          expression: "explaining",
+          text: "왼편은 세계의 기록, 가운데는 인물 도감, 오른편은 건국 이야기를 담은 삽화집이야.\n마음 가는 책부터 펼쳐 봐. 의외로 재미있는 걸 발견할지도…",
         },
       ]);
     if (!fieldFlags.libraryLetterRead)
@@ -1801,6 +1805,7 @@ const guildGame = (() => {
         const goal = objectiveGuide.describe(objectiveWorld());
         speak([...topic.lines, { kind: id, expression: "pointing", text: (questAccepted ? "네 임무는 성역의 이상 징후를 확인하는 거야.\n" : "의뢰를 맡을 생각이면 접수부터 해야지.\n") + goal.step + "." }, ...topic.ending], () => { objectiveGuide.reveal(); hub(); });
       }});
+      if (id === "rael") actions.push({ label: "도서관 기록 보기", action: () => openArchive("world") });
       actions.push(...person.topics.filter(topic => !asked.has(topic)).map(topic => ({ label: topic.label, action: () => {
         asked.add(topic);
         // Do not claim the player accepted a quest when they have not.
@@ -1809,7 +1814,7 @@ const guildGame = (() => {
         speak(lines, () => hub());
       }})));
       actions.push({ label: "대화 마치기", cancel: true, action: () => { saveProgress(); } });
-      speak(first ? person.greeting : [{ kind: id, expression: "neutral", text: id === "lucy" ? "더 궁금한 게 있으세요?" : id === "edan" ? "더 궁금하신 점이 있으십니까?" : id === "tobin" ? "더 물어볼 게 있나?" : "더 궁금한 게 있어?" }], null, actions);
+      speak(first ? person.greeting : [{ kind: id, expression: "neutral", text: person.hubPrompt || (id === "lucy" ? "더 궁금한 게 있으세요?" : id === "edan" ? "더 궁금하신 점이 있으십니까?" : id === "tobin" ? "더 물어볼 게 있나?" : "더 궁금한 게 있어?") }], null, actions);
     };
     if (id === "leon" && !objectiveGuide.snapshot().unlocked) {
       const briefing = person.briefing;
@@ -1819,18 +1824,6 @@ const guildGame = (() => {
 
   function npcTalk(id) {
     if (characterChats[id]) { characterConversation(id); return; }
-    if (id === "rael") {
-      speak(
-        [
-          {
-            kind: "rael",
-            text: "어떤 기록이 궁금하세요?\n세계의 이야기와, 길에서 만난 사람들의 이야기를 함께 모아 두었어요.",
-          },
-        ],
-        () => openArchive("world"),
-      );
-      return;
-    }
     if (id === "rose") {
       speak(
         fieldWorld.shops.city.greeting.map((text,i) => ({ kind: id, expression: i ? "smile" : "curious", text })),
@@ -1848,15 +1841,6 @@ const guildGame = (() => {
       characterConversation("lucy");
       return;
     }
-    const texts = {
-      sena: [
-        "처음 오셨어요? 저는 새나예요. 다리 건너 도서관에서는 라엘 씨가 기다리고 있고요.\n여긴 앉아서 물소리를 듣기만 해도 시간이 잘 가요.",
-        "저기 작은 샘은 마셔도 괜찮아요. 긴 여행 뒤엔 잠깐 쉬어 가세요.\n강가에 떨어진 잎도 하나쯤은 기념으로 가져가셔도 돼요.",
-      ],
-    };
-    const npc = npcs.find((n) => n.id === id);
-    npc.talkCount = (npc.talkCount || 0) + 1;
-    speak([{ kind: id, text: texts[id][(npc.talkCount - 1) % 2] }]);
   }
   function targets() {
     const people = npcs.map((n) => ({

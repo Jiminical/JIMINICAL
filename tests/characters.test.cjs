@@ -4,8 +4,8 @@ const fs = require('node:fs'), vm = require('node:vm'), path = require('node:pat
 const root = path.join(__dirname,'..');
 const chats = vm.runInNewContext(fs.readFileSync(path.join(root,'JS/character-chats.js'),'utf8')+';characterChats');
 const modelFactory = vm.runInNewContext(fs.readFileSync(path.join(root,'JS/objective-guide.js'),'utf8')+';createObjectiveGuideModel');
-test('seven replacement identities retain save IDs and three distinct finite topics',()=>{
-  assert.deepEqual(Object.keys(chats).sort(),['bran','edan','leon','lucy','mia','nara','tobin']);
+test('replacement identities retain save IDs and three distinct finite topics',()=>{
+  assert.deepEqual(Object.keys(chats).sort(),['bran','edan','leon','lucy','mia','nara','rael','sena','tobin']);
   for (const [id,person] of Object.entries(chats)) {
     assert.equal(person.topics.length,3,id);
     assert.equal(new Set(person.topics.map(t=>t.label)).size,3);

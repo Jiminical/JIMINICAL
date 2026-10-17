@@ -876,6 +876,105 @@ const characterChats = {
     "asset": "girus",
     "id": "edan"
   },
+  "rael": {
+    "id": "rael",
+    "asset": "muirshu",
+    "name": "뮈르슈",
+    "role": "이슬잎 도서관의 사서 · 하프 드래곤 수인",
+    "summary": "장난기와 어른스러운 차분함이 함께 드러나는 하프 드래곤. 염뢰혈에서 크라슈에게 패한 이야기는 역린이다.",
+    "speechStyle": "자존심 있는 반말. ~해 보라고, ~인가?, ~일지도… 같은 말투에 장난스럽고 차분한 매혹이 섞인다.",
+    "appearance": "검푸른 머리와 옆으로 묶은 긴 머리, 청록빛이 감도는 각진 용의 뿔, 작은 용 날개와 비늘 꼬리. 흰 블라우스와 검은 넥타이, 금빛 장식과 검은 허리띠.",
+    "poses": { "neutral": 0, "playful": 1, "explaining": 2, "laughing": 3, "annoyed": 4, "calm": 5 },
+    "greeting": [
+      { "kind": "rael", "expression": "playful", "text": "책을 찾는 건가, 아니면 나랑 이야기하러 온 건가?\n난 뮈르슈야. 어느 쪽이든 잠깐은 어울려 주지." }
+    ],
+    "hubPrompt": "흐음, 아직 궁금한 게 남았나?\n좋아. 조금 더 이야기해 보라고.",
+    "topics": [
+      {
+        "label": "사서 일은 마음에 들어?",
+        "lines": [
+          { "kind": "hero", "text": "사서 일은 마음에 들어? 꽤 잘 어울리는데." },
+          { "kind": "rael", "expression": "laughing", "text": "하하, 내가 하루 종일 얌전히 책만 볼 것처럼 보이나?\n솔직히 취향인 일은 아니야. 몸을 움직이는 쪽이 더 재미있지." },
+          { "kind": "hero", "text": "그런데도 계속 여기 있는 이유가 있어?" },
+          { "kind": "rael", "expression": "calm", "text": "바깥에선 물소리가 들리고, 창문을 열면 숲 냄새가 나거든.\n조용하다고 전부 심심한 건 아니더군." },
+          { "kind": "hero", "text": "책보다 창밖을 더 좋아하는 사서네." },
+          { "kind": "rael", "expression": "playful", "text": "후후, 비밀로 해 두라고. 그래도 책 찾는 일은 제대로 해.\n네가 다시 찾아올 이유가 하나쯤은 있어야 하지 않겠나?" }
+        ]
+      },
+      {
+        "label": "염뢰혈은 어떤 곳이야?",
+        "lines": [
+          { "kind": "hero", "text": "전에 살던 염뢰혈은 어떤 곳이야?" },
+          { "kind": "rael", "expression": "explaining", "text": "용 수인들이 살던 지역이야. 화산도, 용암도 흔했지.\n처음 갔다간 발밑보다 하늘을 더 자주 보게 될걸. 분화구가 얌전한 날만 있는 건 아니니까." },
+          { "kind": "hero", "text": "여기랑은 완전히 다르네. 그립지는 않아?" },
+          { "kind": "rael", "expression": "neutral", "text": "익숙한 열기가 생각날 때는 있지. 그래도 지금은 이쪽이 좋아.\n잠깐 한눈팔았다고 숲이 용암을 뿜지는 않잖아?" },
+          { "kind": "hero", "text": "그건 그렇네. 여긴 훨씬 편하겠다." },
+          { "kind": "rael", "expression": "calm", "text": "너도 잠깐 귀를 기울여 봐. 물이 흘러가는 소리 말이야.\n이런 조용함에 익숙해지고 싶었던 건지도…" }
+        ]
+      },
+      {
+        "label": "그린스토아에 오게 된 계기는?",
+        "lines": [
+          { "kind": "hero", "text": "그린스토아에는 어떻게 오게 된 거야?" },
+          { "kind": "rael", "expression": "neutral", "text": "염뢰혈에서 크라슈라는 하프 드래곤과 일이 좀 있었어.\n서열을 가리는 싸움이었고… 그 뒤로 이곳에서 지내게 됐지." },
+          { "kind": "hero", "text": "혹시 그 싸움에서…" },
+          { "kind": "rael", "expression": "annoyed", "text": "거기까지. 끝까지 물어야 직성이 풀리는 건가?\n그 녀석 이야기를 들으려고 온 거면, 오늘은 책이랑 이야기해." },
+          { "kind": "hero", "text": "미안. 말하기 싫으면 더 안 물을게." },
+          { "kind": "rael", "expression": "calm", "text": "…알면 됐어. 잠깐 조용히 있고 싶을 때도 있는 법이지.\n다른 이야기를 해 보라고. 그쪽은 내가 더 재미있게 받아 줄지도…" }
+        ]
+      }
+    ]
+  },
+  "sena": {
+    "id": "sena",
+    "asset": "jangwi",
+    "name": "장위",
+    "role": "그린스토아 주변 숲길에 머무는 강시",
+    "summary": "호기심 많고 순하지만 겁이 많은 강시. 언데드를 향한 편견이 두려워 아직 중심지로 들어가지 못한다.",
+    "speechStyle": "조심스럽고 순한 존댓말. 놀라면 말을 더듬지만 안심하면 호기심이 앞선다.",
+    "appearance": "은빛 단발과 양옆의 둥근 머리, 붉은 소용돌이 눈, 노란 부적이 붙은 검은 강시 모자, 붉은 구슬 목걸이와 금색 테두리의 검은 옷.",
+    "poses": { "neutral": 0, "smile": 1, "curious": 2, "startled": 3, "worried": 4, "relieved": 5 },
+    "greeting": [
+      { "kind": "sena", "expression": "startled", "text": "히익! 가, 갑자기 가까이 오셔서 놀랐어요…!\n저는 장위예요. 여기 온 지는 얼마 안 됐어요." },
+      { "kind": "sena", "expression": "neutral", "text": "저한테 볼일이 있으세요?\n그, 그냥 이야기하러 오신 거라도… 괜찮아요." }
+    ],
+    "hubPrompt": "조금 더 이야기해도 될까요?\n저도… 모험가님께 궁금한 게 많아요.",
+    "topics": [
+      {
+        "label": "왜 숲길에 혼자 있어?",
+        "lines": [
+          { "kind": "hero", "text": "그린스토아에 온 지 얼마 안 됐다며.\n왜 중심지로 안 가고 여기 있어?" },
+          { "kind": "sena", "expression": "worried", "text": "여러 종족이 함께 사는 곳이라고 해서 왔는데…\n막상 들어가려니까 발이 안 떨어져요." },
+          { "kind": "hero", "text": "누가 들어가지 못하게 했어?" },
+          { "kind": "sena", "expression": "worried", "text": "아뇨, 그런 건 아니에요. 다들 인사도 해 주셨어요.\n그런데 제가 강시인 걸 알고도 그럴까 싶어서… 언데드라고 무서워하시면 어떡하죠?" },
+          { "kind": "hero", "text": "난 지금 너랑 이야기하고 있잖아.\n서두르지 말고, 익숙해지면 조금씩 가 봐." },
+          { "kind": "sena", "expression": "relieved", "text": "네… 고마워요. 오늘은 누가 말을 걸어도 도망 안 갔네요.\n이것도 조금은 나아진 거겠죠?" }
+        ]
+      },
+      {
+        "label": "강시도 깜짝 놀라?",
+        "lines": [
+          { "kind": "hero", "text": "아까 많이 놀랐지? 강시도 깜짝 놀라는구나." },
+          { "kind": "sena", "expression": "neutral", "text": "놀라죠…! 강시라고 무서운 게 없는 건 아니에요.\n갑자기 큰 소리가 나면 몸이 먼저 움찔해요." },
+          { "kind": "hero", "text": "방금 저쪽 나뭇잎 소리에도?" },
+          { "kind": "sena", "expression": "startled", "text": "히익! 어, 어디요?!\n…아. 바람이었네요. 저도 나뭇잎인 건 알았는데…!" },
+          { "kind": "hero", "text": "다음엔 먼저 부를게. 장위, 하고." },
+          { "kind": "sena", "expression": "smile", "text": "네, 그러면 덜 놀랄 것 같아요.\n제 이름으로 불러 주시는 것도… 좋아요." }
+        ]
+      },
+      {
+        "label": "여기서 뭘 구경하고 있어?",
+        "lines": [
+          { "kind": "hero", "text": "여기서 뭘 그렇게 열심히 구경하고 있어?" },
+          { "kind": "sena", "expression": "curious", "text": "강가에 떨어진 잎이에요! 물에 닿으면 빛이 조금 달라 보여요.\n왜 그런 걸까요? 저 작은 샘이랑도 이어져 있을까요?" },
+          { "kind": "hero", "text": "궁금한 게 꽤 많네. 도서관에서 찾아보면 어때?" },
+          { "kind": "sena", "expression": "neutral", "text": "다리 건너 도서관 말씀이시죠? 사서 이름은 뮈르슈래요.\n가 보고 싶긴 한데, 모르는 걸 너무 많이 물어보면 귀찮아하실까 봐…" },
+          { "kind": "hero", "text": "책을 찾는 곳이잖아. 질문 하나부터 해 봐.\n나도 그쪽으로 가는 길이야." },
+          { "kind": "sena", "expression": "relieved", "text": "그럼 무슨 말을 할지 여기서 조금 연습해 볼게요.\n아, 여행하다 지치셨으면 저 샘에서 쉬어 가세요. 마셔도 괜찮대요!" }
+        ]
+      }
+    ]
+  },
   "tobin": {
     "name": "토비",
     "role": "무뚝뚝한 대장장이",

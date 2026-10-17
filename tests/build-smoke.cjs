@@ -8,12 +8,16 @@ const {gunzipSync}=require('zlib');
  const payload=raw.split('<script id="portable-payload" type="application/octet-stream">')[1].split('</script>')[0];
  const length=Number(raw.match(/\.textContent,(\d+)\)/)[1]);
  const html=gunzipSync(decodePortable(payload,length)).toString('utf8');
- for(const attr of ['lucy','iboria','hanari','aina','munia','girus','tobi','arda']) {
+ for(const attr of ['lucy','iboria','hanari','aina','munia','girus','tobi','arda','jangwi','muirshu']) {
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/ld-'+attr+'.webp')));
  }
  const ardaField=html.match(/data-sd-arda-src="data:image\/webp;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(ardaField,'base64'),fs.readFileSync(path.join(root,'assets/sd-arda.webp')));
+ const jangwiField=html.match(/data-sd-jangwi-src="data:image\/webp;base64,([^" ]+)"/)[1];
+ assert.deepEqual(Buffer.from(jangwiField,'base64'),fs.readFileSync(path.join(root,'assets/sd-jangwi.webp')));
+ const muirshuField=html.match(/data-sd-muirshu-src="data:image\/webp;base64,([^" ]+)"/)[1];
+ assert.deepEqual(Buffer.from(muirshuField,'base64'),fs.readFileSync(path.join(root,'assets/sd-muirshu.webp')));
  for(const [attr,file]of [['cast','ld-hero.webp'],['field-cast','ld-librarians.webp']]) {
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file)));

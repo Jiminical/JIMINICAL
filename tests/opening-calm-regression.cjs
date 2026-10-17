@@ -43,9 +43,11 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   await start(fixture({location:'gate',storyStep:'arrival'}));
   for(let i=0;i<80&&(await p.evaluate(()=>guildGame.getState().phase))!=='vista';i++){await p.keyboard.press('e');await p.waitForTimeout(60)}
   await p.waitForFunction(()=>guildGame.getState().phase==='vista'&&guildGame.getState().vista==='sanctuary');await p.waitForTimeout(150);
-  const fixed=await p.locator('#vista-art').evaluate(async canvas=>{const c=canvas.getContext('2d'),x=Math.round(canvas.width*.44),y=Math.round(canvas.height*.1),w=Math.max(1,Math.round(canvas.width*.12)),h=Math.max(1,Math.round(canvas.height*.18)),get=()=>c.getImageData(x,y,w,h).data;c.getImageData(0,0,1,1);const a=get(),before=canvas.toDataURL();await new Promise(r=>setTimeout(r,600));const b=get();let n=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])n++;return{treeChanged:n,waterChanged:before!==canvas.toDataURL(),pan:document.querySelector('#game-vista').dataset.pan}});
-  check(tag+' Mother Tree camera and central trunk remain still',fixed.pan==='0.000'&&fixed.treeChanged===0);
-  check(tag+' Mother Tree water still flows',fixed.waterChanged);await p.screenshot({path:path.join(out,tag+'-mother-tree.png')});
+  const moving=await p.locator('#vista-art').evaluate(async canvas=>{const before=canvas.toDataURL(),pan=Number(document.querySelector('#game-vista').dataset.pan);await new Promise(r=>setTimeout(r,1200));return{changed:before!==canvas.toDataURL(),from:pan,to:Number(document.querySelector('#game-vista').dataset.pan)}});
+  check(tag+' Mother Tree camera advances through the painting',moving.to>moving.from+.02&&moving.changed);
+  await p.emulateMedia({reducedMotion:'reduce'});await p.waitForTimeout(120);
+  const still=await p.locator('#vista-art').evaluate(async canvas=>{const before=canvas.toDataURL(),pan=document.querySelector('#game-vista').dataset.pan;await new Promise(r=>setTimeout(r,200));return{same:before===canvas.toDataURL(),pan}});
+  check(tag+' reduced motion holds final Mother Tree framing',still.same&&still.pan==='1.000');await p.screenshot({path:path.join(out,tag+'-mother-tree.png')});
   check(tag+' viewport stays within mobile bounds',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
   await ctx.close();
  }
