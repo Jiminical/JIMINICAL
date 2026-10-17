@@ -14,7 +14,13 @@ const {gunzipSync}=require('zlib');
  }
  const ardaField=html.match(/data-sd-arda-src="data:image\/webp;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(ardaField,'base64'),fs.readFileSync(path.join(root,'assets/sd-arda.webp')));
- assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: eight portraits and Arda field sheet byte-identical, below 100 MiB');
+ for(const [attr,file]of [['cast','ld-hero.webp'],['field-cast','ld-librarians.webp']]) {
+  const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
+  assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file)));
+ }
+ const opening=html.match(/id="opening-music" src="data:audio\/mpeg;base64,([^" ]+)"/)[1];
+ assert.deepEqual(Buffer.from(opening,'base64'),fs.readFileSync(path.join(root,'assets/audio/pixel-memories.mp3')));
+ assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: active portrait sheets and original opening music byte-identical, below 100 MiB');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
  try {
  for(const url of [pathToFileURL(path.join(root,'index.html')).href,'http://127.0.0.1:8765/dist-cloudflare-compact/']) {

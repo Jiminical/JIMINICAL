@@ -260,6 +260,7 @@ const storyJourney = (() => {
     if (phase !== "title") return;
     const token = cancelWork();
     phase = "opening";
+    gameAudio.scene("prologue");
     busy = true;
     index = 0;
     automatic = true;
@@ -299,6 +300,7 @@ const storyJourney = (() => {
     const token = cancelWork();
     busy = true;
     phase = "game-opening";
+    gameAudio.stopOpening(.35);
     title.inert = true;
     curtain.hidden = false;
     try {
@@ -330,6 +332,7 @@ const storyJourney = (() => {
         message.hidden = false;
       } else {
         showPage("complete");
+        gameAudio.scene("prologue");
         screen.hidden = false;
         document.querySelector("#record-note").textContent =
           "길드의 그림을 불러오지 못했어요. 다시 시작해 주세요.";

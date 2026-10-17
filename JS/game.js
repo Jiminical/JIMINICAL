@@ -109,9 +109,9 @@ const guildGame = (() => {
     },
     // Keep the original actor key so existing saves and codex entries survive.
     rose: { name: "아르다", portrait: 0, fieldPortrait: true },
-    rael: { name: "라엘", portrait: 1, fieldPortrait: true },
+    rael: { name: "라엘", portrait: 0, fieldPortrait: true },
     edan: { name: "기루스", portrait: 2, fieldPortrait: true },
-    sena: { name: "새나", portrait: 3, fieldPortrait: true },
+    sena: { name: "새나", portrait: 1, fieldPortrait: true },
   };
   for (const [id, person] of Object.entries(characterChats)) cast[id].name = person.name;
   const pictures = {};
@@ -133,7 +133,6 @@ const guildGame = (() => {
       "carriage",
       "checkpoint",
       "gate",
-      "forest",
       "journey",
       "journeyGorge",
       "journeyRoad",
@@ -290,6 +289,7 @@ const guildGame = (() => {
   function drawScenery() {
     if (!motion()) return;
     livingNature.draw(ctx,background,location,elapsed);
+    if (["gate", "grove", "library"].includes(location)) return;
     const frame = Math.floor(elapsed * 8);
     // Sparse individual pollen/dust pixels leave the environment painting legible.
     for (let i = 0; i < 8; i++) {
@@ -590,11 +590,9 @@ const guildGame = (() => {
     const frame = motion() ? Math.floor(seconds * 24) : "complete";
     if (frame === cinematic.frame) return;
     cinematic.frame = frame;
-    const progress = complete ? 1 : Math.min(1, seconds / 32);
-    const ease = progress * progress * (3 - 2 * progress);
     const art = pictures.sanctuary;
-    // One tall painting, uniformly scaled. Keep at least half a screen of vertical
-    // travel on portrait phones as well as on wide desktop displays.
+    // Hold the final framing from the moment the painting appears. Only the
+    // water layer moves; there is no camera pan or moving canopy.
     const scale = Math.max(
       vistaArt.width / art.naturalWidth,
       (vistaArt.height * 1.5) / art.naturalHeight,
@@ -604,11 +602,11 @@ const guildGame = (() => {
     vistaContext.imageSmoothingEnabled = false;
     vistaContext.save();
     vistaContext.scale(vistaArt.width/sw,vistaArt.height/sh);
-    vistaContext.translate(-(art.naturalWidth-sw)/2,-Math.min(art.naturalHeight-sh,Math.round((art.naturalHeight-sh)*ease)));
+    vistaContext.translate(-(art.naturalWidth-sw)/2,-(art.naturalHeight-sh));
     vistaContext.drawImage(art,0,0);
     livingNature.draw(vistaContext,art,"sanctuary",seconds,motion());
     vistaContext.restore();
-    vista.dataset.pan = progress.toFixed(3);
+    vista.dataset.pan = "0.000";
     const cue = (start, end) =>
       complete
         ? 0
@@ -1040,6 +1038,8 @@ const guildGame = (() => {
     target.dataset.expression = expression;
     if (!kind) return;
     const sheets = {
+      // These atlases contain only the original cells still used in the game.
+      hero: { image: "cast", columns: 1, rows: 1, poses: { neutral: 0 } },
       rose: {
         image: "arda", columns: 3, rows: 2,
         columnEdges: [0,268,524,768],
@@ -1087,9 +1087,8 @@ const guildGame = (() => {
       (cast[kind].fieldPortrait
         ? {
             image: "fieldCast",
-            columns: 2,
+            columns: 1,
             rows: 2,
-            columnEdges: [0, 800, 1536],
             rowEdges: [0, 519, 1024],
           }
         : { image: "cast", columns: 3, rows: 2 });

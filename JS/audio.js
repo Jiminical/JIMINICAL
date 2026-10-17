@@ -22,6 +22,8 @@ const gameAudio = (() => {
   const townTrack = document.querySelector("#town-music"), townPlaces = new Set(["guild", "city", "cliff", "shop"]);
   const townLevel = .66;
   let townBus, townWanted = false, townStopping = false, townPlay = null, townFadeTimer = 0;
+  const openingTrack = document.querySelector("#opening-music"), openingLevel = .82;
+  let openingBus, openingWanted = false, openingStopping = false, openingPlay = null, openingFadeTimer = 0;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -36,6 +38,7 @@ const gameAudio = (() => {
   const interiors = new Set(["guild", "shop", "library"]);
   const landscapes = {
     title: { wind: 0.065, water: 0.035, cutoff: 1100 },
+    prologue: { wind: 0.008, water: 0, cutoff: 360 },
     guild: { wind: 0.018, water: 0, cutoff: 300 },
     shop: { wind: 0.012, water: 0, cutoff: 260 },
     library: { wind: 0.008, water: 0, cutoff: 240 },
@@ -164,6 +167,58 @@ const gameAudio = (() => {
     syncJourney();
     syncBattle();
     syncTown();
+    syncOpening();
+  }
+  function syncOpening() {
+    if (!openingBus || !openingTrack) return;
+    if (openingStopping) { if (!usable()) openingTrack.pause(); return; }
+    if (!openingWanted || !usable()) {
+      openingTrack.pause();
+      openingBus.gain.cancelScheduledValues(context.currentTime);
+      openingBus.gain.setValueAtTime(0, context.currentTime);
+      return;
+    }
+    if (openingTrack.paused && !openingPlay) {
+      openingBus.gain.cancelScheduledValues(context.currentTime);
+      openingBus.gain.setValueAtTime(0, context.currentTime);
+      openingPlay = openingTrack.play().then(() => {
+        if (!openingWanted || !usable()) { openingTrack.pause(); return; }
+        // Begin the fade when decoded audio actually starts, even on a slow link.
+        const now = context.currentTime;
+        openingBus.gain.cancelScheduledValues(now);
+        openingBus.gain.setValueAtTime(0, now);
+        openingBus.gain.linearRampToValueAtTime(openingLevel, now + 2.6);
+      }).catch(() => {}).finally(() => { openingPlay = null; });
+    }
+  }
+  function startOpening() {
+    clearTimeout(openingFadeTimer);
+    openingStopping = false;
+    if (!openingWanted && openingTrack) openingTrack.currentTime = 0;
+    openingWanted = true;
+    syncOpening();
+  }
+  function stopOpening(fade = 0) {
+    openingWanted = false;
+    openingStopping = false;
+    clearTimeout(openingFadeTimer);
+    const finish = () => {
+      openingStopping = false;
+      openingTrack?.pause();
+      if (openingTrack) openingTrack.currentTime = 0;
+      if (openingBus) {
+        openingBus.gain.cancelScheduledValues(context.currentTime);
+        openingBus.gain.setValueAtTime(0, context.currentTime);
+      }
+    };
+    if (fade > 0 && openingBus && !openingTrack.paused && usable()) {
+      openingStopping = true;
+      const now = context.currentTime;
+      openingBus.gain.cancelScheduledValues(now);
+      openingBus.gain.setValueAtTime(openingBus.gain.value, now);
+      openingBus.gain.linearRampToValueAtTime(0, now + fade);
+      openingFadeTimer = setTimeout(finish, fade * 1000);
+    } else finish();
   }
   function syncTown() {
     if (!townBus || !townTrack) return;
@@ -326,6 +381,8 @@ const gameAudio = (() => {
     return (landscapes[place] || landscapes.title).wind;
   }
   function scene(next) {
+    if (next === "prologue") startOpening();
+    else if (openingWanted || openingStopping) stopOpening(next === "title" ? .2 : 0);
     if (townPlaces.has(next)) startTown();
     else if (townWanted || next === "title") stopTown(next === "title" ? .2 : .75, next === "title");
     if (["ambush", "battle", "title", "library"].includes(next) && journeyWanted)
@@ -370,7 +427,7 @@ const gameAudio = (() => {
     }
     const now = context.currentTime;
     const rolling = place === "carriage" || place === "departure";
-    if (place === "ambush") return;
+    if (place === "ambush" || place === "prologue") return;
     if (place === "battle") {
       // The full chiptune carries the rhythm; avoid a second unsynchronised loop.
       return;
@@ -478,6 +535,8 @@ const gameAudio = (() => {
         context.createMediaElementSource(battleTrack).connect(battleBus);
         townBus = context.createGain(); townBus.gain.value = 0; townBus.connect(master);
         context.createMediaElementSource(townTrack).connect(townBus);
+        openingBus = context.createGain(); openingBus.gain.value = 0; openingBus.connect(master);
+        context.createMediaElementSource(openingTrack).connect(openingBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -907,10 +966,12 @@ const gameAudio = (() => {
   journeyTrack?.addEventListener("canplay", syncJourney);
   battleTrack?.addEventListener("canplay", syncBattle);
   townTrack?.addEventListener("canplay", syncTown);
+  openingTrack?.addEventListener("canplay", syncOpening);
   const retryMusic = () => {
     if (journeyWanted && journeyTrack?.paused) syncJourney();
     if (battleWanted && battleTrack?.paused) syncBattle();
     if (townWanted && townTrack?.paused) syncTown();
+    if (openingWanted && openingTrack?.paused) syncOpening();
   };
   document.addEventListener("pointerdown", retryMusic, { passive: true });
   document.addEventListener("keydown", retryMusic, { passive: true });
@@ -922,10 +983,12 @@ const gameAudio = (() => {
     scene,
     startJourney,
     stopJourney,
+    stopOpening,
     stopBattle,
     battlePhase,
     getCombatState: () => ({ active: battleWanted, mode: battleMode, samples: samples.size }),
     getTownState: () => ({ active: townWanted, offset: townTrack?.currentTime ?? 0 }),
+    getOpeningState: () => ({ active: openingWanted, offset: openingTrack?.currentTime ?? 0, gain: openingBus?.gain.value ?? 0 }),
     getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,
