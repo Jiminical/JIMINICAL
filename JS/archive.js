@@ -12,8 +12,13 @@ const libraryArchive = (() => {
   const counts = {
     world: () => greenstoaLore.articles.length,
     people: () => greenstoaLore.people.length,
-    comic: () => greenstoaLore.scenes.length,
+    comic: () => 1,
   };
+  const webtoonPages = [
+    [1, 1080, 2044], [2, 1080, 8306], [3, 1080, 5713],
+    [4, 1080, 5213], [5, 1080, 4305], [6, 1080, 5376],
+    [7, 1080, 3939], [8, 1080, 3167], [10, 826, 1905],
+  ];
   function paragraph(text, className = "") {
     const p = document.createElement("p");
     p.textContent = text;
@@ -45,12 +50,11 @@ const libraryArchive = (() => {
   }
   function renderIndex() {
     list.replaceChildren();
+    if (tab === "comic") return;
     const entries =
       tab === "world"
         ? greenstoaLore.articles
-        : tab === "people"
-          ? greenstoaLore.people
-          : greenstoaLore.scenes;
+        : greenstoaLore.people;
     entries.forEach((item, index) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -97,42 +101,24 @@ const libraryArchive = (() => {
       );
       page.append(art, copy);
     } else {
-      const chapter = greenstoaLore.scenes[selected];
-      page.append(
-        paragraph(
-          "제루스의 기록 · " + String(selected + 1).padStart(2, "0") + " / 09",
-          "archive-kicker",
-        ),
-        heading(chapter.title),
-      );
+      // 프롤로그를 웹툰으로 다시 복기하세요
+      page.append(paragraph("프롤로그를 웹툰으로 다시 복기하세요", "archive-comic-note"));
       const strip = document.createElement("div");
       strip.className = "archive-comic";
-      // Read the whole illustrated chronicle as a continuous vertical scroll.
-      greenstoaLore.scenes.forEach((scene, index) => {
-        const figure = document.createElement("figure");
-        figure.id = "archive-chapter-" + index;
-        const art = canvas(768, 342);
-        greenstoaLore.paintChapter(art, index);
-        const caption = document.createElement("figcaption");
-        caption.append(
-          paragraph(
-            String(index + 1).padStart(2, "0") + " · " + scene.title,
-            "comic-chapter-name",
-          ),
-          paragraph(scene.text),
-        );
-        figure.append(art, caption);
-        strip.append(figure);
+      const assets = document.querySelector("#webtoon-assets").dataset;
+      webtoonPages.forEach(([number, width, height]) => {
+        const image = document.createElement("img");
+        image.src = assets["web" + number + "Src"];
+        image.alt = "프롤로그 웹툰 " + number;
+        image.dataset.page = String(number);
+        image.width = width;
+        image.height = height;
+        image.loading = "lazy";
+        image.decoding = "async";
+        image.style.maxWidth = width + "px";
+        strip.append(image);
       });
       page.append(strip);
-      if (selected)
-        requestAnimationFrame(() => {
-          if (!state || tab !== "comic") return;
-          const chapter = document.querySelector(
-            "#archive-chapter-" + selected,
-          );
-          scroll.scrollTop = chapter.offsetTop - page.offsetTop - 12;
-        });
     }
     document.querySelector("#archive-page-count").textContent =
       String(selected + 1).padStart(2, "0") +
@@ -162,8 +148,8 @@ const libraryArchive = (() => {
     page.replaceChildren();
     list.replaceChildren();
   }
-  function close() {
-    if (!state || performance.now() < inputAfter) return;
+  function close(immediate = false) {
+    if (!state || (!immediate && performance.now() < inputAfter)) return;
     const after = state.close;
     hide();
     after();
@@ -204,7 +190,7 @@ const libraryArchive = (() => {
   tabs.forEach((b) =>
     b.addEventListener("click", () => changeTab(b.dataset.archiveTab)),
   );
-  document.querySelector("#archive-close").addEventListener("click", close);
+  document.querySelector("#archive-close").addEventListener("click", () => close(true));
   return {
     show,
     hide,

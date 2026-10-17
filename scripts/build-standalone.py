@@ -32,6 +32,10 @@ script = minify(script, "js")
 # encoder can optimise irrelevant RGB values hidden under fully transparent pixels.
 asset_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp|mp3)", page + "\n" + styles)))
 for ref in asset_refs:
+    # Preserve the supplied animated strips byte-for-byte beside the HTML.
+    # Their 63 MB source bundle cannot fit inside GitHub's 100 MiB HTML limit.
+    if ref.removeprefix("../").startswith("assets/webtoon/"):
+        continue
     asset_path = ROOT / ref.removeprefix("../")
     mime = {".webp": "image/webp", ".png": "image/png", ".mp3": "audio/mpeg"}[asset_path.suffix]
     data = asset_path.read_bytes()

@@ -23,6 +23,9 @@ styles='/* Galmuri font license:\n'+(ROOT/'assets/fonts/LICENSE.txt').read_text(
 refs=sorted(set(re.findall(r'assets/[a-zA-Z0-9_./-]+\.(?:png|webp|mp3)',page)))
 entries=[]
 for ref in refs:
+    # Long animated strips load only when their library images approach view.
+    if ref.startswith('assets/webtoon/'):
+        continue
     path=ROOT/ref
     mime={'.webp':'image/webp','.png':'image/png','.mp3':'audio/mpeg'}[path.suffix]
     uri=f'data:{mime};base64,'+base64.b64encode(path.read_bytes()).decode('ascii')
@@ -83,8 +86,10 @@ if OUT.exists():shutil.rmtree(OUT)
 OUT.mkdir()
 (OUT/'index.html').write_text(page,encoding='utf-8')
 for i,chunk in enumerate(chunks):(OUT/f'media-{i+1}.js').write_text(chunk,encoding='utf-8')
+shutil.copytree(ROOT/'assets/webtoon',OUT/'assets/webtoon')
 (OUT/'.greenstoa-compact-build').write_text('Generated compact deployment.\n')
-for file in OUT.iterdir():
- if not file.name.startswith('.'):
-  print(f'{file.name}: {file.stat().st_size/1024/1024:.2f} MiB')
-print(f'{len(chunks)+1} upload files; original images preserved byte-for-byte.')
+uploads=[file for file in OUT.rglob('*') if file.is_file() and not file.name.startswith('.')]
+for file in uploads:
+ if file.stat().st_size>=25_000_000:raise SystemExit('Asset exceeds 25 MB: '+str(file))
+ print(f'{file.relative_to(OUT)}: {file.stat().st_size/1024/1024:.2f} MiB')
+print(f'{len(uploads)} upload files; original images preserved byte-for-byte.')

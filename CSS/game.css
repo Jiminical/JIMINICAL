@@ -1777,27 +1777,33 @@
   color: #e1d6a5;
 }
 .archive-comic {
-  max-width: 760px;
+  max-width: 1080px;
   margin: auto;
+  background: #fff;
 }
-.archive-comic figure {
-  margin: 48px 0 88px;
-}
-.archive-comic canvas {
+.archive-comic img {
   width: 100%;
   height: auto;
   display: block;
-  image-rendering: pixelated;
+  margin: 0 auto;
+  image-rendering: auto;
 }
-.archive-comic figcaption {
-  max-width: 560px;
-  margin: 24px auto 0;
-  padding: 0 12px;
+.library-reader[data-tab="comic"] .archive-body {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
 }
-#archive-page .comic-chapter-name {
-  color: #c2be92;
-  font-size: 11px;
-  margin-bottom: 10px;
+.library-reader[data-tab="comic"] #archive-index,
+.library-reader[data-tab="comic"] .archive-window > footer {
+  display: none;
+}
+.library-reader[data-tab="comic"] #archive-scroll {
+  padding: 0;
+}
+#archive-page .archive-comic-note {
+  color: #c6cdb4;
+  font-size: 12px;
+  text-align: center;
+  margin: 0 0 16px;
 }
 .archive-window > footer {
   display: flex;

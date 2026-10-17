@@ -26,6 +26,7 @@ const {gunzipSync}=require('zlib');
  assert.deepEqual(Buffer.from(opening,'base64'),fs.readFileSync(path.join(root,'assets/audio/pixel-memories.mp3')));
  const battle=html.match(/id="battle-music" src="data:audio\/mpeg;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(battle,'base64'),fs.readFileSync(path.join(root,'assets/audio/makai-toppa-sen.mp3')));
+ for(const number of [1,2,3,4,5,6,7,8,10])assert.ok(html.includes('data-web'+number+'-src="assets/webtoon/web'+number+(number===10?'.png':'.webp')+'"'));
  assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: active portrait sheets and original opening music byte-identical, below 100 MiB');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
  try {
