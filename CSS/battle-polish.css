@@ -5,8 +5,7 @@
 .battle-screen[data-finale="true"] .battle-menu,
 .battle-screen[data-finale="true"] .battle-message,
 .battle-screen[data-finale="true"] #battle-wave-hud,
-.battle-screen[data-finale="true"] .battle-turn,
-.battle-screen[data-finale="true"] #battle-touch-pad { display:none!important; }
+.battle-screen[data-finale="true"] .battle-turn { display:none!important; }
 .battle-screen[data-finale="true"] .battle-heading { opacity:0; visibility:hidden; }
 .battle-screen[data-finale="true"] .battle-bottom { left:50%; right:auto; bottom:32px; width:min(52%,520px); max-height:none; transform:translateX(-50%); gap:0; }
 .battle-screen[data-finale="true"] .battle-player-health { max-width:none; width:100%; }

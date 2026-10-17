@@ -8,6 +8,7 @@ const battleScenes = (() => {
     touchPad = document.querySelector('#battle-touch-pad'), turnLabel = document.querySelector('#battle-turn');
   battleMenuArt.prepare([...buttons,back]);
   const held = new Set(), AW = 420, AH = 190;
+  const joystick = document.querySelector('#battle-joystick'), stick = {pointerId:null,x:0,y:0};
   const finaleStages = new Set(['overload','desperation','lastStrike','arrow','impact','dissolve']);
   const finalDuration = 14.4;
   const story = document.querySelector('#battle-story'), storyText = document.querySelector('#battle-story-text');
@@ -64,11 +65,10 @@ const battleScenes = (() => {
     next.hidden = !['info','won'].includes(kind);
     next.textContent = kind === 'info' ? 'E · 돌아가기' : 'E · 카니아에게';
     waveHud.hidden = finale || !['telegraph','dodge','waveEnd'].includes(kind);
-    touchPad.hidden = !dodging || finale;
-    touchPad.querySelectorAll('button').forEach(b => b.disabled = !dodging || finale);
+    touchPad.hidden = !dodging;
     turnLabel.textContent = ['overload','desperation'].includes(kind) ? '중급 마족 · 폭주' : choosing ? `내 차례 · ${state.turn + 1}` : ['telegraph','dodge','waveEnd','overload','desperation'].includes(kind) ? `적의 차례 · ${state.turn}` : '';
     document.querySelector('#battle-hint').textContent = dodging
-      ? 'WASD / 방향키 이동 · Shift 천천히 · 터치: 회피 상자를 드래그'
+      ? matchMedia('(pointer: coarse)').matches ? '조이스틱으로 이동 · 회피 상자 안을 드래그해도 이동할 수 있다.' : 'WASD / 방향키 이동 · Shift 천천히 · 터치: 회피 상자를 드래그'
       : choosing ? '↑ ↓ 선택 · E 결정 · 1 / 2 / 3 · Esc 돌아가기' : '성역 숲길 · 균열의 추적자';
     document.querySelector('#battle-cinematic-caption').hidden = kind !== 'intro';
     if (line) say(line);
@@ -170,7 +170,7 @@ const battleScenes = (() => {
   function dodge(dt) {
     const left=held.has('ArrowLeft')||held.has('KeyA'),right=held.has('ArrowRight')||held.has('KeyD'),
       up=held.has('ArrowUp')||held.has('KeyW'),down=held.has('ArrowDown')||held.has('KeyS'),
-      dx=Number(right)-Number(left),dy=Number(down)-Number(up),speed=held.has('ShiftLeft')||held.has('ShiftRight')?77:150,length=Math.hypot(dx,dy)||1;
+      dx=Number(right)-Number(left)+stick.x,dy=Number(down)-Number(up)+stick.y,speed=held.has('ShiftLeft')||held.has('ShiftRight')?77:150,length=Math.max(1,Math.hypot(dx,dy));
     if(state.pointer){const x=state.pointer.x-state.soul.x,y=state.pointer.y-state.soul.y,distance=Math.hypot(x,y);if(distance>1){const move=Math.min(distance,speed*dt);state.soul.x+=x/distance*move;state.soul.y+=y/distance*move;}}
     else{state.soul.x+=dx/length*speed*dt;state.soul.y+=dy/length*speed*dt;}
     state.soul.x=clamp(state.soul.x,8,AW-8);state.soul.y=clamp(state.soul.y,8,AH-8);state.invincible=Math.max(0,state.invincible-dt);
@@ -448,7 +448,12 @@ const battleScenes = (() => {
   }
   function play(){if(!state)return;cancelAnimationFrame(request);previous=performance.now();request=requestAnimationFrame(loop);}
   function finish(){if(state?.stage!=='won'||performance.now()<state.inputAfter)return;const {after,hp}=state;stop();after({hp});}
-  function clearInput(){held.clear();if(state)state.pointer=null;touchPad.querySelectorAll('button').forEach(b=>b.classList.remove('is-held'));}
+  function resetStick(){
+    const id=stick.pointerId;stick.pointerId=null;stick.x=stick.y=0;
+    joystick.classList.remove('is-held');joystick.style.setProperty('--stick-x','0px');joystick.style.setProperty('--stick-y','0px');
+    if(id!==null&&joystick.hasPointerCapture(id))joystick.releasePointerCapture(id);
+  }
+  function clearInput(){held.clear();if(state)state.pointer=null;resetStick();}
   function release(code){held.delete(code);}
   function stop(){cancelAnimationFrame(request);clearInput();gameAudio.stopBattle();state=null;root.hidden=true;delete root.dataset.ready;delete root.dataset.state;}
   function confirm(){
@@ -479,14 +484,22 @@ const battleScenes = (() => {
   canvas.addEventListener('pointerdown',event=>{
     if(!['dodge','desperation'].includes(state?.stage))return;const p=point(event);
     if(p.x<0||p.y<0||p.x>p.box.w||p.y>p.box.h)return;
-    canvas.setPointerCapture(event.pointerId);held.clear();state.pointer={x:p.x/p.box.w*AW,y:p.y/p.box.h*AH};event.preventDefault();
+    canvas.setPointerCapture(event.pointerId);held.clear();resetStick();state.pointer={x:p.x/p.box.w*AW,y:p.y/p.box.h*AH};event.preventDefault();
   });
   canvas.addEventListener('pointermove',event=>{if(!['dodge','desperation'].includes(state?.stage)||!canvas.hasPointerCapture(event.pointerId))return;const p=point(event);state.pointer={x:clamp(p.x/p.box.w,0,1)*AW,y:clamp(p.y/p.box.h,0,1)*AH};});
   const pointerEnd=()=>{if(state)state.pointer=null;};canvas.addEventListener('pointerup',pointerEnd);canvas.addEventListener('pointercancel',pointerEnd);canvas.addEventListener('lostpointercapture',pointerEnd);
-  touchPad.querySelectorAll('button').forEach(b=>{
-    b.addEventListener('pointerdown',e=>{if(!['dodge','desperation'].includes(state?.stage))return;b.setPointerCapture(e.pointerId);held.add(b.dataset.dodge);state.pointer=null;b.classList.add('is-held');e.preventDefault();});
-    for(const name of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(name,()=>{held.delete(b.dataset.dodge);b.classList.remove('is-held');});
+  function moveStick(event){
+    const r=joystick.getBoundingClientRect(),radius=(r.width-48)/2,x=event.clientX-r.left-r.width/2,y=event.clientY-r.top-r.height/2,distance=Math.hypot(x,y),travel=Math.min(radius,distance),strength=Math.max(0,(Math.min(1,distance/radius)-.12)/.88);
+    stick.x=x/(distance||1)*strength;stick.y=y/(distance||1)*strength;
+    joystick.style.setProperty('--stick-x',x/(distance||1)*travel+'px');joystick.style.setProperty('--stick-y',y/(distance||1)*travel+'px');
+  }
+  joystick.addEventListener('pointerdown',event=>{
+    event.preventDefault();if(!['dodge','desperation'].includes(state?.stage)||document.hidden||event.button!==0||stick.pointerId!==null)return;
+    state.pointer=null;stick.pointerId=event.pointerId;joystick.setPointerCapture(event.pointerId);joystick.classList.add('is-held');moveStick(event);
   });
+  joystick.addEventListener('pointermove',event=>{if(event.pointerId!==stick.pointerId)return;event.preventDefault();moveStick(event);});
+  for(const name of ['pointerup','pointercancel','lostpointercapture'])joystick.addEventListener(name,event=>{if(event.pointerId===stick.pointerId)resetStick();});
+  window.addEventListener('resize',resetStick);
   new ResizeObserver(fit).observe(document.querySelector('#game-screen'));
   return {prepare,play,stop,handle,release,clearInput,get active(){return !!state;},getState(){return state?{stage:state.stage,hp:state.hp,enemyHp:state.enemyHp,turn:state.turn,rescued:state.rescued,pattern:patterns[state.pattern]?.name,projectiles:state.bullets.length,warnings:state.warnings.length,soul:{...state.soul},invincible:state.invincible,age:state.age,finale:finaleStages.has(state.stage),narration:storyText.textContent}:null;}};
 })();

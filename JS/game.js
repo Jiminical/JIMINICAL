@@ -17,6 +17,8 @@ const guildGame = (() => {
   let cinematic = null,
     portraitAnimation;
   const choicesBox = document.querySelector("#game-choices");
+  const dialogueScroll = document.querySelector("#game-dialogue-scroll");
+  const dialogueScrollMedia = matchMedia("(pointer: coarse), (max-width: 700px)");
   const menu = document.querySelector("#guild-menu");
   const itemList = document.querySelector("#guild-item-list");
   const itemDetail = document.querySelector("#guild-item-detail");
@@ -1196,6 +1198,7 @@ const guildGame = (() => {
         : "E 다음";
     if (dialogue.index === dialogue.lines.length - 1 && dialogue.choices)
       renderChoices();
+    updateDialogueScroll();
   }
   function typeLetter() {
     if (!dialogue || !active) return;
@@ -1225,6 +1228,10 @@ const guildGame = (() => {
     gameAudio.stopVoice();
     choicesBox.replaceChildren();
     choicesBox.hidden = true;
+    root.classList.remove("is-dialogue-choices");
+    dialogueScroll.hidden = true;
+    dialogueText.parentElement.scrollTop = 0;
+    choicesBox.scrollTop = 0;
     const line = dialogue.lines[dialogue.index];
     const person = line.kind ? cast[line.kind] : null;
     speakerLabel.textContent = person
@@ -1300,7 +1307,28 @@ const guildGame = (() => {
     const selected = choicesBox.children[selectedChoice];
     if (focus) selected.focus({ preventScroll: true });
     selected.scrollIntoView({ block: "nearest" });
+    updateDialogueScroll();
   }
+  // Both long replies and clipped choices use the same visible way to read on.
+  function dialogueScrollTarget() {
+    if (!dialogueScrollMedia.matches || dialogueBox.hidden || !dialogue ||
+      dialogue.shown < dialogue.letters.length) return null;
+    return [dialogueText.parentElement, choicesBox].find(panel =>
+      !panel.hidden && panel.clientHeight > 0 &&
+      panel.scrollHeight - panel.clientHeight - panel.scrollTop > 2);
+  }
+  function updateDialogueScroll() {
+    dialogueScroll.hidden = !dialogueScrollTarget();
+  }
+  dialogueScroll.addEventListener("click", event => {
+    event.stopPropagation();
+    const panel = dialogueScrollTarget();
+    if (panel) panel.scrollBy({ top: Math.max(32, panel.clientHeight * 0.75),
+      behavior: motion() ? "smooth" : "instant" });
+  });
+  for (const panel of [dialogueText.parentElement, choicesBox])
+    panel.addEventListener("scroll", updateDialogueScroll, { passive: true });
+  dialogueScrollMedia.addEventListener("change", updateDialogueScroll);
   function choose(index) {
     if (
       !dialogue ||
@@ -1323,6 +1351,7 @@ const guildGame = (() => {
     root.classList.remove("is-dialogue-choices");
     dialogueBox.hidden = true;
     choicesBox.hidden = true;
+    dialogueScroll.hidden = true;
     phase = "free";
     root.dataset.phase = phase;
     keys.clear();
@@ -2421,6 +2450,8 @@ const guildGame = (() => {
     // Let the native sound button handle its own keyboard activation.
     if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-dialogue-scroll"))
+      return;
     if (phase === "board") {
       if (noticeBoard.handle(event, repeat)) event.preventDefault();
       return;
@@ -2706,9 +2737,11 @@ const guildGame = (() => {
     portraitFrame.style.width = height * ratio + "px";
     portraitFrame.style.maxHeight = "none";
   }
-  const dialogueLayout = new ResizeObserver(fitPortrait);
+  const dialogueLayout = new ResizeObserver(() => { fitPortrait(); updateDialogueScroll(); });
   dialogueLayout.observe(dialogueBox);
   dialogueLayout.observe(root);
+  dialogueLayout.observe(dialogueText.parentElement);
+  dialogueLayout.observe(choicesBox);
   const vistaLayout = new ResizeObserver(fitVista);
   vistaLayout.observe(root);
   vistaLayout.observe(document.querySelector(".vista-copy"));
@@ -2903,6 +2936,7 @@ const guildGame = (() => {
     root.hidden = true;
     menu.hidden = true;
     dialogueBox.hidden = true;
+    dialogueScroll.hidden = true;
   }
   function unlock() {
     inputLocked = false;

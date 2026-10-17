@@ -403,6 +403,7 @@
             id="guild-menu-open"
             class="guild-button"
             aria-controls="guild-menu"
+            aria-label="메뉴 열기 · 소지품과 의뢰"
           >
             메뉴 <kbd>C</kbd>
           </button>
@@ -488,6 +489,8 @@
             aria-atomic="true"
           ></p>
           <div id="game-choices" class="game-choices" hidden></div>
+          <button id="game-dialogue-scroll" type="button" aria-label="아래 내용 더 보기"
+            aria-controls="game-dialogue-text game-choices" hidden><span aria-hidden="true">▼</span></button>
           <button id="game-dialogue-next" class="guild-button">E 다음</button>
         </section>
         <section
@@ -778,7 +781,13 @@
           <div id="battle-wave-hud" hidden><b id="battle-pattern-name"></b><span id="battle-wave-time"></span><div><i id="battle-wave-bar"></i></div></div>
           <div id="battle-turn" class="battle-turn" aria-live="polite"></div>
           <p id="battle-hint" class="battle-key-hint">↑ ↓ 선택 · E 결정 · Esc 돌아가기</p>
-          <div id="battle-touch-pad" hidden><button type="button" data-dodge="ArrowUp" aria-label="위로 이동">↑</button><button type="button" data-dodge="ArrowLeft" aria-label="왼쪽으로 이동">←</button><button type="button" data-dodge="ArrowDown" aria-label="아래로 이동">↓</button><button type="button" data-dodge="ArrowRight" aria-label="오른쪽으로 이동">→</button></div>
+            <div id="battle-touch-pad" hidden>
+              <div id="battle-joystick" class="touch-joystick" role="group" aria-label="전투 회피 조이스틱. 원하는 방향으로 드래그하세요.">
+                <span class="joystick-base" aria-hidden="true"></span>
+                <span class="joystick-thumb" aria-hidden="true"></span>
+                <span class="joystick-label" aria-hidden="true">회피</span>
+              </div>
+            </div>
         </section>
         <div id="game-transition" aria-hidden="true" hidden></div>
         <section

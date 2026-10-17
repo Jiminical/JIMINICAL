@@ -1,9 +1,52 @@
 /* Let the actual viewport, rather than a desktop minimum, size mobile screens. */
+#game-dialogue-scroll { display: none; }
+#game-dialogue-scroll[hidden] { display: none; }
+@media (pointer: coarse), (max-width: 700px) {
+  #game-dialogue-text { grid-template-columns: minmax(0, 1fr); padding: 4px 32px 5px 4px; }
+  #game-dialogue-glyphs { min-width: 0; }
+  .game-choices { padding-right: 32px; }
+  #game-dialogue-scroll {
+    display: grid; place-items: center; position: absolute; z-index: 2;
+    right: 8px; bottom: 36px; width: 44px; height: 44px; padding: 0;
+    border: 0; background: transparent; color: #efdf9e;
+    touch-action: manipulation; user-select: none; -webkit-touch-callout: none;
+  }
+  #game-dialogue-scroll span {
+    display: grid; place-items: center; width: 26px; height: 26px;
+    background: #172733ed; border: 1px solid #8e9b85; border-radius: 50%;
+    font-size: 12px; box-shadow: 1px 2px #09131bc0;
+    animation: dialogue-scroll-cue 1.3s steps(3, end) infinite;
+  }
+  #game-dialogue-scroll:focus-visible { outline: 2px solid #efdf9e; outline-offset: -5px; }
+}
+@keyframes dialogue-scroll-cue { 0%, 100% { transform: translateY(-2px); } 50% { transform: translateY(2px); } }
+.no-motion #game-dialogue-scroll span { animation: none; }
+@media (prefers-reduced-motion: reduce) { #game-dialogue-scroll span { animation: none; } }
 @media (pointer: coarse) {
+  #guild-menu-open {
+    position: relative; min-width: 76px; min-height: 44px; padding: 8px 12px;
+    border: 1px solid #d9d99d; background: #243b35ed; color: #fff0bd; font-size: 14px;
+    box-shadow: 0 0 8px #d7e59566, inset 0 0 5px #c2d89422;
+  }
+  #guild-menu-open::after {
+    content: ""; position: absolute; inset: -3px; border: 1px solid #f4eab4;
+    pointer-events: none; animation: menu-stroke-glow 2.2s ease-in-out infinite;
+  }
+  #guild-menu-open kbd { display: none; }
+  .game-screen:is([data-phase="free"], [data-phase="dialogue"], [data-phase="menu"]) .game-audio-toggle { right: 102px; }
+  #battle-screen #battle-touch-pad { position: absolute; display: block; left: 18px; right: auto; bottom: 18px; z-index: 3; }
+  #battle-joystick { width: 108px; height: 108px; flex: none; }
+  #battle-screen[data-state="dodge"] .battle-bottom { left: 18px; right: 18px; bottom: 150px; max-height: none; }
+  #battle-screen[data-state="dodge"] .battle-message { display: none; }
+  #battle-screen[data-finale="true"] .battle-bottom { bottom: 132px; }
+  #battle-screen:is([data-state="dodge"], [data-state="desperation"]) .battle-key-hint { left: 145px; right: 14px; bottom: 32px; }
   .guild-menu-panel > footer > span, .shop-panel > footer > span,
   .archive-window > footer > span:first-child, .notice-board footer { display: none; }
   .battle-turn { right: 110px; }
 }
+@keyframes menu-stroke-glow { 0%, 100% { opacity: .4; box-shadow: 0 0 3px #f1e6a433; } 50% { opacity: 1; box-shadow: 0 0 8px #f1e6a477; } }
+.no-motion #guild-menu-open::after { animation: none; }
+@media (prefers-reduced-motion: reduce) { #guild-menu-open::after { animation: none; } }
 @media (max-width: 700px), (pointer: coarse) and (max-width: 1024px) and (orientation: portrait) {
   body { padding: 0; display: block; overflow-x: hidden; }
   .scene, .scene.is-story-active, .scene.is-game-active {
@@ -171,4 +214,16 @@
   .battle-player-health { font-size: 14px; gap: 4px; }
   .battle-turn { top: 20px; right: 110px; font-size: 13px; }
   .battle-key-hint { bottom: 8px; left: 20px; font-size: 10px; }
+  #battle-screen #battle-touch-pad { left: auto; right: 10px; }
+  #battle-screen:is([data-state="dodge"], [data-state="desperation"], [data-state="overload"]) .battle-bottom { left: auto; right: 10px; bottom: 140px; width: 112px; transform: none; }
+  #battle-screen:is([data-state="dodge"], [data-state="desperation"], [data-state="overload"]) .battle-player-health { grid-template-columns: 1fr; font-size: 12px; gap: 3px; }
+  #battle-player-name { overflow-wrap: anywhere; }
+  #battle-screen:is([data-state="dodge"], [data-state="desperation"]) .battle-key-hint { left: 20px; right: 145px; bottom: 8px; }
+}
+/* Enlarged emotional lines need room for their extra lines and animation. */
+@media (pointer: coarse), (max-width: 700px) {
+  .game-screen:not(.is-dialogue-choices) #game-dialogue-text:is([data-emotion="shout"], [data-emotion="firm"], [data-emotion="tremble"], [data-emotion="surprise"]) {
+    max-height: min(38cqh, 220px);
+    overflow-y: auto;
+  }
 }
