@@ -57,12 +57,12 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
    // Record the transformed carriage's actual draw bounds, at near/mid/far depth.
    const coach=await p.evaluate(()=>{
     const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=650;const c=canvas.getContext('2d'),draw=c.drawImage.bind(c),bounds=[];let time;
-    c.drawImage=(...a)=>{if(a.length===5&&a[0].width===240){const m=c.getTransform(),[image,x,y,w,h]=a,p=m.transformPoint(new DOMPoint(x,y)),q=m.transformPoint(new DOMPoint(x+w,y+h));bounds.push({time,x:p.x,y:p.y,w:q.x-p.x,h:q.y-p.y})}return draw(...a)};
+    c.drawImage=(...a)=>{if(Number.isFinite(time)&&a.length===5&&a[0].width===320){const m=c.getTransform(),[image,x,y,w,h]=a,p=m.transformPoint(new DOMPoint(x,y)),q=m.transformPoint(new DOMPoint(x+w,y+h));bounds.push({time,x:p.x,y:p.y,w:q.x-p.x,h:q.y-p.y})}return draw(...a)};
     for(time of [18.7,23,30])journeyCinematic.draw(c,time,true);
-    const a=journeyCinematic.draw(c,0,false),first=canvas.toDataURL();journeyCinematic.draw(c,30,false);return {bounds,still:first===canvas.toDataURL(),image:canvas.toDataURL(),box:a.box};
+    time=null;const a=journeyCinematic.draw(c,0,false),first=canvas.toDataURL();journeyCinematic.draw(c,30,false);return {bounds,still:first===canvas.toDataURL(),image:canvas.toDataURL(),box:a.box};
    });report.measurements.push({coach:coach.bounds});
    for(const b of coach.bounds)check('coach stays grounded and visible at '+b.time,b.x>=0&&b.x+b.w<=1201&&b.y>=coach.box.y-1&&b.y+b.h<=coach.box.y+coach.box.h+2);
-   check('far coach remains larger than 8.5 percent of the image',coach.bounds.at(-1).w>1200*.085);check('journey motion-off view is stable',coach.still);
+   check('far coach remains larger than 15 percent of the image',coach.bounds.at(-1).w>1200*.15);check('journey motion-off view is stable',coach.still);
    fs.writeFileSync(path.join(out,'journey-larger-coach.png'),Buffer.from(coach.image.split(',')[1],'base64'));
    const events=await p.evaluate(async()=>{
     const a=document.querySelector('#guild-assets').dataset,atlas=new Image(),props=new Image();atlas.src=a.eventsSrc;props.src=a.eventPropsSrc;await Promise.all([atlas.decode(),props.decode()]);const avatar=document.createElement('canvas');avatar.width=avatar.height=100;

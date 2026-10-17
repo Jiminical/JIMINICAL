@@ -22,8 +22,8 @@ const journeyCinematic = (() => {
         left = Math.min(left, x); right = Math.max(right, x);
         top = Math.min(top, y); bottom = Math.max(bottom, y);
       }
-    coach = document.createElement("canvas"); coach.width = 240;
-    coach.height = Math.round(240 * (bottom - top + 1) / (right - left + 1));
+    coach = document.createElement("canvas"); coach.width = 320;
+    coach.height = Math.round(320 * (bottom - top + 1) / (right - left + 1));
     const p = coach.getContext("2d"); p.imageSmoothingEnabled = false;
     p.drawImage(image, left, top, right - left + 1, bottom - top + 1, 0, 0, coach.width, coach.height);
   }
@@ -44,7 +44,7 @@ const journeyCinematic = (() => {
     // point controls position and size; no turns or spline overshoot exist.
     const t = clamp((seconds - cuts[1]) / (duration - cuts[1])), depth = 1 + t * .53,
       ground = .46 + .49 / depth;
-    return { x: .65 + (ground - .46) * .4, y: ground, width: .141 / depth };
+    return { x: .65 + (ground - .46) * .4, y: ground, width: .24 / depth };
   }
   function carriage(c, seconds, w, h, moving) {
     const position = roadPosition(seconds), width = position.width * w,
