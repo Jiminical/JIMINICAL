@@ -1215,6 +1215,13 @@ const guildGame = (() => {
     dialogue.pulses = 0;
     reactPortrait(line);
     dialogueText.parentElement.dataset.fullText = line.text;
+    dialogueText.parentElement.dataset.emotion = line.emotion || "";
+    dialogueText.classList.remove("is-emoting");
+    if (line.emotion && motion()) {
+      // Restart once per line, leaving the window and reading area still.
+      void dialogueText.offsetWidth;
+      dialogueText.classList.add("is-emoting");
+    }
     dialogue.letters = Array.from(line.text);
     dialogue.shown = 0;
     dialogueText.textContent = "";
@@ -1286,6 +1293,8 @@ const guildGame = (() => {
     clearTimeout(typingTimer);
     gameAudio.stopVoice();
     dialogue = null;
+    dialogueText.parentElement.dataset.emotion = "";
+    dialogueText.classList.remove("is-emoting");
     root.classList.remove("is-dialogue-choices");
     dialogueBox.hidden = true;
     choicesBox.hidden = true;
@@ -1394,6 +1403,7 @@ const guildGame = (() => {
                 {
                   kind: "lucy",
                   expression: "incredulous",
+                  emotion: "surprise",
                   text: "…하신다고요?\n…….",
                 },
               ],
@@ -1492,6 +1502,7 @@ const guildGame = (() => {
           kind: "rogue",
           expression: "boasting",
           text: "우헤켈켈켈! 형씨, 그린스토아는 나 혼자 갈 줄 알았는데 말야!\n나처럼 짜릿한 위협을 즐기는 용자가 아직 남아 있었구만?!",
+          emotion: "shout",
         },
         {
           kind: "rogue",
@@ -1539,6 +1550,7 @@ const guildGame = (() => {
           kind: "rogue",
           expression: "offended",
           text: "어…? 나? 방금 도착했는데?!\n평등한 나라라면서 이래도 되는 거냐고!",
+          emotion: "shout",
         },
         {
           kind: "scout",
@@ -1553,11 +1565,13 @@ const guildGame = (() => {
           kind: "scout",
           expression: "warning",
           text: "네놈을 들일 수는 없다. 돌아가라.",
+          emotion: "firm",
         },
         {
           kind: "rogue",
           expression: "embarrassed",
           text: "에…?\n……그, 그럴 수가…….",
+          emotion: "tremble",
         },
       ],
       () =>
@@ -2646,22 +2660,17 @@ const guildGame = (() => {
   function fitPortrait() {
     if (root.hidden || dialogueBox.hidden) return;
     const view = root.getBoundingClientRect();
-    const compact = view.width > 700 && (view.height < 500 || root.classList.contains("is-dialogue-choices"));
-    root.classList.toggle("is-dialogue-compact", compact);
     if (portrait.hidden) return;
     const box = dialogueBox.getBoundingClientRect();
     const mobile = view.width <= 700,
       ratio = portrait.width / portrait.height;
-    const available = compact
-      ? box.height - 16
-      : Math.max(0, box.top - view.top - (mobile ? 64 : 104));
+    const headerSpace = mobile ? 64 : view.height < 500 ? 56 : 104;
+    const available = Math.max(0, box.top - view.top - headerSpace);
     const desired = Math.min(
       view.height * (mobile ? 0.48 : 0.58),
       mobile ? 350 : 450,
     );
-    const widthLimit = compact
-      ? parseFloat(getComputedStyle(dialogueBox).paddingLeft) - 24
-      : box.width * (mobile ? 0.96 : 0.54);
+    const widthLimit = box.width * (mobile ? 0.96 : 0.54);
     const height = Math.min(available, desired, widthLimit / ratio);
     // Set both dimensions together so max-width never silently shrinks the bust.
     portraitFrame.style.height = height + "px";

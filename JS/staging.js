@@ -35,6 +35,7 @@ const actionScenes = (() => {
     root.dataset.kind = state.kind;
     inputAfter = performance.now() + 180;
     label.textContent = "";
+    label.dataset.emotion = "";
     next.textContent = state.kind === "guide" ? "E · 정문으로" : "E · 계속";
     root.dataset.interactive = String(!!state.interactive);
     if (state.kind === "guide")
@@ -98,6 +99,7 @@ const actionScenes = (() => {
       seconds < 1.65
         ? "…그, 그럴 수가……!"
         : "노란 머리 도적은 울음을 훔치며 마차 쪽으로 달아났다.";
+    label.dataset.emotion = seconds < 1.65 ? "tremble" : "";
     cue("jump", 0.8, state.motion ? "jump" : null);
     cue("cry", 1.1, "cry");
     if (state.motion && moving && seconds < 3.9)

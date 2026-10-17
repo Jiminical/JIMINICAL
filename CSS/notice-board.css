@@ -19,9 +19,6 @@
 .notice-status { color: #62492c; border-block: 1px solid #ae996d; padding: 8px 0; font-size: 12px; }
 .notice-board footer { padding-top: 12px; color: #b5bc9e; font-size: 11px; }
 .notice-board :focus-visible { outline: 3px solid #eac77e; outline-offset: 2px; }
-.is-dialogue-choices.is-dialogue-compact .game-dialogue { top: auto; height: 340px; min-height: 0; max-height: calc(100% - 116px); grid-template-rows: auto auto minmax(0,1fr) auto; }
-.is-dialogue-choices.is-dialogue-compact #game-dialogue-text { max-height: 72px; }
-.is-dialogue-compact .game-choices { overflow-y: auto; min-height: 0; max-height: 44vh; }
 @media (max-width:700px) {
   .notice-board { padding: 12px; }
   .notice-board-window { padding: 12px; }
@@ -43,6 +40,4 @@
   #notice-board-list { padding: 12px; gap: 12px; }
   #notice-board-list button { padding: 8px; font-size: 12px; }
   .notice-board footer { padding-top: 4px; font-size: 10px; }
-  .is-dialogue-choices.is-dialogue-compact .game-dialogue { top: 76px; height: auto; min-height: 0; max-height: none; }
-  .is-dialogue-compact .game-choices { max-height: none; }
 }

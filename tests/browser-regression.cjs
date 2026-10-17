@@ -20,15 +20,21 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   await page.waitForFunction(()=>!document.documentElement.classList.contains('is-loading'));
   await page.evaluate(()=>guildGame.ready);
   const state=()=>page.evaluate(()=>guildGame.getState());
-  const start=async save=>{await page.evaluate(async save=>{document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save?.name||'여행자',()=>{},save);guildGame.unlock();},save);await page.waitForTimeout(100);};
+  const start=async save=>{await page.evaluate(async save=>{document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save?.name||'여행자',()=>{},save);guildGame.unlock();},save);await page.waitForTimeout(100);};
   const press=async(key='e')=>{await page.keyboard.press(key);await page.waitForTimeout(40);};
   const hub=async()=>{for(let i=0;i<25;i++){if(await page.locator('#game-choices').isVisible())return;const s=await state();if(s.phase==='event')await page.waitForTimeout(250);await press();}throw Error('No hub '+JSON.stringify(await state()));};
   const free=async()=>{for(let i=0;i<45;i++){if((await state()).phase==='free')return;if(await page.locator('#game-choices').isVisible())throw Error('Unexpected choice while finishing');await press();await page.waitForTimeout(60);}throw Error('No free phase '+JSON.stringify(await state()));};
   const shot=async name=>{const file=tag+'-'+name+'.png';await page.screenshot({path:path.join(out,file)});report.screens.push(file);};
+  const portraitAbove=async label=>{
+   const portrait=await page.locator('#dialogue-portrait-frame').boundingBox(),box=await page.locator('#game-dialogue').boundingBox();
+   check(tag+' '+label+' portrait above dialogue',portrait.height>60&&portrait.y>=0&&portrait.y+portrait.height<=box.y+1);
+   check(tag+' '+label+' dialogue fits viewport',box.y>=0&&box.y+box.height<=size.height+1);
+  };
   const pick=async label=>{await page.locator('#game-choices button').filter({hasText:label}).click();await page.waitForTimeout(50);};
   await start(fixture());await press();await hub();
   check(tag+' Lucy 5 options',await page.locator('#game-choices button').count()===5);
   await shot('lucy-hub');
+  await portraitAbove('Lucy hub');
   const layout=await page.locator('#dialogue-portrait-frame').boundingBox();check(tag+' portrait visible and in viewport',layout.width>60&&layout.height>60&&layout.y>=0&&layout.y+layout.height<=size.height+2);
   await press('ArrowDown');check(tag+' one arrow advances one option',await page.locator('#game-choices .is-current').innerText().then(t=>t.includes('25관왕')));
   await page.keyboard.down('e');await page.keyboard.down('e');await page.waitForTimeout(150);check(tag+' held E does not skip lines',(await state()).line===0);await page.keyboard.up('e');
@@ -55,6 +61,7 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
    await start(save);await press();await hub();
    const labels=await page.evaluate(id=>characterChats[id].topics.map(t=>t.label),id);
    await shot(id+'-hub');
+   await portraitAbove(id+' hub');
    for(const label of labels){await pick(label);await hub();check(tag+' '+id+' consumed '+label,!(await page.locator('#game-choices').innerText()).includes(label));}
    await press('c');check(tag+' '+id+' safe exit',(await state()).phase==='free'&&!(await state()).questAccepted&&(await state()).items.length===2);
   }

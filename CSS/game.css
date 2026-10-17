@@ -308,11 +308,12 @@
   line-height: 1.4;
 }
 #game-dialogue-text {
+  --dialogue-font-size: 18px;
   display: grid;
   margin: 0;
   white-space: pre-line;
   min-height: 65px;
-  font-size: 18px;
+  font-size: var(--dialogue-font-size);
   line-height: 1.85;
   word-break: keep-all;
   overflow-wrap: anywhere;
@@ -331,6 +332,45 @@
   margin-top: 2px;
   color: #adbaad;
   font-size: 11px;
+}
+/* Only selected dramatic lines receive emphasis. */
+#game-dialogue-text[data-emotion="shout"] {
+  font-size: calc(var(--dialogue-font-size) * 1.18);
+  color: #fff0cf;
+}
+#game-dialogue-text:is([data-emotion="tremble"], [data-emotion="surprise"], [data-emotion="firm"]) {
+  font-size: calc(var(--dialogue-font-size) * 1.1);
+}
+#game-dialogue-text[data-emotion="shout"] .is-emoting {
+  animation: dialogue-shout .14s steps(2, end) 4;
+}
+#game-dialogue-text[data-emotion="tremble"] .is-emoting,
+#action-label[data-emotion="tremble"] {
+  animation: dialogue-tremble .18s steps(2, end) 6;
+}
+#game-dialogue-text[data-emotion="surprise"] .is-emoting {
+  transform-origin: left center;
+  animation: dialogue-surprise .32s ease-out;
+}
+@keyframes dialogue-shout {
+  0%, 100% { transform: translate(0); }
+  25% { transform: translate(-1px, 1px); }
+  75% { transform: translate(1px, -1px); }
+}
+@keyframes dialogue-tremble {
+  0%, 100% { transform: translate(0); }
+  25% { transform: translate(-1px, 0); }
+  75% { transform: translate(1px, 1px); }
+}
+@keyframes dialogue-surprise {
+  0% { transform: scale(.98); }
+  40% { transform: scale(1.025); }
+  100% { transform: scale(1); }
+}
+.no-motion #game-dialogue-glyphs.is-emoting,
+.no-motion #action-label[data-emotion] { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  #game-dialogue-glyphs.is-emoting, #action-label[data-emotion] { animation: none; }
 }
 #dialogue-portrait-frame {
   position: absolute;
@@ -352,37 +392,6 @@
   object-fit: contain;
   image-rendering: pixelated;
   pointer-events: none;
-}
-.is-dialogue-compact .game-dialogue {
-  top: 84px;
-  bottom: 30px;
-  left: 16px;
-  right: 16px;
-  min-height: 0;
-  padding: 10px 16px 8px;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-}
-.is-dialogue-compact .game-dialogue:has(#dialogue-portrait:not([hidden])) {
-  padding-left: clamp(180px, 35cqw, 280px);
-}
-.is-dialogue-compact #dialogue-portrait-frame {
-  left: 12px;
-  bottom: 8px;
-}
-.is-dialogue-compact #game-dialogue-text {
-  min-height: 0;
-  overflow-y: auto;
-  font-size: 14px;
-  line-height: 1.6;
-}
-.is-dialogue-compact .game-choices {
-  margin-top: 6px;
-  gap: 2px;
-}
-.is-dialogue-compact .game-choices button {
-  padding-block: 3px;
-  font-size: 13px;
 }
 #game-transition {
   position: absolute;
@@ -647,10 +656,6 @@
   .game-interaction {
     bottom: 161px;
   }
-  .is-dialogue-compact .game-dialogue {
-    top: 64px;
-    bottom: 159px;
-  }
 }
 @media (max-width: 700px) {
   .game-hud {
@@ -693,7 +698,7 @@
     font-size: 14px;
   }
   #game-dialogue-text {
-    font-size: 14px;
+    --dialogue-font-size: 14px;
     min-height: 76px;
     line-height: 1.9;
   }
@@ -754,7 +759,7 @@
     padding: 14px 20px 8px;
   }
   #game-dialogue-text {
-    font-size: 16px;
+    --dialogue-font-size: 16px;
     min-height: 55px;
   }
   #dialogue-portrait-frame {
@@ -765,6 +770,39 @@
   }
   .guild-menu-body {
     min-height: 170px;
+  }
+}
+
+/* Keep the portrait above the window on short landscape screens too. */
+@media (min-width: 701px) and (max-height: 500px) {
+  .game-dialogue {
+    bottom: 20px;
+    min-height: 0;
+    padding: 8px 16px;
+  }
+  .game-dialogue h2 {
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  #game-dialogue-text {
+    min-height: 40px;
+    max-height: 60px;
+    overflow-y: auto;
+    --dialogue-font-size: 13px;
+    line-height: 1.5;
+  }
+  .game-choices {
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 6px;
+    margin: 6px 0 2px;
+    max-height: 102px;
+    overflow-y: auto;
+  }
+  .game-choices button {
+    min-height: 30px;
+    padding: 4px 6px;
+    font-size: 12px;
   }
 }
 
