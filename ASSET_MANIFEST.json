@@ -1,0 +1,96 @@
+{
+  "formatVersion": 1,
+  "generatedAt": "2026-10-17",
+  "images": [
+    {
+      "character": "iboria",
+      "path": "assets/portraits/iboria.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2533034,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "81f4311537683a539a627189a4d2bdc8cd142d22",
+      "source": "original stored image-generation data URL; no edits"
+    },
+    {
+      "character": "hanari",
+      "path": "assets/portraits/hanari.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2592465,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "825c9d1ad889689dfe7c8605f8ec2001dc5e9be1",
+      "source": "original stored image-generation data URL; no edits"
+    },
+    {
+      "character": "aina",
+      "path": "assets/portraits/aina.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3015568,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "b6bdcc14a451a49ef78fe44c9b9c8c7398d8062b",
+      "source": "original stored image-generation data URL; no edits"
+    },
+    {
+      "character": "munia",
+      "path": "assets/portraits/munia.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 3075155,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "de65c6b295e71d692228ad11f5087e27a671109e",
+      "source": "original stored image-generation data URL; no edits"
+    },
+    {
+      "character": "girus",
+      "path": "assets/portraits/girus.png",
+      "width": 1517,
+      "height": 1037,
+      "bytes": 2865558,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "e533196bb90d364a5f26157d7989ce5dd9b2b7a6",
+      "source": "original stored image-generation data URL; no edits"
+    },
+    {
+      "character": "tobi",
+      "path": "assets/portraits/tobi.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2782107,
+      "pngColorType": 6,
+      "grid": {
+        "columns": 3,
+        "rows": 2
+      },
+      "sha": "0c36bca4f0d93d2ec8cd5bf87978a71ad6cc54f0",
+      "source": "original stored image-generation data URL; no edits"
+    }
+  ],
+  "notes": [
+    "PNG originals were transferred without image editing.",
+    "PNG color type 6 supports alpha but does not establish that painted backgrounds are absent; inspect visually.",
+    "Girus is 1517x1037, not the 1536x1024 of the other five. Inspect actual gutters and pad/crop without clipping before assuming a 3x2 atlas.",
+    "The new Lucy image is not included; it must be recovered from the earlier chat or inaccessible old workspace."
+  ]
+}

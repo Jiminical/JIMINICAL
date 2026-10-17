@@ -1,0 +1,121 @@
+{
+  "kind": "model-only checks; not gameplay verification",
+  "results": [
+    {
+      "name": "Before Munia briefing: hidden",
+      "pass": true
+    },
+    {
+      "name": "Briefing reveals current goal",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase idle",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase dialogue",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase board",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase event",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase vista",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase transition",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase battle",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase menu",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase inspect",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase reading",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase shop",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase archive",
+      "pass": true
+    },
+    {
+      "name": "Hide in phase letter",
+      "pass": true
+    },
+    {
+      "name": "Hide while input locked",
+      "pass": true
+    },
+    {
+      "name": "Hide outside active game",
+      "pass": true
+    },
+    {
+      "name": "Stage leave-guild",
+      "pass": true
+    },
+    {
+      "name": "Stage board-carriage",
+      "pass": true
+    },
+    {
+      "name": "Stage checkpoint",
+      "pass": true
+    },
+    {
+      "name": "Stage enter-grove",
+      "pass": true
+    },
+    {
+      "name": "Stage reach-library",
+      "pass": true
+    },
+    {
+      "name": "Stage enter-library",
+      "pass": true
+    },
+    {
+      "name": "Stage read-letter",
+      "pass": true
+    },
+    {
+      "name": "Stage read-records",
+      "pass": true
+    },
+    {
+      "name": "Dismiss persists after restore and travel",
+      "pass": true
+    },
+    {
+      "name": "Explicit reopen works",
+      "pass": true
+    },
+    {
+      "name": "Legacy save defaults safely",
+      "pass": true
+    },
+    {
+      "name": "Malformed optional setting defaults safely",
+      "pass": true
+    }
+  ]
+}
