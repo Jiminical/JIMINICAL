@@ -6,7 +6,7 @@ const fieldWorld = (() => {
       npcs: [["edan", 500, 365, "right"]],
       targets: [
         { id: "guild-entry", name: "모험가 길드", x: 140, y: 219 },
-        { id: "shop-entry", name: "로제의 잡화점", x: 568, y: 244 },
+        { id: "shop-entry", name: "아르다의 잡화점", x: 568, y: 244 },
         { id: "carriage-stop", name: "그린스토아행 마차", x: 539, y: 389 },
         { id: "city-board", name: "광장 안내판", x: 84, y: 335 },
         { id: "fountain", name: "광장의 분수", x: 363, y: 307 },
@@ -67,17 +67,17 @@ const fieldWorld = (() => {
   };
   const shops = {
     city: {
-      title: "로제의 잡화점",
+      title: "아르다의 잡화점",
       merchant: "rose",
-      note: "길드 앞에서 챙기는 작은 여행 준비",
+      note: "새로운 여행 이야기를 기다리는 아르다의 가게",
       stock: [
         { id: "bread", price: 3, stock: 6 },
         { id: "tonic", price: 7, stock: 3 },
         { id: "bandage", price: 4, stock: 4 },
       ],
       greeting: [
-        "어머, 길드에서 나오시는 길인가요?\n먼 길에는 가벼운 빵과 물약이 제일 오래 남는 법이죠.",
-        "천천히 골라 보세요. 급한 마차라도\n물건 살 잠깐은 기다려 줄 테니까요.",
+        "어서 오세용! 저는 아르다에용.\n길드에서 오셨어용? 이번엔 어디로 모험을 떠나시는 거에용?",
+        "신기한 걸 발견하면 제게도 꼭 이야기해 주세용!\n궁금한 게 너무 많아용. 여행 준비는 여기서 천천히 해용!",
       ],
     },
   };

@@ -22,6 +22,7 @@ const scenicLandscape = (() => {
     ctx.save();ctx.beginPath();ctx.rect(0,58,720,344);ctx.clip();
     ctx.translate(0,58);ctx.scale(720/sw,344/sh);ctx.translate(-sx,-sy);
     ctx.drawImage(image,0,0);
+    livingNature.draw(ctx,image,"overlook",seconds,moving);
     if(moving)for(let index=0;index<falls.length;index++){
       const fall=falls[index],xs=fall.points.map(p=>p[0]),ys=fall.points.map(p=>p[1]),left=Math.min(...xs),right=Math.max(...xs),top=Math.min(...ys),bottom=Math.max(...ys),[tx,ty,tw,th]=fall.texture;
       ctx.save();ctx.beginPath();fall.points.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));ctx.closePath();ctx.clip();

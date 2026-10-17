@@ -8,31 +8,10 @@ const journeyCinematic = (() => {
   const names = ["kingdom", "gorge", "departure"];
   let shots = [], coach = null;
 
-  function waterLayer(image, region) {
-    const layer = document.createElement("canvas");
-    layer.width = image.naturalWidth; layer.height = image.naturalHeight;
-    const c = layer.getContext("2d", { willReadFrequently: true });
-    c.drawImage(image, 0, 0);
-    const pixels = c.getImageData(0, 0, layer.width, layer.height), data = pixels.data;
-    for (let y = 0; y < layer.height; y++) for (let x = 0; x < layer.width; x++) {
-      const i = (y * layer.width + x) * 4, r = data[i], g = data[i+1], b = data[i+2];
-      if (!(x > layer.width * region[0] && x < layer.width * region[2] &&
-        y > layer.height * region[1] && y < layer.height * region[3] &&
-        b > r * 1.15 && g > r * 1.2 && b > 75)) data[i + 3] = 0;
-    }
-    c.putImageData(pixels, 0, 0);
-    return layer;
-  }
   function prepare(pictures) {
     if (shots[0]?.image === pictures.journey) return;
-    shots = [
-      { image: pictures.journey, region: [.25, .51, .80, .98],
-        falls: [[.10,.286,.018,.30],[.228,.425,.012,.225],[.296,.547,.015,.18]] },
-      { image: pictures.journeyGorge, region: [.14, .59, .98, .98],
-        falls: [[.12,.045,.065,.55],[.357,.34,.023,.22],[.855,.265,.023,.21]] },
-      { image: pictures.journeyRoad, region: [.01, .33, .62, .69],
-        falls: [[.081,.59,.014,.23],[.18,.63,.018,.21],[.261,.67,.014,.22]] },
-    ].map(shot => ({ ...shot, water: waterLayer(shot.image, shot.region) }));
+    shots = [pictures.journey,pictures.journeyGorge,pictures.journeyRoad].map(image=>({image}));
+    shots.forEach((shot,i)=>livingNature.prepare(shot.image,["journeyKingdom","journeyGorge","journeyRoad"][i]));
     const image = pictures.journeyCarriage, full = document.createElement("canvas");
     full.width = image.naturalWidth; full.height = image.naturalHeight;
     const c = full.getContext("2d", { willReadFrequently: true }); c.drawImage(image, 0, 0);
@@ -43,22 +22,10 @@ const journeyCinematic = (() => {
         left = Math.min(left, x); right = Math.max(right, x);
         top = Math.min(top, y); bottom = Math.max(bottom, y);
       }
-    coach = document.createElement("canvas"); coach.width = 160;
-    coach.height = Math.round(160 * (bottom - top + 1) / (right - left + 1));
+    coach = document.createElement("canvas"); coach.width = 240;
+    coach.height = Math.round(240 * (bottom - top + 1) / (right - left + 1));
     const p = coach.getContext("2d"); p.imageSmoothingEnabled = false;
     p.drawImage(image, left, top, right - left + 1, bottom - top + 1, 0, 0, coach.width, coach.height);
-  }
-  function livingWater(c, shot, seconds) {
-    const w = shot.image.naturalWidth, h = shot.image.naturalHeight;
-    c.save(); c.globalAlpha *= .1;
-    c.drawImage(shot.water, Math.round(Math.sin(seconds * .6) * 2), 0); c.restore();
-    for (const [x, y, width, height] of shot.falls) {
-      c.save(); c.beginPath(); c.rect(x*w, y*h, width*w, height*h); c.clip();
-      c.globalAlpha *= .12; c.fillStyle = "#edffff";
-      for (let i = 0; i < 10; i++) c.fillRect(Math.round(x*w+(i*13)%(width*w)),
-        Math.round(y*h+(seconds*55+i*31)%(height*h+20)-20), 1+i%2, 7+i%4*3);
-      c.restore();
-    }
   }
   function birds(c, seconds, w, h, shot) {
     c.save(); c.fillStyle = shot === 2 ? "#7c8793" : "#e7edf1";
@@ -77,7 +44,7 @@ const journeyCinematic = (() => {
     // point controls position and size; no turns or spline overshoot exist.
     const t = clamp((seconds - cuts[1]) / (duration - cuts[1])), depth = 1 + t * .53,
       ground = .46 + .49 / depth;
-    return { x: .65 + (ground - .46) * .4, y: ground, width: .094 / depth };
+    return { x: .65 + (ground - .46) * .4, y: ground, width: .141 / depth };
   }
   function carriage(c, seconds, w, h, moving) {
     const position = roadPosition(seconds), width = position.width * w,
@@ -112,7 +79,10 @@ const journeyCinematic = (() => {
     c.save(); c.beginPath(); c.rect(box.x, box.y, box.w, box.h); c.clip();
     c.translate(box.x,box.y); c.scale(box.w/sw,box.h/sh); c.translate(-sx,-sy);
     c.drawImage(image,0,0);
-    if (moving) { livingWater(c,shot,seconds); birds(c,seconds,w,h,index); }
+    if (moving) {
+      livingNature.draw(c,image,["journeyKingdom","journeyGorge","journeyRoad"][index],seconds);
+      birds(c,seconds,w,h,index);
+    }
     if (index === 2) carriage(c,seconds,w,h,moving);
     c.restore();
   }

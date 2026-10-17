@@ -107,7 +107,8 @@ const guildGame = (() => {
       name: "카니아",
       portrait: 7,
     },
-    rose: { name: "로제", portrait: 0, fieldPortrait: true },
+    // Keep the original actor key so existing saves and codex entries survive.
+    rose: { name: "아르다", portrait: 0, fieldPortrait: true },
     rael: { name: "라엘", portrait: 1, fieldPortrait: true },
     edan: { name: "기루스", portrait: 2, fieldPortrait: true },
     sena: { name: "새나", portrait: 3, fieldPortrait: true },
@@ -148,6 +149,8 @@ const guildGame = (() => {
       "shop",
       "fieldCast",
       "sdField",
+      "arda",
+      "sdArda",
       "library",
       "guideForest",
       "guideKania",
@@ -162,6 +165,7 @@ const guildGame = (() => {
       hero: pictures.sdHero,
       leads: pictures.sdLeads,
       field: pictures.sdField,
+      arda: pictures.sdArda,
       kania: pictures.sdKania,
       ...Object.fromEntries(Object.entries(characterChats).map(([id, person]) => [id, pictures["sd" + person.asset]])),
     });
@@ -171,6 +175,8 @@ const guildGame = (() => {
     firstPersonArms.prepare(pictures.firstPersonArms);
     itemSpecimens.prepare(pictures.itemSpecimens);
     journeyCinematic.prepare(pictures);
+    livingNature.prepare(pictures.sanctuary,"sanctuary");
+    livingNature.prepare(pictures.guideForest,"overlook");
   });
   // Attach rejection handling before a player chooses to enter the room.
   ready.catch(() => {});
@@ -270,6 +276,7 @@ const guildGame = (() => {
             fieldWorld.shops[shopOrigin].title,
           ]
         : placeNames[location];
+    livingNature.prepare(background,location);
     document.querySelector(".game-place").textContent = names[0];
     document.querySelector(".game-hud strong").textContent = names[1];
     root.dataset.location = location;
@@ -282,36 +289,8 @@ const guildGame = (() => {
   }
   function drawScenery() {
     if (!motion()) return;
+    livingNature.draw(ctx,background,location,elapsed);
     const frame = Math.floor(elapsed * 8);
-    const water =
-      location === "city"
-        ? [
-            [347, 227],
-            [375, 234],
-            [358, 247],
-            [382, 244],
-          ]
-        : location === "grove"
-          ? [
-              [211, 254],
-              [227, 287],
-              [206, 319],
-              [193, 365],
-              [215, 416],
-            ]
-          : [];
-    water.forEach(([x, y], i) => {
-      const cel = (frame + i * 3) % 16;
-      ctx.globalAlpha = cel < 8 ? 0.5 : 0.22;
-      rect(
-        ctx,
-        x + (cel % 4),
-        y + Math.floor(cel / 8),
-        cel < 8 ? 4 : 2,
-        1,
-        "#d5fbef",
-      );
-    });
     // Sparse individual pollen/dust pixels leave the environment painting legible.
     for (let i = 0; i < 8; i++) {
       const x = (93 + i * 79 + Math.floor(frame / 7)) % W;
@@ -608,7 +587,7 @@ const guildGame = (() => {
   function drawSanctuary(seconds) {
     if (!motion()) cinematic.revealed = true;
     const complete = cinematic.revealed || seconds >= 32;
-    const frame = complete ? "complete" : Math.floor(seconds * 24);
+    const frame = motion() ? Math.floor(seconds * 24) : "complete";
     if (frame === cinematic.frame) return;
     cinematic.frame = frame;
     const progress = complete ? 1 : Math.min(1, seconds / 32);
@@ -623,20 +602,12 @@ const guildGame = (() => {
     const sw = vistaArt.width / scale,
       sh = vistaArt.height / scale;
     vistaContext.imageSmoothingEnabled = false;
-    vistaContext.drawImage(
-      art,
-      (art.naturalWidth - sw) / 2,
-      Math.min(
-        art.naturalHeight - sh,
-        Math.round((art.naturalHeight - sh) * ease),
-      ),
-      sw,
-      sh,
-      0,
-      0,
-      vistaArt.width,
-      vistaArt.height,
-    );
+    vistaContext.save();
+    vistaContext.scale(vistaArt.width/sw,vistaArt.height/sh);
+    vistaContext.translate(-(art.naturalWidth-sw)/2,-Math.min(art.naturalHeight-sh,Math.round((art.naturalHeight-sh)*ease)));
+    vistaContext.drawImage(art,0,0);
+    livingNature.draw(vistaContext,art,"sanctuary",seconds,motion());
+    vistaContext.restore();
     vista.dataset.pan = progress.toFixed(3);
     const cue = (start, end) =>
       complete
@@ -983,11 +954,11 @@ const guildGame = (() => {
           (item) => item.id === id,
         );
         if (!product || shopStocks[shopOrigin][id] <= 0)
-          return { ok: false, message: "이 물건은 모두 팔렸어요." };
+          return { ok: false, message: "이 물건은 모두 팔렸어용. 다른 것도 구경해 보세용!" };
         if (coins < product.price)
           return {
             ok: false,
-            message: "금화가 부족해요. 다른 물건을 골라 보세요.",
+            message: "금화가 조금 부족해용. 다른 물건도 구경해 보세용!",
           };
         coins -= product.price;
         shopStocks[shopOrigin][id]--;
@@ -1069,6 +1040,11 @@ const guildGame = (() => {
     target.dataset.expression = expression;
     if (!kind) return;
     const sheets = {
+      rose: {
+        image: "arda", columns: 3, rows: 2,
+        columnEdges: [0,268,524,768],
+        poses: {neutral:0,smile:1,curious:2,surprised:3,excited:4,thoughtful:5},
+      },
       lucy: {
         image: "lucy",
         columns: 3,
@@ -1858,7 +1834,7 @@ const guildGame = (() => {
     }
     if (id === "rose") {
       speak(
-        fieldWorld.shops.city.greeting.map((text) => ({ kind: id, text })),
+        fieldWorld.shops.city.greeting.map((text,i) => ({ kind: id, expression: i ? "smile" : "curious", text })),
         trade,
       );
       return;
@@ -2001,7 +1977,7 @@ const guildGame = (() => {
     if (target.id === "city-board")
       speak([
         {
-          text: "‘동쪽 숲길의 통행은 기사단 파견 마차를 이용해 주십시오.’\n그 아래에 로제의 잡화점 전단이 조그맣게 붙어 있다. ‘따끈한 빵, 오늘도 구웠어요.’",
+          text: "‘동쪽 숲길의 통행은 기사단 파견 마차를 이용해 주십시오.’\n그 아래에 아르다의 잡화점 전단이 조그맣게 붙어 있다. ‘여행 준비는 여기서 해용! 신기한 여행 이야기도 들려주세용.’",
         },
       ]);
     if (target.id === "fountain") {

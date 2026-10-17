@@ -14,7 +14,7 @@ const fieldSprites = (() => {
     mia: { sheet: "guild", row: 1, height: 70 },
     nara: { sheet: "guild", row: 2, height: 72 },
     tobin: { sheet: "guild", row: 3, height: 60 },
-    rose: { sheet: "field", row: 0, height: 70 },
+    rose: { sheet: "arda", row: 0, height: 70 },
     rael: { sheet: "field", row: 1, height: 70 },
     edan: { sheet: "field", row: 2, height: 72 },
     sena: { sheet: "field", row: 3, height: 70 },
@@ -60,10 +60,11 @@ const fieldSprites = (() => {
         for (let x = 0; x < c.width; x++)
           if (pixels[(y * c.width + x) * 4 + 3] > 160) columns[x]++;
       const groups = [];
+      const joinGap = Math.min(24, c.width / 64);
       for (let x = 0; x < c.width; x++) {
         if (!columns[x]) continue;
         const last = groups.at(-1);
-        if (last && x - last.end < 24) last.end = x;
+        if (last && x - last.end < joinGap) last.end = x;
         else groups.push({ start: x, end: x });
       }
       while (groups.length > 4) {
@@ -134,7 +135,7 @@ const fieldSprites = (() => {
     sheets = Object.fromEntries(
       Object.entries(images).map(([name, image]) => [
         name,
-        analyse(image, name === "kania" || characterChats[name] ? 1 : 4),
+        analyse(image, name === "kania" || name === "arda" || characterChats[name] ? 1 : 4),
       ]),
     );
     for (const [kind, person] of Object.entries(cast)) {

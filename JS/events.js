@@ -146,6 +146,8 @@ const eventScenes = (() => {
     context.scale(scale, scale);
     context.translate(-cameraX, -cameraY);
     context.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+    if (state.natureBackdrop)
+      livingNature.draw(context,state.natureBackdrop,state.kind === "departure" ? "eventDeparture" : "eventCredentials",seconds,animated);
     if (departure && propsImage) {
       // The wheel is an independent transparent layer, anchored to the axle.
       // The camera travels with the carriage; ground-level dust trails behind.
@@ -407,6 +409,14 @@ const eventScenes = (() => {
       routeLength: routePath.getTotalLength(),
     };
     prepareProps(options.props || propsImage);
+    if (["departure","credentials"].includes(kind)) {
+      const image=state.atlas,sw=image.naturalWidth/2,sh=image.naturalHeight/2,
+        frame=definitions[kind].frame,backdrop=document.createElement("canvas");
+      backdrop.width=sw;backdrop.height=sh;
+      backdrop.getContext("2d").drawImage(image,(frame%2)*sw,Math.floor(frame/2)*sh,sw,sh,0,0,sw,sh);
+      state.natureBackdrop=backdrop;
+      livingNature.prepare(backdrop,kind === "departure" ? "eventDeparture" : "eventCredentials");
+    }
     root.dataset.kind = kind;
     root.dataset.progress = "0";
     root.hidden = false;

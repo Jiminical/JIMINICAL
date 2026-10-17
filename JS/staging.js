@@ -60,6 +60,7 @@ const actionScenes = (() => {
     c.scale(zoom, zoom);
     c.translate(-centreX, -centreY);
     c.drawImage(state.world, 0, 0);
+    livingNature.draw(c,state.world,"city",seconds,state.motion);
     const jump =
       state.motion && seconds >= 0.8 && seconds <= 1.3
         ? Math.round(Math.sin(((seconds - 0.8) / 0.5) * Math.PI) * 13)

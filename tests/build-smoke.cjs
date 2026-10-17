@@ -8,11 +8,13 @@ const {gunzipSync}=require('zlib');
  const payload=raw.split('<script id="portable-payload" type="application/octet-stream">')[1].split('</script>')[0];
  const length=Number(raw.match(/\.textContent,(\d+)\)/)[1]);
  const html=gunzipSync(decodePortable(payload,length)).toString('utf8');
- for(const attr of ['lucy','iboria','hanari','aina','munia','girus','tobi']) {
+ for(const attr of ['lucy','iboria','hanari','aina','munia','girus','tobi','arda']) {
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/ld-'+attr+'.webp')));
  }
- assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: all seven portraits byte-identical, below 100 MiB');
+ const ardaField=html.match(/data-sd-arda-src="data:image\/webp;base64,([^" ]+)"/)[1];
+ assert.deepEqual(Buffer.from(ardaField,'base64'),fs.readFileSync(path.join(root,'assets/sd-arda.webp')));
+ assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: eight portraits and Arda field sheet byte-identical, below 100 MiB');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
  try {
  for(const url of [pathToFileURL(path.join(root,'index.html')).href,'http://127.0.0.1:8765/dist-cloudflare-compact/']) {

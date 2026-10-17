@@ -48,9 +48,9 @@ const shopView = (() => {
     const affordable = snapshot.coins >= product.price;
     buyButton.disabled = !remaining || !affordable;
     buyButton.textContent = !remaining
-      ? "모두 팔렸어요"
+      ? "모두 팔렸어용"
       : !affordable
-        ? "금화가 부족해요"
+        ? "금화가 부족해용"
         : "구매 · " + product.price + " G";
   }
   function buy() {
@@ -67,7 +67,7 @@ const shopView = (() => {
     selected = 0;
     inputAfter = performance.now() + 180;
     root.hidden = false;
-    status.textContent = "필요한 물건을 골라 주세요.";
+    status.textContent = "필요한 물건을 골라 보세용! 여행 이야기도 들려주세용.";
     render();
     list.children[0].focus({ preventScroll: true });
   }
