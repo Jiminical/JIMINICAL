@@ -30,6 +30,31 @@ const guildGame = (() => {
   const keyboardPressed = new Set();
   const touchMovement = new Map();
   const touchButtons = [...document.querySelectorAll("[data-game-key]")];
+  const joystick = document.querySelector("#game-joystick");
+  const stick = { pointerId: null, x: 0, y: 0 };
+  function resetJoystick() {
+    const pointerId = stick.pointerId;
+    stick.pointerId = null;
+    stick.x = stick.y = 0;
+    joystick.classList.remove("is-held");
+    joystick.style.setProperty("--stick-x", "0px");
+    joystick.style.setProperty("--stick-y", "0px");
+    if (pointerId !== null && joystick.hasPointerCapture(pointerId))
+      joystick.releasePointerCapture(pointerId);
+  }
+  function moveJoystick(event) {
+    const box = joystick.getBoundingClientRect(),
+      radius = (box.width - 48) / 2,
+      x = event.clientX - box.left - box.width / 2,
+      y = event.clientY - box.top - box.height / 2,
+      distance = Math.hypot(x, y),
+      travel = Math.min(radius, distance),
+      strength = Math.max(0, (Math.min(1, distance / radius) - 0.12) / 0.88);
+    stick.x = x / (distance || 1) * strength;
+    stick.y = y / (distance || 1) * strength;
+    joystick.style.setProperty("--stick-x", x / (distance || 1) * travel + "px");
+    joystick.style.setProperty("--stick-y", y / (distance || 1) * travel + "px");
+  }
   function syncMovementKeys() {
     keys.clear();
     for (const code of keyboardMovement) keys.add(code);
@@ -1990,18 +2015,18 @@ const guildGame = (() => {
     return npcs.some((n) => Math.abs(n.x - x) < 14 && Math.abs(n.y - y) < 9);
   }
   function movePlayer(dt) {
-    // Scenes pause movement, but a held key/finger survives until its release.
+    // Keep keyboard holds independent from the continuous joystick vector.
     syncMovementKeys();
     const oldX = player.x,
       oldY = player.y;
-    let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0),
-      dy = (keys.has("KeyS") ? 1 : 0) - (keys.has("KeyW") ? 1 : 0);
+    let dx = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0) + stick.x,
+      dy = (keys.has("KeyS") ? 1 : 0) - (keys.has("KeyW") ? 1 : 0) + stick.y;
     player.moving = !!(dx || dy);
     if (!player.moving) return;
     if (Math.abs(dx) > Math.abs(dy)) player.dir = dx < 0 ? "left" : "right";
     else player.dir = dy < 0 ? "up" : "down";
     const speed = keys.has("ShiftLeft") ? 126 : 76,
-      length = Math.hypot(dx, dy);
+      length = Math.max(1, Math.hypot(dx, dy));
     dx = (dx / length) * speed * dt;
     dy = (dy / length) * speed * dt;
     const steps = Math.max(
@@ -2148,6 +2173,7 @@ const guildGame = (() => {
     ctx.restore();
   }
   function drawWorld() {
+    if ((phase !== "free" || inputLocked) && stick.pointerId !== null) resetJoystick();
     updateObjective();
     const menuUnavailable = phase !== "free" || inputLocked;
     if (menuButton.disabled !== menuUnavailable)
@@ -2607,6 +2633,7 @@ const guildGame = (() => {
     keyboardPressed.clear();
     keyboardMovement.clear();
     touchMovement.clear();
+    resetJoystick();
     keys.clear();
     updateTouchButtons();
     battleScenes.clearInput();
@@ -2683,8 +2710,27 @@ const guildGame = (() => {
   const vistaLayout = new ResizeObserver(fitVista);
   vistaLayout.observe(root);
   vistaLayout.observe(document.querySelector(".vista-copy"));
+  for (const surface of [document.querySelector(".game-touch"), document.querySelector("#battle-touch-pad")])
+    for (const name of ["contextmenu", "selectstart", "touchstart"])
+      surface.addEventListener(name, event => event.preventDefault(), { passive: false });
+  joystick.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    if (!active || inputLocked || phase !== "free" || document.hidden || event.button !== 0 || stick.pointerId !== null) return;
+    stick.pointerId = event.pointerId;
+    joystick.setPointerCapture(event.pointerId);
+    joystick.classList.add("is-held");
+    moveJoystick(event);
+  });
+  joystick.addEventListener("pointermove", event => {
+    if (event.pointerId !== stick.pointerId) return;
+    event.preventDefault();
+    if (phase !== "free" || inputLocked) { resetJoystick(); return; }
+    moveJoystick(event);
+  });
+  for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
+    joystick.addEventListener(name, event => { if (event.pointerId === stick.pointerId) resetJoystick(); });
+  window.addEventListener("resize", resetJoystick);
   for (const b of touchButtons) {
-    b.addEventListener("contextmenu", event => event.preventDefault());
     b.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       if (!active || inputLocked || document.hidden || event.button !== 0) return;
@@ -2697,17 +2743,6 @@ const guildGame = (() => {
         syncMovementKeys();
         updateTouchButtons();
       }
-    });
-    b.addEventListener("pointermove", (event) => {
-      if (!touchMovement.has(event.pointerId) || !b.closest(".touch-directions")) return;
-      const button = document.elementFromPoint(event.clientX, event.clientY)
-        ?.closest(".touch-directions [data-game-key]");
-      touchMovement.set(event.pointerId, {
-        button,
-        codes: button ? button.dataset.gameKey.split(" ") : [],
-      });
-      syncMovementKeys();
-      updateTouchButtons();
     });
     for (const name of ["pointerup", "pointercancel", "lostpointercapture"])
       b.addEventListener(name, (event) => {

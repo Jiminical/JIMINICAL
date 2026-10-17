@@ -443,15 +443,10 @@
           ><span><kbd>E</kbd> 대화 · 조사</span><span><kbd>C</kbd> 메뉴</span>
         </footer>
         <div class="game-touch" aria-label="터치 조작">
-          <div class="touch-directions">
-            <button type="button" data-game-key="KeyW KeyA" aria-label="왼쪽 위로 이동">↖</button>
-            <button type="button" data-game-key="KeyW" aria-label="위로 이동">↑</button>
-            <button type="button" data-game-key="KeyW KeyD" aria-label="오른쪽 위로 이동">↗</button>
-            <button type="button" data-game-key="KeyA" aria-label="왼쪽 이동">←</button>
-            <button type="button" data-game-key="KeyD" aria-label="오른쪽 이동">→</button>
-            <button type="button" data-game-key="KeyS KeyA" aria-label="왼쪽 아래로 이동">↙</button>
-            <button type="button" data-game-key="KeyS" aria-label="아래로 이동">↓</button>
-            <button type="button" data-game-key="KeyS KeyD" aria-label="오른쪽 아래로 이동">↘</button>
+          <div id="game-joystick" class="touch-joystick" role="group" tabindex="0" aria-label="이동 조이스틱. 원하는 방향으로 드래그하세요. 키보드는 WASD로 이동합니다.">
+            <span class="joystick-base" aria-hidden="true"></span>
+            <span class="joystick-thumb" aria-hidden="true"></span>
+            <span class="joystick-label" aria-hidden="true">이동</span>
           </div>
           <button
             type="button"

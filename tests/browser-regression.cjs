@@ -69,16 +69,16 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   await start(fixture());await press();await hub();await pick('조사 의뢰');await hub();await pick('조사 의뢰를 맡는다');await free();
   check(tag+' seal grants exactly one dispatch',(await state()).questAccepted&&(await state()).items.filter(i=>i.id==='dispatch').length===1);
   await press();await hub();await pick('맡은 의뢰');await free();check(tag+' repeat quest grants no second dispatch',(await state()).items.find(i=>i.id==='dispatch').count===1);
-  // Held keyboard movement survives E and independent touch direction releases.
+  // Held keyboard movement survives E; joystick and run pointers are independent.
   await start(fixture({player:{x:360,y:270,dir:'down'},npcs:[]}));const before=(await state()).player;await page.keyboard.down('s');await page.waitForTimeout(150);await press();await page.waitForTimeout(150);await page.keyboard.up('s');check(tag+' held movement survives E',(await state()).player.y>before.y+12);
   if(size.width!==1280){
     await start(fixture({player:{x:350,y:270,dir:'down'},npcs:[]}));
     const session=await context.newCDPSession(page);
-    const up=await page.locator('[data-game-key="KeyW"]').boundingBox(),right=await page.locator('[data-game-key="KeyD"]').boundingBox();
-    const a={x:up.x+up.width/2,y:up.y+up.height/2,id:1},b={x:right.x+right.width/2,y:right.y+right.height/2,id:2};
-    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[a]});await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[a,b]});await page.waitForTimeout(180);
+    const pad=await page.locator('#game-joystick').boundingBox(),run=await page.locator('[data-game-key="ShiftLeft"]').boundingBox();
+    const centre={x:pad.x+pad.width/2,y:pad.y+pad.height/2,id:1},a={...centre,x:centre.x+26,y:centre.y-26},b={x:run.x+run.width/2,y:run.y+run.height/2,id:2};
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[centre]});await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[a]});await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[a,b]});await page.waitForTimeout(180);
     const diagonal=(await state()).player;check(tag+' touch diagonal',diagonal.x>350&&diagonal.y<270);
-    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[b]});await page.waitForTimeout(150);await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});check(tag+' independent touch release',(await state()).player.x>diagonal.x);
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[b]});await page.waitForTimeout(150);await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});check(tag+' releasing run preserves joystick',(await state()).player.x>diagonal.x);
   }
   await context.close();
  }
