@@ -23,10 +23,10 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   check(tag+' lock does not change quest or inventory',(await state()).questAccepted&&(await state()).items.length===2&&(await state()).coins===18);await shot('palace');
   await close();await walk('up',250);check(tag+' holding at same boundary does not spam',(await state()).phase==='free'&&(await state()).player.y>=63);
   await walk('down',900);await walk('up',950);check(tag+' returning to boundary shows narration again',(await state()).phase==='dialogue');
-  await start(fixture({player:{x:360,y:440,dir:'down'}}));await walk('down');
+  await start(fixture({player:{x:360,y:440,dir:'down'},objectiveGuide:{unlocked:true,dismissed:false}}));await walk('down');
   check(tag+' southern road enters the new cliff',(await state()).location==='cliff'&&(await state()).phase==='dialogue');
   check(tag+' cliff describes river and impassable drop',(await text()).includes('큰 강')&&(await text()).includes('더 이상 나아갈 수 없'));
-  await shot('cliff-narration');await close();await shot('cliff-field');
+  await shot('cliff-narration');await close();check(tag+' lookout updates the objective to return to square',(await p.locator('#game-objective').innerText()).includes('광장으로 돌아가'));await shot('cliff-field');
   await p.keyboard.press('c');await p.locator('#guild-save').click();const saved=await p.evaluate(()=>journeySave.read());
   check(tag+' cliff saves in v1 without changing progress',saved.version===1&&saved.location==='cliff'&&saved.questAccepted&&saved.hp===18&&saved.inventory.length===2);
   await start(saved);check(tag+' cliff save resumes safely',(await state()).location==='cliff'&&(await state()).phase==='free');

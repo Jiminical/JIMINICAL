@@ -37,6 +37,7 @@ test('objectives follow quest, travel and library progression',()=>{
   }
   assert.equal(model.describe({...world,location:'grove',fieldFlags:{libraryAmbushCleared:true}}).id,'enter-library');
   assert.equal(model.describe({...world,location:'library',fieldFlags:{libraryLetterRead:true}}).id,'read-records');
+  assert.equal(model.describe({...world,location:'cliff'}).id,'return-to-city');
 });
 test('guide stays hidden through every modal, event, battle and transition phase',()=>{
   const model=modelFactory(); model.reveal();
