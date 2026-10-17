@@ -2303,7 +2303,9 @@ const guildGame = (() => {
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
-        "W A S D  이동\n왼쪽 Shift  달리기\nE  대화 · 조사 · 대사 넘기기\nC  메뉴 열기 · 닫기\n\n메뉴 안에서는 W/S로 소지품을, A/D로 탭을 선택한다.\nE로 결정하고 C 또는 Esc로 돌아간다.";
+        matchMedia("(pointer: coarse)").matches
+          ? "왼쪽 조이스틱을 원하는 방향으로 밀어 이동한다.\n조금 밀면 천천히, 끝까지 밀면 빠르게 걷는다.\n달리기 버튼을 함께 누르면 달린다.\nE 버튼으로 대화 · 조사 · 대사를 넘긴다.\n\n위쪽 메뉴 버튼으로 기록을 열고,\n탭과 항목을 터치해 선택한다. 닫기 버튼으로 돌아간다."
+          : "W A S D  이동\n왼쪽 Shift  달리기\nE  대화 · 조사 · 대사 넘기기\nC  메뉴 열기 · 닫기\n\n메뉴 안에서는 W/S로 소지품을, A/D로 탭을 선택한다.\nE로 결정하고 C 또는 Esc로 돌아간다.";
     }
   }
   function toggleObjective() {

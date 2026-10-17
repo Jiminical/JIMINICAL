@@ -1,0 +1,174 @@
+/* Let the actual viewport, rather than a desktop minimum, size mobile screens. */
+@media (pointer: coarse) {
+  .guild-menu-panel > footer > span, .shop-panel > footer > span,
+  .archive-window > footer > span:first-child, .notice-board footer { display: none; }
+  .battle-turn { right: 110px; }
+}
+@media (max-width: 700px), (pointer: coarse) and (max-width: 1024px) and (orientation: portrait) {
+  body { padding: 0; display: block; overflow-x: hidden; }
+  .scene, .scene.is-story-active, .scene.is-game-active {
+    width: 100%;
+    height: 100svh;
+    height: 100dvh;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+    box-shadow: none;
+  }
+  .title-content {
+    top: auto;
+    bottom: 48px;
+    left: 16px;
+    right: 16px;
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .title-logo { margin-left: 0; }
+  .main-menu { width: min(276px, 100%); margin-inline: auto; }
+  .intro-copy { margin: 12px 0 18px; }
+  .character-sprite {
+    left: 50%;
+    right: auto;
+    bottom: 41%;
+    width: min(94%, 500px);
+    height: 52%;
+    transform: translateX(-50%);
+    mask-image: linear-gradient(#000 65%, transparent 100%);
+  }
+  .sound-toggle { top: 12px; right: 12px; padding: 6px 10px; font-size: 12px; }
+  .footer { left: 16px; right: 16px; bottom: 14px; flex-direction: row; justify-content: center; }
+  .menu-hint { display: none; }
+  .panel { width: min(420px, calc(100% - 24px)); max-height: calc(100dvh - 24px); padding: 16px; }
+  #options-dialog .panel-header { position: sticky; top: 0; z-index: 1; background: #263642; }
+  .story-content { overflow-y: auto; overscroll-behavior: contain; }
+  #story-screen:not([data-phase="prologue"]) .story-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: safe center;
+    padding: 64px 20px 20px;
+    scroll-padding-block: 20px;
+  }
+  .name-page { flex: 0 0 auto; }
+  .story-quiet, .story-action, .story-next { min-height: 44px; }
+  .guild-menu-panel > header { gap: 10px; }
+  #guild-menu-close { flex-shrink: 0; }
+}
+@media (min-width: 701px) and (max-width: 1024px) and (orientation: portrait) and (pointer: coarse) {
+  .title-name { font-size: clamp(64px, 10vw, 82px); }
+  .title-prefix { font-size: 22px; }
+  .battle-screen { --battle-menu-width: 36%; }
+  .battle-menu { right: 16px; }
+  #battle-commands b { font-size: clamp(32px, 5cqw, 42px); }
+}
+@media (max-width: 700px) and (max-height: 700px) and (orientation: portrait) {
+  .title-name { font-size: clamp(42px, 14.5vw, 56px); }
+  .title-prefix { font-size: 17px; margin-bottom: 4px; }
+  .logo-tree { width: 48px; height: 38px; top: -44px; left: calc(50% - 24px); }
+  .intro-copy { margin: 8px 0 12px; font-size: 11px; }
+  .main-menu { padding: 8px; }
+  .menu-item { min-height: 42px; font-size: 18px; }
+  .character-sprite { height: 48%; bottom: 46%; }
+  .game-dialogue { min-height: 0; bottom: 140px; padding: 10px 12px 8px; }
+  .is-dialogue-choices .game-dialogue {
+    height: min(260px, calc(100cqh - 270px));
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+  #game-dialogue-text { --dialogue-font-size: 13px; min-height: 48px; max-height: 75px; overflow-y: auto; }
+  .game-choices { width: 100%; min-height: 0; overflow-y: auto; gap: 2px; margin-top: 8px; }
+  .game-choices button { min-height: 40px; font-size: 12px; padding: 3px 6px; }
+}
+/* Reserve separate space for all three commands and the status panel. */
+@media (max-width: 700px) and (orientation: portrait) and (max-height: 700px) {
+  .battle-heading { top: 54px; width: 60%; }
+  .battle-heading h2 { font-size: 20px; }
+  .battle-turn { top: 24px; right: 100px; font-size: 12px; }
+  .battle-menu { top: 25%; bottom: 180px; max-height: none; padding: 6px; }
+  .battle-menu-kicker { margin-bottom: 6px; font-size: 10px; }
+  #battle-commands { gap: 6px; }
+  #battle-commands button { min-height: clamp(58px, 10.5dvh, 72px); padding: 10px; grid-template-columns: 20px 1fr; gap: 0 5px; }
+  #battle-commands b { font-size: 23px; }
+  #battle-commands small { display: none; }
+  .battle-command-icon { width: 20px; height: 20px; }
+  .battle-bottom { gap: 8px; max-height: 138px; }
+  .battle-message { min-height: 82px; padding: 10px 12px; }
+  #battle-message { font-size: 15px; line-height: 1.65; }
+  .battle-screen[data-state="info"] .battle-bottom { max-height: 35%; }
+  .battle-screen[data-state="info"] #battle-message { font-size: 14px; }
+}
+/* On a phone held sideways, keep the title and artwork beside one another. */
+@media (min-width: 560px) and (max-width: 1024px) and (max-height: 500px) and (pointer: coarse) {
+  body { padding: 0; display: block; }
+  .scene, .scene.is-story-active, .scene.is-game-active {
+    width: 100%; height: 100svh; height: 100dvh; min-height: 0; max-height: none; aspect-ratio: auto; box-shadow: none;
+  }
+  .title-content {
+    top: auto; bottom: 32px; left: 5%; right: auto; width: 44%;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+  }
+  .title-logo { margin-left: 0; }
+  .title-name { font-size: clamp(40px, 6.8vw, 60px); }
+  .title-prefix { font-size: 16px; margin-bottom: 4px; }
+  .logo-tree { width: 46px; height: 36px; top: -40px; left: calc(50% - 23px); }
+  .logo-sprig, .logo-leaf { width: 20px; height: 46px; bottom: 0; }
+  .intro-copy { margin: 8px 0 12px; font-size: 11px; }
+  .main-menu { width: min(260px, 100%); padding: 7px 9px; }
+  .menu-item { min-height: 36px; font-size: 17px; }
+  .character-sprite { left: auto; right: 2%; bottom: 0; width: 52%; height: 94%; transform: none; mask-image: none; }
+  .sound-toggle { top: 10px; right: 12px; font-size: 12px; padding: 5px 10px; }
+  .footer { left: 12px; right: 12px; bottom: 8px; justify-content: center; }
+  .menu-hint { display: none; }
+  .panel { max-height: calc(100dvh - 24px); padding: 16px; }
+  #options-dialog .panel-header { position: sticky; top: 0; z-index: 1; background: #263642; }
+  #story-screen:not([data-phase="prologue"]) .story-content {
+    display: flex; flex-direction: column; align-items: center; justify-content: safe center;
+    overflow-y: auto; padding: 60px 24px 16px; scroll-padding-block: 16px;
+  }
+  .name-page { flex: 0 0 auto; padding: 8px 0 16px; }
+  .name-ornament { margin-bottom: 12px; }
+  .name-prelude { margin-bottom: 10px; font-size: 12px; }
+  .name-page h2 { margin-bottom: 16px; font-size: 23px; }
+  .written-name { font-size: 28px; margin: 12px 0 24px; }
+  .record-note { margin-bottom: 18px; font-size: 12px; }
+  .story-screen[data-phase="prologue"] .story-content { padding: 0; min-height: 0; overflow: hidden; }
+  .story-page {
+    display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: center; gap: 18px; padding: 60px 20px 12px;
+  }
+  .chronicle-art { width: 100%; max-width: none; }
+  .narration-block { align-self: stretch; justify-content: safe center; padding: 0; overflow-y: auto; }
+  #story-narration { font-size: 14px; line-height: 1.8; }
+  .story-footer { padding: 6px 16px 10px; }
+  .guild-menu-panel { padding: 14px 18px; }
+  #guild-player-name { font-size: 20px; margin-top: 4px; }
+  .world-viewport { padding-top: 82px; padding-bottom: 34px; }
+  #guild-world { width: min(100%, calc((100cqh - 116px) * 1.5)); }
+  .game-hud { top: 10px; }
+  .game-dialogue { bottom: 20px; min-height: 0; padding: 8px 16px; }
+  .game-dialogue h2 { margin-bottom: 4px; font-size: 14px; }
+  #game-dialogue-text { --dialogue-font-size: 13px; min-height: 40px; max-height: 60px; overflow-y: auto; line-height: 1.5; }
+  .game-choices { width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2px 6px; margin: 6px 0 2px; max-height: 102px; overflow-y: auto; }
+  .game-choices button { min-height: 30px; padding: 4px 6px; font-size: 12px; }
+  .battle-screen { --battle-menu-width: 30%; }
+  .battle-heading { top: 16px; left: 20px; width: 59%; }
+  .battle-heading > p { font-size: 10px; margin-bottom: 3px; }
+  .battle-heading h2 { font-size: 23px; line-height: 1.2; }
+  .battle-heading h2 span { font-size: 12px; margin-top: 5px; }
+  .battle-menu { top: 20%; bottom: 18px; right: 10px; padding: 6px; max-height: none; }
+  .battle-menu-kicker { font-size: 11px; margin-bottom: 6px; }
+  #battle-commands { gap: 8px; padding: 2px; }
+  #battle-commands button { min-height: 64px; padding: 10px 16px; grid-template-columns: 24px 1fr; gap: 0 8px; }
+  #battle-commands b { font-size: 26px; line-height: 1.2; }
+  #battle-commands small { display: none; }
+  .battle-command-icon { width: 24px; height: 24px; }
+  .battle-bottom { left: 20px; right: calc(var(--battle-menu-width) + 30px); bottom: 31px; gap: 8px; max-height: 42%; }
+  .battle-message { min-height: 66px; padding: 10px 15px; }
+  #battle-message { font-size: 16px; line-height: 1.5; }
+  .battle-player-health { font-size: 14px; gap: 4px; }
+  .battle-turn { top: 20px; right: 110px; font-size: 13px; }
+  .battle-key-hint { bottom: 8px; left: 20px; font-size: 10px; }
+}
