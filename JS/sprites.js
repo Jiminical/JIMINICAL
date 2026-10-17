@@ -125,13 +125,16 @@ const fieldSprites = (() => {
     c.putImageData(data, 0, 0);
   }
   function prepare(images) {
+    for (const id of Object.keys(characterChats)) {
+      cast[id] = { ...cast[id], sheet: id, row: 0 };
+    }
     cache.clear();
     outlines.clear();
     bases.clear();
     sheets = Object.fromEntries(
       Object.entries(images).map(([name, image]) => [
         name,
-        analyse(image, name === "kania" ? 1 : 4),
+        analyse(image, name === "kania" || characterChats[name] ? 1 : 4),
       ]),
     );
     for (const [kind, person] of Object.entries(cast)) {

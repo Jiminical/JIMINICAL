@@ -1,0 +1,36 @@
+
+.game-objective {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: min(440px, calc(100% - 48px));
+  padding: 6px 0 6px 10px;
+  border: 1px solid #a49360;
+  background: #15251ff0;
+  color: #eee7cc;
+  box-shadow: 2px 2px 0 #08120fc9, inset 0 0 0 1px #334739;
+  pointer-events: auto;
+  line-height: 1.5;
+}
+.game-objective[hidden],
+.game-screen:not([data-phase="free"]) > .game-objective,
+.game-screen:not([data-ready="true"]) > .game-objective,
+.game-screen.is-event > .game-objective,
+.game-screen.is-vista > .game-objective,
+.game-screen.is-battle > .game-objective { display: none !important; }
+.objective-copy { min-width: 0; pointer-events: none; }
+.objective-kicker { display: block; color: #e2c684; font-size: 9px; letter-spacing: 1px; }
+.objective-title { display: block; font-size: 11px; font-weight: 400; color: #f1e6c1; }
+.objective-step { display: block; font-size: 11px; color: #d2dece; overflow-wrap: anywhere; }
+.objective-close {
+  display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px;
+  padding: 0; border: 0; background: transparent; color: #d1c599;
+  cursor: pointer; touch-action: manipulation;
+}
+.objective-close:hover, .objective-close:focus-visible { background: #3b5042; color: #fff1bd; }
+.objective-close:focus-visible { outline: 2px solid #f0d895; outline-offset: -4px; }
+@media (max-width: 700px) {
+  .game-objective { max-width: calc(100% - 28px); right: auto; }
+  .objective-title, .objective-step { font-size: 10px; }
+}
+

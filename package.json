@@ -13,6 +13,7 @@
     "preview": "wrangler dev"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "wrangler": "4.151.0"
   }
 }

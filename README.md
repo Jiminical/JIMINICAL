@@ -5,6 +5,30 @@
 
 로컬 서버로 확인하려면 저장소에서 `python3 -m http.server 8000`을 실행하세요.
 
+2026-10-17 인물 업데이트는 루시~토비 7명의 6표정과 3종 잡담, 열람용 길드 게시판,
+무니아의 저장 가능한 목표 안내를 포함합니다. 기존 actor ID와 v1 저장 형식은 유지하며,
+목표 안내가 없는 옛 저장도 불러옵니다. `729a324`는 이 체크아웃에서 찾을 수 없어
+인계 문서에 따라 재구현했습니다. 전달용 브랜치 전체를 병합하지 않았습니다.
+
+단일 `index.html`은 GitHub의 100 MiB 제한을 지키기 위해 무손실 gzip과 compact ASCII로
+포장합니다. 원본 그림의 보이는 픽셀과 음악은 보존하며, 최신 브라우저의
+`DecompressionStream`으로 오프라인에서도 열립니다. 생성 파일은 직접 수정하지 마세요.
+배포용 `dist-cloudflare`는 이 포장 방식을 사용하지 않는 일반 정적 파일입니다.
+
+검증 명령:
+```sh
+npm ci
+npm test
+npm run build
+python3 scripts/build-standalone.py
+python3 scripts/build-cloudflare-compact.py
+npm run check:deploy
+```
+Python 빌드에는 Pillow가 필요합니다. 브라우저 검증은 Playwright 및 Chrome 설치 후
+`PLAYWRIGHT_MODULE`, `CHROME_PATH`를 지정하고 `tests/browser-regression.cjs`,
+`tests/story-regression.cjs`, `tests/build-smoke.cjs`를 Node로 실행합니다.
+기본 HTTP 미리보기 주소는 `http://127.0.0.1:8765/dist-cloudflare/`입니다.
+
 Cloudflare Workers의 GitHub 연동 배포는 아래 설정을 사용합니다.
 
 | 항목 | 값 |

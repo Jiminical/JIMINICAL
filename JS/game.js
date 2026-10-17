@@ -22,7 +22,6 @@ const guildGame = (() => {
   const itemDetail = document.querySelector("#guild-item-detail");
   const itemInspection = document.querySelector("#item-inspection");
   let inspectionInputAfter = 0;
-  const objective = document.querySelector("#game-objective");
   const menuButton = document.querySelector("#guild-menu-open");
   const prompt = document.querySelector("#game-interaction");
   const keys = new Set();
@@ -54,23 +53,23 @@ const guildGame = (() => {
       portrait: "lucy",
     },
     bran: {
-      name: "브란",
+      name: "이보리아",
       portrait: 1,
     },
     mia: {
-      name: "미아",
+      name: "하나리",
       portrait: 2,
     },
     nara: {
-      name: "나라",
+      name: "아이나",
       portrait: 3,
     },
     tobin: {
-      name: "토빈",
+      name: "토비",
       portrait: 4,
     },
     leon: {
-      name: "레온",
+      name: "무니아",
       portrait: 5,
     },
     rogue: {
@@ -83,9 +82,10 @@ const guildGame = (() => {
     },
     rose: { name: "로제", portrait: 0, fieldPortrait: true },
     rael: { name: "라엘", portrait: 1, fieldPortrait: true },
-    edan: { name: "에단", portrait: 2, fieldPortrait: true },
+    edan: { name: "기루스", portrait: 2, fieldPortrait: true },
     sena: { name: "새나", portrait: 3, fieldPortrait: true },
   };
+  for (const [id, person] of Object.entries(characterChats)) cast[id].name = person.name;
   const pictures = {};
   function loadPicture(key, src) {
     const image = new Image();
@@ -95,7 +95,8 @@ const guildGame = (() => {
   }
   const ready = Promise.all([
     greenstoaLore.ready,
-    loadPicture("lucy", assets.dataset.lucySrc),
+    ...Object.values(characterChats).map(person => loadPicture(person.asset, assets.dataset[person.asset + "Src"])),
+    ...Object.values(characterChats).map(person => loadPicture("sd" + person.asset, assets.dataset["sd" + person.asset[0].toUpperCase() + person.asset.slice(1) + "Src"])),
     loadPicture("cast", assets.dataset.castSrc),
     loadPicture("kania", assets.dataset.kaniaSrc),
     loadPicture("rogue", assets.dataset.rogueSrc),
@@ -113,7 +114,6 @@ const guildGame = (() => {
       "events",
       "eventProps",
       "sdHero",
-      "sdGuild",
       "sdLeads",
       "city",
       "grove",
@@ -132,10 +132,10 @@ const guildGame = (() => {
   ]).then(() => {
     fieldSprites.prepare({
       hero: pictures.sdHero,
-      guild: pictures.sdGuild,
       leads: pictures.sdLeads,
       field: pictures.sdField,
       kania: pictures.sdKania,
+      ...Object.fromEntries(Object.entries(characterChats).map(([id, person]) => [id, pictures["sd" + person.asset]])),
     });
     // Decode and clean the animation frames during loading, before an encounter.
     pixelAtlases.make(pictures.demonActions, 4, 2);
@@ -367,6 +367,7 @@ const guildGame = (() => {
   }
   function travelTo(destination, setup, after) {
     return transitionTo(() => {
+      noticeBoard.hide();
       hideVista();
       hideEvent();
       hideAction();
@@ -980,28 +981,8 @@ const guildGame = (() => {
       },
     });
   }
-  function updateObjective() {
-    objective.textContent =
-      location === "library"
-        ? "여정의 쉼터 · 세계관 설정 / 인물 도감 / 프롤로그 웹툰을 펼쳐 보자."
-        : location === "city"
-          ? questAccepted
-            ? "광장의 마차에 타기 전에 여행 준비를 하자."
-            : "길드에서 의뢰를 받고, 광장을 둘러보자."
-          : location === "grove"
-            ? "이슬잎 숲길 · 다리 너머 강가와 도서관을 둘러보자."
-            : location === "shop"
-              ? "주인에게 E · 물건 구입  /  C · 소지품 확인"
-              : location === "carriage"
-                ? "여정 · 동쪽 숲을 지나 성역으로"
-                : location === "checkpoint"
-                  ? "카니아에게 모험가증을 보여 주자."
-                  : location === "gate"
-                    ? "정문에 다가가 E · 그린스토아 입구 숲길로"
-                    : questAccepted
-                      ? "길드 출입문으로 나가 기사단의 마차에 타자."
-                      : "루시에게 그린스토아행 의뢰를 확인하자.";
-  }
+  function objectiveWorld() { return { active, inputLocked, phase, location, questAccepted, shopOrigin, fieldFlags }; }
+  function updateObjective() { objectiveGuide.update(objectiveWorld()); }
   function notify(text) {
     const toast = document.querySelector("#game-toast");
     toast.textContent = text;
@@ -1095,6 +1076,7 @@ const guildGame = (() => {
       },
     };
     const sheet =
+      (characterChats[kind] && { image: characterChats[kind].asset, columns: 3, rows: 2, poses: characterChats[kind].poses }) ||
       sheets[kind] ||
       (cast[kind].fieldPortrait
         ? {
@@ -1244,8 +1226,11 @@ const guildGame = (() => {
     fitPortrait();
   }
   function speak(lines, after, choices) {
+    clearTimeout(toastTimer);
+    document.querySelector("#game-toast").hidden = true;
     saveProgress();
     keys.clear();
+    noticeBoard.hide();
     phase = "dialogue";
     dialogue = { lines, index: 0, shown: 0, letters: [], after, choices };
     selectedChoice = 0;
@@ -1257,6 +1242,7 @@ const guildGame = (() => {
   function renderChoices() {
     const owner = dialogue;
     choicesBox.hidden = false;
+    root.classList.toggle("is-dialogue-choices", dialogue.choices.length >= 3);
     choicesBox.replaceChildren();
     dialogue.choices.forEach((choice, i) => {
       const b = document.createElement("button");
@@ -1268,6 +1254,7 @@ const guildGame = (() => {
       choicesBox.append(b);
     });
     selectChoice(selectedChoice);
+    fitPortrait();
   }
   function selectChoice(index, focus = false) {
     if (!dialogue?.choices || choicesBox.hidden) return;
@@ -1299,6 +1286,7 @@ const guildGame = (() => {
     clearTimeout(typingTimer);
     gameAudio.stopVoice();
     dialogue = null;
+    root.classList.remove("is-dialogue-choices");
     dialogueBox.hidden = true;
     choicesBox.hidden = true;
     phase = "free";
@@ -1344,7 +1332,7 @@ const guildGame = (() => {
           text: "네, 뭐. 숨은 쉬고 계셨으니까요.\n그린스토아로 가시는 거, 맞죠?",
         },
       ],
-      lucyConversation,
+      lucyQuestConversation,
     );
   }
   function registerQuest() {
@@ -1359,7 +1347,7 @@ const guildGame = (() => {
         "제르디아 기사단 직속 파견 의뢰.\n목적: 성역 그린스토아의 이상 징후 사전 조사.\n정문 검문소에 제시할 수 있도록 기사단 인장이 찍혀 있다.",
     });
   }
-  function lucyConversation() {
+  function lucyQuestConversation() {
     if (questAccepted) {
       speak([
         {
@@ -1465,20 +1453,11 @@ const guildGame = (() => {
   }
   function boardCarriage() {
     if (!questAccepted) {
-      speak([
-        {
-          kind: "edan",
-          text: "그린스토아로 가는 기사단 파견 마차입니다.\n길드에서 의뢰를 접수하신 뒤에 모험가증과 함께 와 주세요.",
-        },
-      ]);
+      speak(characterChats.edan.boardingBlocked);
       return;
     }
     speak(
-      [
-        {
-          text: "기사단의 인장이 찍힌 마차가 기다리고 있다.\n준비를 마치고 그린스토아로 출발할까?",
-        },
-      ],
+      characterChats.edan.boardingReady,
       null,
       [
         {
@@ -1498,7 +1477,7 @@ const guildGame = (() => {
         },
         {
           label: "조금 더 둘러본다",
-          action: () => notify("광장을 둘러보고 준비가 되면 마차로 돌아오자."),
+          action: () => speak(characterChats.edan.boardingCancel),
         },
       ],
     );
@@ -1726,7 +1705,58 @@ const guildGame = (() => {
     questions(true);
   }
 
+  function openNoticeBoard() {
+    if (phase !== "free" || location !== "guild") return;
+    clearTimeout(toastTimer);
+    document.querySelector("#game-toast").hidden = true;
+    saveProgress();
+    phase = "board";
+    root.dataset.phase = phase;
+    keys.clear();
+    updateObjective();
+    noticeBoard.show({ image: pictures.guild, accepted: questAccepted, onClose: () => {
+      if (!active || phase !== "board") return;
+      phase = "free";
+      root.dataset.phase = phase;
+      syncMovementKeys();
+      canvas.focus({ preventScroll: true });
+      updateObjective();
+    }});
+  }
+  function characterConversation(id) {
+    const person = characterChats[id], asked = new Set();
+    const actor = npcs.find(npc => npc.id === id);
+    if (actor) actor.talkCount = Math.min(999999, (actor.talkCount || 0) + 1);
+    const hub = (first = false) => {
+      const actions = [];
+      if (id === "lucy") actions.push({ label: questAccepted ? "맡은 의뢰 확인" : "그린스토아 조사 의뢰", action: lucyQuestConversation });
+      if (id === "edan") {
+        actions.push({ label: "출발 안내", action: () => speak(questAccepted ? person.afterAccepted : person.beforeAccepted, () => hub()) });
+        actions.push({ label: "마차에 탑승하기", action: boardCarriage });
+      }
+      if (id === "leon") actions.push({ label: "현재 목표 안내 · 다시 표시", action: () => {
+        const topic = person.helpTopic;
+        const goal = objectiveGuide.describe(objectiveWorld());
+        speak([...topic.lines, { kind: id, expression: "pointing", text: (questAccepted ? "네 임무는 성역의 이상 징후를 확인하는 거야.\n" : "의뢰를 맡을 생각이면 접수부터 해야지.\n") + goal.step + "." }, ...topic.ending], () => { objectiveGuide.reveal(); hub(); });
+      }});
+      actions.push(...person.topics.filter(topic => !asked.has(topic)).map(topic => ({ label: topic.label, action: () => {
+        asked.add(topic);
+        // Do not claim the player accepted a quest when they have not.
+        const lines = topic.lines.map(line => line.text === "그린스토아로. 조사 의뢰를 받았어." && !questAccepted
+          ? { ...line, text: "그린스토아로. 조사 의뢰를 알아보는 중이야." } : line);
+        speak(lines, () => hub());
+      }})));
+      actions.push({ label: "대화 마치기", cancel: true, action: () => { saveProgress(); } });
+      speak(first ? person.greeting : [{ kind: id, expression: "neutral", text: id === "lucy" ? "더 궁금한 게 있으세요?" : id === "edan" ? "더 궁금하신 점이 있으십니까?" : id === "tobin" ? "더 물어볼 게 있나?" : "더 궁금한 게 있어?" }], null, actions);
+    };
+    if (id === "leon" && !objectiveGuide.snapshot().unlocked) {
+      const briefing = person.briefing;
+      speak([...person.greeting, ...briefing.common, ...(questAccepted ? briefing.afterAccepted : briefing.beforeAccepted), ...briefing.close], () => { objectiveGuide.reveal(); hub(); });
+    } else hub(true);
+  }
+
   function npcTalk(id) {
+    if (characterChats[id]) { characterConversation(id); return; }
     if (id === "rael") {
       speak(
         [
@@ -1753,37 +1783,13 @@ const guildGame = (() => {
       return;
     }
     if (id === "lucy") {
-      lucyConversation();
+      characterConversation("lucy");
       return;
     }
     const texts = {
-      edan: [
-        "길드 앞이 늘 붐비는 건 아니에요. 마차가 나가는 시간이라 그렇죠.\n출발 전에 오른쪽 잡화점에서 필요한 걸 챙기셔도 좋습니다.",
-        "그린스토아행 마차는 광장 오른쪽 아래에 있습니다.\n기사단의 조사 의뢰를 받은 분만 타실 수 있어요.",
-      ],
       sena: [
         "처음 오셨어요? 저는 새나예요. 다리 건너 도서관에서는 라엘 씨가 기다리고 있고요.\n여긴 앉아서 물소리를 듣기만 해도 시간이 잘 가요.",
         "저기 작은 샘은 마셔도 괜찮아요. 긴 여행 뒤엔 잠깐 쉬어 가세요.\n강가에 떨어진 잎도 하나쯤은 기념으로 가져가셔도 돼요.",
-      ],
-      bran: [
-        "아까는 아주 곤히 서 있더군. 후드 덕에 티는 덜 났지만.\n먼 길에서 온 모양이지?",
-        "그린스토아로 간다고? 숲에서는 길보다 소리를 잘 듣게.\n조용하던 새들이 갑자기 날아오르면, 대개 이유가 있거든.",
-      ],
-      mia: [
-        "나도 오늘 첫 의뢰를 받았어요. 약초를 세 다발 구해 오라는데…\n이름이 비슷한 독초가 있어서 벌써 걱정이에요.",
-        "그린스토아에서는 종족이 달라도 함께 일한다면서요?\n언젠가는 저도 가 보고 싶어요.",
-      ],
-      nara: [
-        "우편은 발이 빨라야 해요. 그래도 봉인은 건드리면 안 되죠!\n내용이 궁금할수록 더더욱.",
-        "그린스토아 가는 길? 동쪽 숲길로 쭉 가세요.\n…쭉이라는 말이 숲에서도 쭉일지는 모르겠지만요.",
-      ],
-      tobin: [
-        "흠, 그 망토. 바람은 잘 막겠군.\n비 오기 전에 장화에도 기름 좀 먹여 두게.",
-        "그린스토아 물건들은 오래 쓰기 좋지.\n서로 다른 손들이 만들다 보니 생각 못 한 구석까지 튼튼하거든.",
-      ],
-      leon: [
-        "성역의 어머니 나무는 단순히 오래된 나무가 아닙니다.\n뿌리가 어디까지 뻗어 있는지조차 아직 밝혀지지 않았지요.",
-        "그린스토아의 이상 징후라… 소문은 여러 갈래입니다.\n들었다는 사람은 많은데, 보았다는 사람은 드물더군요.",
       ],
     };
     const npc = npcs.find((n) => n.id === id);
@@ -1887,12 +1893,7 @@ const guildGame = (() => {
       npcTalk(target.id);
       return;
     }
-    if (target.id === "board")
-      speak([
-        {
-          text: "약초 채집, 호위, 분실물 수색…\n여러 의뢰서가 겹겹이 붙어 있다. 그린스토아 사전 조사 의뢰에는 제르디아 기사단의 인장이 찍혀 있다.",
-        },
-      ]);
+    if (target.id === "board") openNoticeBoard();
     if (target.id === "door") leaveGuild();
     if (target.id === "guild-entry") visitGuild();
     if (target.id === "shop-entry") enterShop();
@@ -2028,21 +2029,11 @@ const guildGame = (() => {
     }
   }
   const patrols = {
-    edan: [
-      [452, 309],
-      [485, 309],
-      [485, 338],
-      [452, 338],
-    ],
     sena: [
       [143, 280],
       [127, 280],
       [127, 299],
       [143, 299],
-    ],
-    nara: [
-      [83, 330],
-      [83, 361],
     ],
   };
   function movePeople(dt) {
@@ -2143,6 +2134,7 @@ const guildGame = (() => {
     ctx.restore();
   }
   function drawWorld() {
+    updateObjective();
     const menuUnavailable = phase !== "free" || inputLocked;
     if (menuButton.disabled !== menuUnavailable)
       menuButton.disabled = menuUnavailable;
@@ -2258,6 +2250,14 @@ const guildGame = (() => {
         ? "▸ 성역의 이상 징후 사전 조사"
         : "아직 수락한 의뢰가 없다.";
       itemList.append(h);
+      if (objectiveGuide.snapshot().unlocked) {
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.id = "objective-menu-toggle";
+        toggle.textContent = objectiveGuide.snapshot().dismissed ? "목표 표시 · E" : "목표 숨기기 · E";
+        toggle.addEventListener("click", toggleObjective);
+        itemList.append(toggle);
+      }
       itemDetail.textContent = questAccepted
         ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 이슬잎 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
@@ -2265,6 +2265,12 @@ const guildGame = (() => {
       itemDetail.textContent =
         "W A S D  이동\n왼쪽 Shift  달리기\nE  대화 · 조사 · 대사 넘기기\nC  메뉴 열기 · 닫기\n\n메뉴 안에서는 W/S로 소지품을, A/D로 탭을 선택한다.\nE로 결정하고 C 또는 Esc로 돌아간다.";
     }
+  }
+  function toggleObjective() {
+    if (phase !== "menu" || !objectiveGuide.snapshot().unlocked) return;
+    if (objectiveGuide.snapshot().dismissed) objectiveGuide.reveal(); else objectiveGuide.dismiss();
+    renderMenu();
+    document.querySelector("#objective-menu-toggle")?.focus({ preventScroll: true });
   }
   function openMenu() {
     if (phase !== "free") return;
@@ -2373,6 +2379,10 @@ const guildGame = (() => {
     // Let the native sound button handle its own keyboard activation.
     if (["Enter", "Space"].includes(code) && event.target.closest?.("#game-sound-toggle"))
       return;
+    if (phase === "board") {
+      if (noticeBoard.handle(event, repeat)) event.preventDefault();
+      return;
+    }
     if (phase === "battle") {
       if (["Enter", "Space"].includes(code) &&
         event.target.closest?.("#battle-screen button:not([disabled])")) return;
@@ -2536,7 +2546,7 @@ const guildGame = (() => {
           (selectedItem + offset + inventory.length) % inventory.length;
         gameAudio.sfx("select");
         renderMenu();
-      } else if (code === "KeyE" || code === "Enter") useItem();
+      } else if (code === "KeyE" || code === "Enter") { if (menuTab === "quest") toggleObjective(); else useItem(); }
       return;
     }
     if (phase === "dialogue") {
@@ -2636,7 +2646,7 @@ const guildGame = (() => {
   function fitPortrait() {
     if (root.hidden || dialogueBox.hidden) return;
     const view = root.getBoundingClientRect();
-    const compact = view.height < 500 && view.width > 700;
+    const compact = view.width > 700 && (view.height < 500 || root.classList.contains("is-dialogue-choices"));
     root.classList.toggle("is-dialogue-compact", compact);
     if (portrait.hidden) return;
     const box = dialogueBox.getBoundingClientRect();
@@ -2713,6 +2723,7 @@ const guildGame = (() => {
       fieldFlags: { ...fieldFlags },
       visited: [...visited],
       journeyMusic: gameAudio.getJourneyState(),
+      objectiveGuide: objectiveGuide.snapshot(),
     });
     const label = document.querySelector("#guild-save-status");
     label.textContent = saved
@@ -2740,6 +2751,8 @@ const guildGame = (() => {
     nextAutosave = 0;
     resumingSave = !!saved;
     restoredMusic = saved?.journeyMusic ?? null;
+    objectiveGuide.reset(saved?.objectiveGuide);
+    objectiveGuide.bind({ onSettingsChange: () => saveProgress() });
     location = "guild";
     storyStep = "lucy";
     shopOrigin = "city";
@@ -2795,6 +2808,8 @@ const guildGame = (() => {
       inventory = saved.inventory.map(item => ({ ...item }));
       player = actor("hero", saved.player.x, saved.player.y, saved.player.dir);
       npcs = saved.npcs.map(person => ({ ...actor(person.id, person.x, person.y, person.dir), talkCount: person.talkCount }));
+      // Older saves may contain the previous plaza patrol position.
+      if (location === "city") for (const npc of npcs) if (npc.id === "edan") { npc.x = 500; npc.y = 365; npc.dir = "right"; }
       visited.clear();
       saved.visited.forEach(place => visited.add(place));
       buildMap();
@@ -2818,6 +2833,8 @@ const guildGame = (() => {
   function stop() {
     saveProgress();
     active = false;
+    noticeBoard.hide();
+    updateObjective();
     ++transitionSerial;
     transitionAnimation?.cancel();
     transition.hidden = true;
@@ -2881,6 +2898,7 @@ const guildGame = (() => {
           ? { x: player.x, y: player.y, direction: player.dir }
           : null,
         questAccepted,
+        objectiveGuide: objectiveGuide.snapshot(),
         hp,
         coins,
         shop: shopView.active ? shopOrigin : null,

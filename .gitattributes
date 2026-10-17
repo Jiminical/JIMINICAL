@@ -1,0 +1,2 @@
+# Generated portable payload contains significant ASCII control bytes.
+/index.html -text -diff

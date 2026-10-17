@@ -3,7 +3,7 @@ const fieldWorld = (() => {
   const maps = {
     city: {
       names: ["제르디아 왕국", "길드 앞 광장"],
-      npcs: [["edan", 452, 309, "left"]],
+      npcs: [["edan", 500, 365, "right"]],
       targets: [
         { id: "guild-entry", name: "모험가 길드", x: 140, y: 219 },
         { id: "shop-entry", name: "로제의 잡화점", x: 568, y: 244 },

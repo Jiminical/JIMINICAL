@@ -14,10 +14,13 @@
     <link rel="stylesheet" href="CSS/battle-polish.css" />
     <link rel="stylesheet" href="CSS/scene-polish.css" />
     <link rel="stylesheet" href="CSS/item-view.css" />
+    <link rel="stylesheet" href="CSS/objective-guide.css" />
+    <link rel="stylesheet" href="CSS/notice-board.css" />
     <script src="JS/audio.js" defer></script>
     <script src="JS/events.js" defer></script>
     <script src="JS/fields.js" defer></script>
     <script src="JS/terrain.js" defer></script>
+    <script src="JS/character-chats.js" defer></script>
     <script src="JS/lore.js" defer></script>
     <script src="JS/archive.js" defer></script>
     <script src="JS/staging.js" defer></script>
@@ -33,6 +36,8 @@
     <script src="JS/battle-effects.js" defer></script>
     <script src="JS/battle.js" defer></script>
     <script src="JS/save.js" defer></script>
+    <script src="JS/objective-guide.js" defer></script>
+    <script src="JS/notice-board.js" defer></script>
     <script src="JS/game.js" defer></script>
     <script src="JS/story.js" defer></script>
     <script src="JS/main.js" defer></script>
@@ -333,6 +338,19 @@
           data-volley-src="assets/audio/combat/volley.mp3"></div>
         <div
           id="guild-assets"
+          data-sd-lucy-src="assets/sd-lucy.webp"
+          data-iboria-src="assets/ld-iboria.webp"
+          data-sd-iboria-src="assets/sd-iboria.webp"
+          data-hanari-src="assets/ld-hanari.webp"
+          data-sd-hanari-src="assets/sd-hanari.webp"
+          data-aina-src="assets/ld-aina.webp"
+          data-sd-aina-src="assets/sd-aina.webp"
+          data-munia-src="assets/ld-munia.webp"
+          data-sd-munia-src="assets/sd-munia.webp"
+          data-girus-src="assets/ld-girus.webp"
+          data-sd-girus-src="assets/sd-girus.webp"
+          data-tobi-src="assets/ld-tobi.webp"
+          data-sd-tobi-src="assets/sd-tobi.webp"
           data-lucy-src="assets/ld-lucy.webp"
           data-cast-src="assets/ld-guild.webp"
           data-kania-src="assets/ld-kania.webp"
@@ -350,7 +368,6 @@
           data-events-src="assets/event-scenes.webp"
           data-event-props-src="assets/event-props.webp"
           data-sd-hero-src="assets/sd-hero.webp"
-          data-sd-guild-src="assets/sd-guild.webp"
           data-sd-leads-src="assets/sd-leads.webp"
           data-city-src="assets/map-city.webp"
           data-grove-src="assets/map-grove.webp"
@@ -389,7 +406,27 @@
             메뉴 <kbd>C</kbd>
           </button>
         </header>
-        <p id="game-objective" class="game-objective"></p>
+        <aside id="game-objective" class="game-objective" aria-label="현재 목표" hidden>
+  <div class="objective-copy" role="status" aria-live="polite" aria-atomic="true">
+    <span class="objective-kicker" aria-hidden="true">◆ 현재 목표</span>
+    <strong class="objective-title"></strong>
+    <span class="objective-step"></span>
+  </div>
+  <button class="objective-close" type="button" aria-label="목표 안내 닫기" title="목표 안내 닫기">
+    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" shape-rendering="crispEdges">
+      <path fill="currentColor" d="M1 1h2v2h2v2h2V3h2V1h2v2H9v2H7v2h2v2h2v2H9V9H7V7H5v2H3v2H1V9h2V7h2V5H3V3H1z"/>
+    </svg>
+  </button>
+</aside>
+
+        <section id="notice-board" class="notice-board" role="dialog" aria-modal="true" aria-labelledby="notice-board-title" hidden>
+          <div class="notice-board-window">
+            <header><div><small>제르디아 모험가 길드</small><h2 id="notice-board-title">의뢰 게시판</h2></div><button type="button" id="notice-board-close" aria-label="게시판 닫기">닫기 ×</button></header>
+            <div class="notice-board-content"><div class="notice-board-papers" aria-label="의뢰서 4장"><canvas id="notice-board-art" width="700" height="500" aria-hidden="true"></canvas><div id="notice-board-list"></div></div>
+            <article id="notice-board-paper" tabindex="0" aria-live="polite"></article></div>
+            <footer>↑ ↓ ← → · WASD 선택 / E 읽기 / C · Esc 닫기</footer>
+          </div>
+        </section>
         <div class="world-viewport">
           <canvas
             id="guild-world"

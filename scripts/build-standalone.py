@@ -9,12 +9,23 @@ from pathlib import Path
 import base64
 import io
 import re
+import subprocess
+import gzip
 from PIL import Image, ImageChops
 
 ROOT = Path(__file__).resolve().parent.parent
-page = (ROOT / "templates/index.html").read_text()
-styles = "\n".join((ROOT / "CSS" / name).read_text() for name in ("main.css", "game.css", "battle-polish.css", "scene-polish.css", "item-view.css"))
-script = "\n".join((ROOT / "JS" / filename).read_text() for filename in ("audio.js", "events.js", "fields.js", "terrain.js", "lore.js", "archive.js", "staging.js", "letter.js", "shops.js", "sprites.js", "item-view.js", "weapon.js", "landscape.js", "journey.js", "walk.js", "menu-art.js", "battle-effects.js", "battle.js", "save.js", "game.js", "story.js", "main.js"))
+page = (ROOT / "templates/index.html").read_text(encoding="utf-8")
+css = re.findall(r'<link rel="stylesheet" href="(CSS/[^\"]+)"', page)
+programs = re.findall(r'<script src="(JS/[^\"]+)" defer></script>', page)
+styles = "\n".join((ROOT / name).read_text(encoding="utf-8") for name in css)
+script = "\n".join((ROOT / name).read_text(encoding="utf-8") for name in programs)
+def minify(source, loader):
+    # Use the pinned package, preserving template order and all artwork/audio.
+    # The JS API works on Windows too; bin/esbuild itself is a native executable.
+    command = ["node", "-e", "const e=require('esbuild'),fs=require('fs');process.stdout.write(e.transformSync(fs.readFileSync(0,'utf8'),{minify:true,target:'es2020',charset:'utf8',loader:process.argv[1]}).code)", loader]
+    return subprocess.run(command,input=source,capture_output=True,text=True,encoding="utf-8",check=True,cwd=ROOT).stdout
+styles = minify(styles, "css")
+script = minify(script, "js")
 # Re-encode PNGs losslessly inside the portable file to leave room for the
 # additional scenery/audio under GitHub's 100 MiB per-file limit. Source assets
 # stay unchanged. Visible RGB and every alpha value must remain identical; the
@@ -50,33 +61,22 @@ for cursor_name in ("quill.svg", "quill-active.svg"):
     encoded = base64.b64encode((ROOT / "assets/cursors" / cursor_name).read_bytes()).decode("ascii")
     styles = styles.replace("../assets/cursors/" + cursor_name, "data:image/svg+xml;base64," + encoded)
 # Preserve the font redistribution license inside the single-file build too.
-license_text = (ROOT / "assets/fonts/LICENSE.txt").read_text()
+license_text = (ROOT / "assets/fonts/LICENSE.txt").read_text(encoding="utf-8")
 styles = "/* Galmuri font license:\n" + license_text + "\n*/\n" + styles
 style_tag = '<style id="greenstoa-styles">\n' + styles + "\n</style>"
 script_tag = '<script id="greenstoa-script">\n' + script + "\n</script>"
 
-page = re.sub(r'\s*<link rel="stylesheet" href="CSS/(?:game|battle-polish|scene-polish|item-view).css"\s*/?>', "", page)
-if '<style id="greenstoa-styles">' in page:
-    page = re.sub(
-        r'<style id="greenstoa-styles">.*?</style>', lambda _: style_tag, page, flags=re.S
-    )
-else:
-    page = re.sub(r'<link rel="stylesheet" href="CSS/main.css"\s*/?>', lambda _: style_tag, page)
-
-if '<script id="greenstoa-script">' in page:
-    page = re.sub(
-        r'<script id="greenstoa-script">.*?</script>', lambda _: script_tag, page, flags=re.S
-    )
-else:
-    page = re.sub(r'\s*<script src="JS/(?:audio|events|fields|terrain|lore|archive|staging|letter|shops|sprites|item-view|weapon|landscape|journey|walk|menu-art|battle-effects|battle|save|game|story|main).js" defer></script>', "", page)
-    page = page.replace("</body>", script_tag + "\n</body>")
+page = re.sub(r'\s*<link rel="stylesheet" href="CSS/[^\"]+"\s*/?>', "", page)
+page = page.replace("</head>", style_tag + "\n</head>")
+page = re.sub(r'\s*<script src="JS/[^\"]+" defer></script>', "", page)
+page = page.replace("</body>", script_tag + "\n</body>")
 
 assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert 'data-sprite-src="data:image/webp;base64,' in page
 assert 'data-art-src="data:image/webp;base64,' in page
 assert 'data-late-src="data:image/webp;base64,' in page
-for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-guild', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
+for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'forest', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-leads', 'city', 'grove', 'shop', 'field-cast', 'sd-field', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 for attribute in ('demon-actions', 'item-specimens', 'first-person-arms', 'forest-ambush', 'journey-carriage'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
@@ -86,6 +86,32 @@ for attribute in ('journey-gorge', 'journey-road'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 assert 'src="data:audio/mpeg;base64,' in page
 assert "../assets/" not in styles
+# Lossless transport encoding keeps all decoded artwork and original audio.
+# Native gzip decompression works offline; no remote libraries or media needed.
+payload = gzip.compress(page.encode('utf-8'), compresslevel=9, mtime=0)
+alphabet = ''.join(chr(i) for i in range(128) if i not in (0,10,13,34,39,60,92))
+blocks = []
+for offset in range(0,len(payload),6):
+    value = int.from_bytes(payload[offset:offset+6].ljust(6,b'\0'),'big')
+    digits = [''] * 7
+    for index in range(6,-1,-1):
+        value, digit = divmod(value,121)
+        digits[index] = alphabet[digit]
+    blocks.append(''.join(digits))
+packed = ''.join(blocks)
+decoder = (ROOT/'scripts/portable-codec.cjs').read_text(encoding='utf-8')
+page = '''<!doctype html><html lang="ko"><meta charset="utf-8"><title>그린스토아</title>
+<body style="background:#10191e;color:#e8e4cc;font-family:monospace"><p id="boot">그린스토아 자료를 여는 중…</p>
+<script id="portable-payload" type="application/octet-stream">''' + packed + '''</script>
+<script>''' + decoder + '''
+(async()=>{try {
+ const bytes=decodePortable(document.getElementById('portable-payload').textContent,''' + str(len(payload)) + ''');
+ const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+ const html=await new Response(stream).text();
+ document.open();document.write(html);document.close();
+} catch(error) {document.getElementById('boot').textContent='게임을 열지 못했습니다. 최신 브라우저에서 다시 열어 주세요.';console.error(error);}})();
+</script></body></html>'''
+print(f"Portable HTML (lossless gzip + compact ASCII): {len(page.encode('utf-8')) / 1024 / 1024:.2f} MiB")
 assert len(page.encode("utf-8")) < 100 * 1024 * 1024, "Portable HTML exceeds GitHub's 100 MiB limit"
-(ROOT / "index.html").write_text(page)
+(ROOT / "index.html").write_bytes(page.encode("utf-8"))
 print("Updated standalone index.html with embedded styles, script and background.")

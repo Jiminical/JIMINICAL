@@ -50,6 +50,16 @@ test('opening checkpoints remain valid and restricted to the guild', () => {
   assert.equal(save.write({ ...state, resume: 'opening', location: 'guild' }), true);
   assert.equal(save.write({ ...state, resume: 'opening' }), false);
 });
+
+test('optional objective settings preserve legacy saves and dismissed state', () => {
+  const { save, state } = setup();
+  assert.equal(save.write(state), true);
+  assert.equal(save.read().objectiveGuide, undefined);
+  assert.equal(save.write({ ...state, objectiveGuide: { unlocked: true, dismissed: true } }), true);
+  assert.equal(save.read().objectiveGuide.dismissed, true);
+  for (const settings of [null, {}, { unlocked: 1, dismissed: false }, { unlocked: true, dismissed: 'yes' }])
+    assert.equal(save.write({ ...state, objectiveGuide: settings }), false);
+});
 test('invalid gameplay values cannot replace the current save', () => {
   const { save, state, values } = setup(); save.write(state);
   const original = values.get(save.key);

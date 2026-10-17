@@ -20,6 +20,8 @@ const journeySave = (() => {
       save.fieldFlags && flags.every(flag => typeof save.fieldFlags[flag] === "boolean") &&
       (save.journeyMusic === undefined || (save.journeyMusic && typeof save.journeyMusic.active === "boolean" &&
         Number.isFinite(save.journeyMusic.offset) && save.journeyMusic.offset >= 0 && save.journeyMusic.offset <= 86400)) &&
+      (save.objectiveGuide === undefined || (save.objectiveGuide &&
+        typeof save.objectiveGuide.unlocked === "boolean" && typeof save.objectiveGuide.dismissed === "boolean")) &&
       Array.isArray(save.visited) && save.visited.length <= locations.size && save.visited.every(place => locations.has(place)) &&
       Array.isArray(save.inventory) && save.inventory.length <= items.size &&
       new Set(save.inventory.map(item => item?.id)).size === save.inventory.length &&
