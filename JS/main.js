@@ -725,6 +725,11 @@ updateInterface();
         scene.inert = false;
         scene.setAttribute("aria-busy", "false");
         document.documentElement.classList.remove("is-loading");
+        performance.mark("greenstoa-title-ready");
+        // Give the first title frame and core game images priority over strips.
+        requestAnimationFrame(() => {
+          guildGame.ready.then(() => webtoonMedia.preload()).catch(() => {});
+        });
       });
     })
     .catch(() => {

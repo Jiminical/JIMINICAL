@@ -1788,6 +1788,7 @@
   margin: 0 auto;
   image-rendering: auto;
 }
+.archive-comic img:not([src]) { color: transparent; }
 .library-reader[data-tab="comic"] .archive-body {
   grid-template-columns: minmax(0, 1fr);
   gap: 0;

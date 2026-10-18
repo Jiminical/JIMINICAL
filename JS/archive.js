@@ -14,11 +14,6 @@ const libraryArchive = (() => {
     people: () => greenstoaLore.people.length,
     comic: () => 1,
   };
-  const webtoonPages = [
-    [1, 1080, 2044], [2, 1080, 8306], [3, 1080, 5713],
-    [4, 1080, 5213], [5, 1080, 4305], [6, 1080, 5376],
-    [7, 1080, 3939], [8, 1080, 3167], [10, 826, 1905],
-  ];
   function paragraph(text, className = "") {
     const p = document.createElement("p");
     p.textContent = text;
@@ -75,6 +70,7 @@ const libraryArchive = (() => {
       b.setAttribute("aria-pressed", String(current));
     });
     renderIndex();
+    webtoonMedia.releaseView();
     page.replaceChildren();
     scroll.scrollTop = 0;
     if (tab === "world") {
@@ -105,20 +101,9 @@ const libraryArchive = (() => {
       page.append(paragraph("프롤로그를 웹툰으로 다시 복기하세요", "archive-comic-note"));
       const strip = document.createElement("div");
       strip.className = "archive-comic";
-      const assets = document.querySelector("#webtoon-assets").dataset;
-      webtoonPages.forEach(([number, width, height]) => {
-        const image = document.createElement("img");
-        image.src = assets["web" + number + "Src"];
-        image.alt = "프롤로그 웹툰 " + number;
-        image.dataset.page = String(number);
-        image.width = width;
-        image.height = height;
-        image.loading = "lazy";
-        image.decoding = "async";
-        image.style.maxWidth = width + "px";
-        strip.append(image);
-      });
+      webtoonMedia.pages.forEach(({number}) => strip.append(webtoonMedia.image(number)));
       page.append(strip);
+      webtoonMedia.mount(strip,scroll);
     }
     document.querySelector("#archive-page-count").textContent =
       String(selected + 1).padStart(2, "0") +
@@ -145,6 +130,7 @@ const libraryArchive = (() => {
   function hide() {
     state = null;
     root.hidden = true;
+    webtoonMedia.releaseView();
     page.replaceChildren();
     list.replaceChildren();
   }
