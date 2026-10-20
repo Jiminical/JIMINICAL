@@ -758,12 +758,17 @@
             </nav>
             <div class="archive-body">
               <aside id="archive-index" aria-label="목차"></aside>
-              <div id="archive-scroll" tabindex="0" aria-label="기록 내용">
-                <article id="archive-page"></article>
+              <div class="archive-reading-pane">
+                <div id="archive-scroll" tabindex="0" aria-label="기록 내용">
+                  <article id="archive-page"></article>
+                </div>
+                <button id="archive-scroll-more" type="button" aria-controls="archive-scroll" hidden>
+                  아래로 더 보기 <span aria-hidden="true">▼</span>
+                </button>
               </div>
             </div>
             <footer>
-              <span>A/D 분류 · W/S 목차 또는 스크롤 · C 책 덮기</span
+              <span>A/D 분류 · W/S 목차 · PgUp/PgDn 스크롤 · C 책 덮기</span
               ><span id="archive-page-count"></span>
             </footer>
           </div>

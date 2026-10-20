@@ -4,11 +4,27 @@ const libraryArchive = (() => {
     list = document.querySelector("#archive-index"),
     page = document.querySelector("#archive-page"),
     scroll = document.querySelector("#archive-scroll"),
+    scrollMore = document.querySelector("#archive-scroll-more"),
+    pane = scroll.parentElement,
     tabs = [...document.querySelectorAll("[data-archive-tab]")];
   let state = null,
     tab = "world",
     selected = 0,
     inputAfter = 0;
+  let scrollFrame = 0;
+  function updateScrollCue() {
+    cancelAnimationFrame(scrollFrame);
+    scrollFrame = requestAnimationFrame(() => {
+      const more = Boolean(state) && scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop > 6;
+      scrollMore.hidden = !more;
+      pane.classList.toggle("has-more", more);
+      pane.classList.toggle("is-scrolled", Boolean(state) && scroll.scrollTop > 6);
+    });
+  }
+  function scrollPage(delta, smooth = false) {
+    scroll.scrollBy({top:delta,behavior:smooth && !matchMedia("(prefers-reduced-motion: reduce)").matches ? "smooth" : "instant"});
+    updateScrollCue();
+  }
   const counts = {
     world: () => greenstoaLore.articles.length,
     people: () => greenstoaLore.people.length,
@@ -60,6 +76,10 @@ const libraryArchive = (() => {
       b.addEventListener("click", () => choose(index, true));
       list.append(b);
     });
+    if (selected === 0) {
+      list.scrollTop = 0;
+      list.scrollLeft = 0;
+    }
   }
   function render() {
     if (!state) return;
@@ -79,23 +99,51 @@ const libraryArchive = (() => {
       item.body.forEach((text) => page.append(paragraph(text)));
       const art = canvas(768, 342);
       art.className = "archive-world-art";
-      greenstoaLore.paintChapter(art, [0, 2, 7, 5, 6, 8][selected]);
+      greenstoaLore.paintChapter(art, item.chapter);
       page.append(art);
     } else if (tab === "people") {
-      const person = greenstoaLore.people[selected],
-        art = canvas(640, 560);
-      art.className = "archive-person";
-      art.setAttribute("aria-label", person.name + "의 상반신 초상화");
-      state.drawPortrait(art, person.id);
+      const person = greenstoaLore.people[selected];
+      const portrait = document.createElement("figure");
+      portrait.className = "archive-person-photo";
+      function fallbackPortrait() {
+        const art = canvas(640, 560);
+        art.className = "archive-person";
+        art.setAttribute("role", "img");
+        art.setAttribute("aria-label", person.name + "의 상반신 초상화");
+        state.drawPortrait(art, person.id);
+        portrait.replaceChildren(art);
+      }
+      if (person.portraitSrc) {
+        const photo = new Image();
+        photo.className = "archive-person-image";
+        photo.alt = person.name + "의 인물 사진";
+        photo.decoding = "async";
+        photo.addEventListener("load", updateScrollCue);
+        photo.addEventListener("error", () => { fallbackPortrait(); updateScrollCue(); }, {once:true});
+        photo.src = person.portraitSrc;
+        portrait.append(photo);
+      } else fallbackPortrait();
       const copy = document.createElement("div");
       copy.className = "archive-person-copy";
+      const tags = document.createElement("ul");
+      tags.className = "archive-person-tags";
+      tags.setAttribute("aria-label", "인물 특징");
+      (person.tags || []).forEach(text => {
+        const tag = document.createElement("li");
+        tag.textContent = "#" + text.replace(/^#+/, "").replace(/\s+/g, "_");
+        tags.append(tag);
+      });
+      const biography = document.createElement("section");
+      biography.className = "archive-person-biography";
+      biography.setAttribute("aria-label", "자세한 설명");
+      (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(paragraph(text)));
       copy.append(
-        paragraph(person.role, "archive-kicker"),
+        paragraph(person.role, "archive-kicker archive-person-role"),
         heading(person.id === "hero" ? state.playerName : person.name),
-        paragraph(person.summary, "archive-summary"),
-        paragraph(person.body),
+        tags,
+        biography,
       );
-      page.append(art, copy);
+      page.append(portrait, copy);
     } else {
       // 프롤로그를 웹툰으로 다시 복기하세요
       page.append(paragraph("프롤로그를 웹툰으로 다시 복기하세요", "archive-comic-note"));
@@ -109,6 +157,7 @@ const libraryArchive = (() => {
       String(selected + 1).padStart(2, "0") +
       " / " +
       String(counts[tab]()).padStart(2, "0");
+    updateScrollCue();
   }
   function changeTab(next) {
     tab = next;
@@ -133,6 +182,7 @@ const libraryArchive = (() => {
     webtoonMedia.releaseView();
     page.replaceChildren();
     list.replaceChildren();
+    updateScrollCue();
   }
   function close(immediate = false) {
     if (!state || (!immediate && performance.now() < inputAfter)) return;
@@ -156,6 +206,13 @@ const libraryArchive = (() => {
       if (!repeat) close();
       return true;
     }
+    if (["PageDown", "PageUp", "Home", "End"].includes(code)) {
+      if (code === "Home") scroll.scrollTop = 0;
+      else if (code === "End") scroll.scrollTop = scroll.scrollHeight;
+      else scrollPage((code === "PageUp" ? -1 : 1) * scroll.clientHeight * 0.75);
+      updateScrollCue();
+      return true;
+    }
     if (["KeyA", "ArrowLeft", "KeyD", "ArrowRight"].includes(code)) {
       if (!repeat) {
         const names = ["world", "people", "comic"],
@@ -166,7 +223,7 @@ const libraryArchive = (() => {
     }
     if (["KeyW", "KeyS", "ArrowUp", "ArrowDown"].includes(code)) {
       const delta = ["KeyW", "ArrowUp"].includes(code) ? -1 : 1;
-      if (tab === "comic") scroll.scrollTop += delta * 100;
+      if (tab === "comic" || document.activeElement === scroll || document.activeElement === scrollMore) scrollPage(delta * 100);
       else if (!repeat)
         choose((selected + delta + counts[tab]()) % counts[tab](), true);
       return true;
@@ -177,6 +234,11 @@ const libraryArchive = (() => {
     b.addEventListener("click", () => changeTab(b.dataset.archiveTab)),
   );
   document.querySelector("#archive-close").addEventListener("click", () => close(true));
+  scroll.addEventListener("scroll", updateScrollCue, {passive:true});
+  scrollMore.addEventListener("click", () => scrollPage(Math.max(120,scroll.clientHeight * 0.65), true));
+  const resizeObserver = new ResizeObserver(updateScrollCue);
+  resizeObserver.observe(scroll);
+  resizeObserver.observe(page);
   return {
     show,
     hide,
