@@ -6,6 +6,7 @@ const guildGame = (() => {
   const assets = document.querySelector("#guild-assets");
   const portrait = document.querySelector("#dialogue-portrait");
   const portraitFrame = document.querySelector("#dialogue-portrait-frame");
+  const portraitBreath = document.querySelector("#dialogue-portrait-breath");
   const dialogueBox = document.querySelector("#game-dialogue");
   const dialogueText = document.querySelector("#game-dialogue-glyphs");
   const dialogueLive = document.querySelector("#game-dialogue-live");
@@ -995,20 +996,17 @@ const guildGame = (() => {
     portraitAnimation?.cancel();
     portraitAnimation = undefined;
   }
-  function reactPortrait(line, pulse = false) {
+  function reactPortrait(line) {
     if (!line.kind || !motion() || inputLocked || portrait.hidden) return;
-    if (pulse && portraitAnimation?.playState === "running") return;
     cancelPortraitMotion();
-    const height = pulse
-      ? 2
-      : line.kind === "rogue"
+    const height = line.kind === "rogue"
         ? 7
         : line.expression === "incredulous"
           ? 5
           : line.expression === "concerned"
             ? 2
             : 4;
-    const rebound = pulse ? 1 : Math.max(1, Math.floor(height / 3));
+    const rebound = Math.max(1, Math.floor(height / 3));
     const cels = [
       [0, 0],
       [0.12, Math.ceil(height / 2)],
@@ -1025,11 +1023,18 @@ const guildGame = (() => {
         offset,
         easing: "steps(1,end)",
       })),
-      { duration: pulse ? 180 : 360, easing: "linear" },
+      { duration: 360, easing: "linear" },
     );
   }
   function portraitFor(kind, expression = "neutral") {
     portraitFrame.hidden = !kind;
+    portraitFrame.classList.toggle("is-breathing", Boolean(kind));
+    if (kind && portraitBreath.dataset.speaker !== kind) {
+      // Keep the cycle across lines, with a slightly different pace per person.
+      const seed = Array.from(kind).reduce((sum,letter) => sum + letter.charCodeAt(0), 0);
+      portraitBreath.style.setProperty("--portrait-breath-time", (3600 + seed % 5 * 160) + "ms");
+      portraitBreath.dataset.speaker = kind;
+    }
     paintPortrait(portrait, kind, expression);
   }
   function paintPortrait(target, kind, expression = "neutral") {
@@ -1197,10 +1202,6 @@ const guildGame = (() => {
     const line = dialogue.lines[dialogue.index];
     if (line.kind)
       gameAudio.voice(line.kind, last, dialogue.shown - 1, line.expression);
-    if (dialogue.shown % 16 === 0 && dialogue.pulses < 3) {
-      dialogue.pulses++;
-      reactPortrait(dialogue.lines[dialogue.index], true);
-    }
     typingTimer = setTimeout(typeLetter, /[.!?…]/u.test(last) ? 190 : 30);
   }
   function paintLine() {
@@ -1224,7 +1225,6 @@ const guildGame = (() => {
     // The tracking shot already frames Kania; keep the scenery visible behind her words.
     portraitFor(root.classList.contains("is-guide-chat") ? null : line.kind, line.expression);
     cancelPortraitMotion();
-    dialogue.pulses = 0;
     reactPortrait(line);
     dialogueText.parentElement.dataset.fullText = line.text;
     dialogueText.parentElement.dataset.emotion = line.emotion || "";
@@ -1339,6 +1339,7 @@ const guildGame = (() => {
   }
   function closeDialogue() {
     cancelPortraitMotion();
+    portraitFrame.classList.remove("is-breathing");
     clearTimeout(typingTimer);
     gameAudio.stopVoice();
     dialogue = null;
@@ -2663,6 +2664,7 @@ const guildGame = (() => {
   }
   window.addEventListener("blur", clearKeys);
   document.addEventListener("visibilitychange", () => {
+    portraitBreath.style.animationPlayState = document.hidden ? "paused" : "running";
     if (document.hidden) saveProgress();
     clearKeys();
     previous = performance.now();
@@ -2910,6 +2912,7 @@ const guildGame = (() => {
     transitionAnimation?.cancel();
     transition.hidden = true;
     cancelPortraitMotion();
+    portraitFrame.classList.remove("is-breathing");
     hideVista();
     hideEvent();
     hideTrading();

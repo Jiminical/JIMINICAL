@@ -393,6 +393,30 @@
   image-rendering: pixelated;
   pointer-events: none;
 }
+#dialogue-portrait-breath {
+  position: absolute;
+  inset: 0;
+  --portrait-breath-rise: -3px;
+  --portrait-breath-middle: -2px;
+  pointer-events: none;
+}
+#game-screen[data-ready="true"] #game-dialogue:not([hidden]) #dialogue-portrait-frame.is-breathing:not([hidden]) #dialogue-portrait-breath {
+  /* Integer-pixel cels preserve the dot edges; no scale or body deformation. */
+  animation: portrait-breathe var(--portrait-breath-time, 4000ms) steps(1, end) infinite;
+}
+@keyframes portrait-breathe {
+  0%, 12%, 100% { transform: translateY(0); }
+  22%, 30%, 86% { transform: translateY(-1px); }
+  40%, 48%, 74% { transform: translateY(var(--portrait-breath-middle)); }
+  56%, 64% { transform: translateY(var(--portrait-breath-rise)); }
+  94% { transform: translateY(0); }
+}
+@media (max-width: 700px) {
+  #dialogue-portrait-breath { --portrait-breath-rise: -2px; --portrait-breath-middle: -1px; }
+}
+@media (min-width: 701px) and (max-height: 500px) {
+  #dialogue-portrait-breath { --portrait-breath-rise: -1px; --portrait-breath-middle: -1px; }
+}
 #game-transition {
   position: absolute;
   inset: 0;
@@ -917,8 +941,16 @@
 .no-motion #dialogue-portrait {
   transform: none !important;
 }
+.no-motion #dialogue-portrait-breath {
+  animation: none !important;
+  transform: none !important;
+}
 @media (prefers-reduced-motion: reduce) {
   #dialogue-portrait {
+    transform: none !important;
+  }
+  #dialogue-portrait-breath {
+    animation: none !important;
     transform: none !important;
   }
 }
