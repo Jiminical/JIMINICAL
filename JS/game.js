@@ -217,6 +217,7 @@ const guildGame = (() => {
   let nextAutosave = 0;
   let resumingSave = false;
   let restoredMusic = null;
+  let libraryShortcut = false;
   let boundaryContact = null;
   const background = document.createElement("canvas");
   background.width = W;
@@ -721,6 +722,10 @@ const guildGame = (() => {
     visitCity(false);
   }
   function welcomeLibrary() {
+    if (libraryShortcut) {
+      notify("도서관에 도착했다 · 빛나는 책 가까이에서 E");
+      return;
+    }
     const welcome = () =>
       speak([
         {
@@ -1816,7 +1821,7 @@ const guildGame = (() => {
         speak(lines, () => hub());
       }})));
       actions.push({ label: "대화 마치기", cancel: true, action: () => { saveProgress(); } });
-      speak(first ? person.greeting : [{ kind: id, expression: "neutral", text: person.hubPrompt || (id === "lucy" ? "더 궁금한 게 있으세요?" : id === "edan" ? "더 궁금하신 점이 있으십니까?" : id === "tobin" ? "더 물어볼 게 있나?" : "더 궁금한 게 있어?") }], null, actions);
+      speak(first ? (id === "rael" && libraryShortcut ? person.libraryGreeting : person.greeting) : [{ kind: id, expression: "neutral", text: person.hubPrompt || (id === "lucy" ? "더 궁금한 게 있으세요?" : id === "edan" ? "더 궁금하신 점이 있으십니까?" : id === "tobin" ? "더 물어볼 게 있나?" : "더 궁금한 게 있어?") }], null, actions);
     };
     if (id === "leon" && !objectiveGuide.snapshot().unlocked) {
       const briefing = person.briefing;
@@ -2778,6 +2783,11 @@ const guildGame = (() => {
       });
   }
   function saveProgress({ manual = false, opening = false } = {}) {
+    // A title shortcut is a reading visit; preserve the player's real journey.
+    if (libraryShortcut) {
+      if (manual) notify("도서관 열람 중에는 기존 여정 기록을 유지합니다.");
+      return false;
+    }
     if (!active || inputLocked || (!opening && !["free", "menu"].includes(phase))) return false;
     const saved = journeySave.write({
       name: playerName,
@@ -2805,10 +2815,11 @@ const guildGame = (() => {
     }
     return saved;
   }
-  async function start(name, exit, saved = null) {
+  async function start(name, exit, saved = null, options = {}) {
     if (saved && !journeySave.valid(saved)) throw new Error("Invalid journey save");
     await ready;
     stop();
+    libraryShortcut = options.libraryShortcut === true;
     inputLocked = true;
     root.dataset.ready = "false";
     playerName = name;
@@ -2903,6 +2914,22 @@ const guildGame = (() => {
       root.dataset.phase = phase;
     }
   }
+  function startLibrary(name, exit) {
+    const visit = {
+      version: 1, savedAt: Date.now(), name, resume: "world", location: "library",
+      storyStep: "arrived", questAccepted: false, hp: 18, coins: 18, shopOrigin: "city",
+      player: {x:552,y:290,dir:"up"},
+      npcs: [{id:"rael",x:360,y:108,dir:"down",talkCount:0}],
+      inventory: [
+        {id:"map",name:"낡은 여행 지도",description:"여행길을 기록한 지도.",count:1},
+        {id:"credentials",name:"모험가증",description:"모험가의 신분을 확인하는 등록증.",count:1},
+      ],
+      visited: ["library"], shopStocks: fieldWorld.freshStock(),
+      fieldFlags: {lucyFarewell:false,leafTaken:false,springUsed:false,libraryReached:true,libraryLetterRead:false,libraryAmbushCleared:true},
+      objectiveGuide: {unlocked:false,dismissed:false},
+    };
+    return start(name, exit, visit, {libraryShortcut:true});
+  }
   function stop() {
     saveProgress();
     active = false;
@@ -2943,14 +2970,16 @@ const guildGame = (() => {
       typeLetter();
     }
     if (!resumingSave) saveProgress({ opening: true });
+    else if (libraryShortcut) openArchive("world");
     else if (location === "library" && !fieldFlags.libraryLetterRead) welcomeLibrary();
     if (resumingSave && storyStep !== "arrived" && !fieldFlags.libraryAmbushCleared && ["checkpoint", "gate", "grove"].includes(location) &&
       (restoredMusic?.active ?? true)) gameAudio.startJourney(restoredMusic?.offset ?? 0);
-    if (resumingSave && phase === "free") notify("저장된 여정에서 이어간다.");
+    if (resumingSave && !libraryShortcut && phase === "free") notify("저장된 여정에서 이어간다.");
   }
   return {
     ready,
     start,
+    startLibrary,
     stop,
     unlock,
     get active() {
@@ -2959,6 +2988,7 @@ const guildGame = (() => {
     getState() {
       return {
         phase,
+        libraryShortcut,
         location,
         storyStep,
         event: eventScenes.kind,

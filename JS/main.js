@@ -513,9 +513,21 @@ document.querySelector("#continue-button").addEventListener("click", () => {
   activateAudio();
   storyJourney.continue();
 });
+const librarySkipDialog = document.querySelector("#library-skip-dialog");
+document.querySelector("#library-skip-button").addEventListener("click", () => {
+  if (librarySkipDialog.open || storyJourney.active) return;
+  characterSpeech.close();
+  librarySkipDialog.returnValue = "cancel";
+  librarySkipDialog.showModal();
+});
+librarySkipDialog.addEventListener("close", () => {
+  if (librarySkipDialog.returnValue !== "confirm") return;
+  activateAudio();
+  storyJourney.skipToLibrary();
+});
 document.addEventListener("greenstoa:storychange", updateInterface);
 document.addEventListener("greenstoa:audiochange", updateInterface);
-for (const dialog of [optionsDialog]) {
+for (const dialog of [optionsDialog, librarySkipDialog]) {
   dialog.addEventListener("click", (event) => {
     if (event.target !== dialog) return;
     const bounds = dialog.getBoundingClientRect();
@@ -556,7 +568,7 @@ document.addEventListener("greenstoa:savechange", updateContinue);
 window.addEventListener("storage", event => { if (event.key === journeySave.key || event.key === null) updateContinue(); });
 updateContinue();
 document.addEventListener("keydown", (event) => {
-  if (optionsDialog.open || storyJourney.active) return;
+  if (optionsDialog.open || librarySkipDialog.open || storyJourney.active) return;
   if (["ArrowDown", "ArrowUp"].includes(event.key)) {
     const visible = menuButtons.filter(button => !button.hidden);
     event.preventDefault();
@@ -662,7 +674,7 @@ document.addEventListener("click", (event) => {
       // An opening fade should stay quiet instead of flashing the click burst over it.
       if (
         event.target.closest(
-          "#start-button,#continue-button,#story-return,#name-finish,#name-begin,#guild-exit-title",
+          "#start-button,#continue-button,#library-skip-button,#library-skip-dialog button,#story-return,#name-finish,#name-begin,#guild-exit-title",
         )
       )
         return;

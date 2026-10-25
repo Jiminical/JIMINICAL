@@ -177,6 +177,9 @@
             <button class="menu-item is-selected" id="start-button">
               시작하기
             </button>
+            <button class="menu-item" id="library-skip-button" aria-haspopup="dialog">
+              스킵<small>도서관 바로가기</small>
+            </button>
             <button class="menu-item" id="options-button">설정</button>
           </nav>
           <p id="title-save-message" class="title-save-message" role="status" hidden></p>
@@ -881,6 +884,17 @@
       <div id="scene-curtain" aria-hidden="true" hidden></div>
     </main>
 
+    <dialog id="library-skip-dialog" class="panel game-window" aria-labelledby="library-skip-title" aria-describedby="library-skip-question library-skip-signature">
+      <form method="dialog">
+        <div class="panel-header"><h2 id="library-skip-title">도서관으로 이동</h2></div>
+        <p id="library-skip-question">5분 내외의 게임을 스킵하고 바로 세계관 설정으로 이동합니다. 스킵하시겠습니까?</p>
+        <p id="library-skip-signature">-추광더리우스 3세</p>
+        <div class="library-skip-actions">
+          <button class="panel-confirm" value="cancel" autofocus>취소</button>
+          <button class="panel-confirm" value="confirm">스킵하기</button>
+        </div>
+      </form>
+    </dialog>
     <dialog
       id="options-dialog"
       class="panel game-window"

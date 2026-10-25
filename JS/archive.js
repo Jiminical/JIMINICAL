@@ -52,8 +52,9 @@ const libraryArchive = (() => {
     gameAudio.sfx("paper");
     render();
     if (focus) {
-      list.children[index]?.focus({ preventScroll: true });
-      list.children[index]?.scrollIntoView({
+      const button = list.querySelectorAll("button")[index];
+      button?.focus({ preventScroll: true });
+      button?.scrollIntoView({
         block: "nearest",
         inline: "nearest",
       });
@@ -66,7 +67,20 @@ const libraryArchive = (() => {
       tab === "world"
         ? greenstoaLore.articles
         : greenstoaLore.people;
+    let target = list;
     entries.forEach((item, index) => {
+      if (tab === "world" && (index === 0 || index === 4)) {
+        const group = document.createElement("section");
+        group.className = "archive-index-group";
+        const label = document.createElement("h4");
+        label.textContent = index === 0 ? "배경 이야기" : "지금 알아야 할 것";
+        label.id = "archive-group-" + index;
+        group.setAttribute("aria-labelledby", label.id);
+        target = document.createElement("div");
+        target.className = "archive-index-entries";
+        group.append(label, target);
+        list.append(group);
+      }
       const b = document.createElement("button");
       b.type = "button";
       b.textContent =
@@ -74,7 +88,7 @@ const libraryArchive = (() => {
       b.className = index === selected ? "is-current" : "";
       b.setAttribute("aria-pressed", String(index === selected));
       b.addEventListener("click", () => choose(index, true));
-      list.append(b);
+      target.append(b);
     });
     if (selected === 0) {
       list.scrollTop = 0;

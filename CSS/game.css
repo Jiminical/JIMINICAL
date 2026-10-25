@@ -1761,6 +1761,10 @@
   background: #354a3b;
   color: #f2e6b9;
 }
+.archive-index-group { flex-shrink: 0; min-width: 0; }
+.archive-index-group + .archive-index-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid #536a55; }
+.archive-index-group h4 { margin: 0 8px 8px; color: #d3cba3; font-size: 11px; font-weight: 400; line-height: 1.6; }
+.archive-index-entries { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .archive-reading-pane {
   position: relative;
   display: flex;
@@ -2196,6 +2200,11 @@
     white-space: nowrap;
     padding: 6px 10px;
   }
+  .library-reader[data-tab="world"] #archive-index { flex: 0 0 104px; max-height: 104px; flex-direction: column; }
+  .archive-index-group { display: grid; grid-template-columns: 86px minmax(0, 1fr); align-items: center; }
+  .archive-index-group + .archive-index-group { margin-top: 0; padding-top: 4px; }
+  .archive-index-group h4 { margin: 0 4px; font-size: 10px; }
+  .archive-index-entries { flex-direction: row; overflow-x: auto; scrollbar-color: #849071 #1b2927; }
   #archive-scroll {
     flex: 1;
     padding: 4px 4px 58px;

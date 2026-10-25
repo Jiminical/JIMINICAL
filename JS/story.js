@@ -295,8 +295,8 @@ const storyJourney = (() => {
     nextButton.focus({ preventScroll: true });
     startTyping();
   }
-  async function beginGame(saved = null) {
-    if (busy || phase !== (saved ? "title" : "complete")) return;
+  async function beginGame(saved = null, directLibrary = false) {
+    if (busy || phase !== (saved || directLibrary ? "title" : "complete")) return;
     const token = cancelWork();
     busy = true;
     phase = "game-opening";
@@ -309,9 +309,10 @@ const storyJourney = (() => {
       screen.hidden = true;
       title.hidden = true;
       scene.classList.add("is-game-active", "is-story-active");
-      scene.setAttribute("aria-label", "제르디아 왕국 모험가 길드");
+      scene.setAttribute("aria-label", directLibrary ? "그린스토아 이슬잎 도서관" : "제르디아 왕국 모험가 길드");
       phase = "game";
-      await guildGame.start(saved ? saved.name : draftName, returnToTitle, saved);
+      if (directLibrary) await guildGame.startLibrary(draftName, returnToTitle);
+      else await guildGame.start(saved ? saved.name : draftName, returnToTitle, saved);
       notify();
       if (!(await fade(curtain, 0, 620)) || token !== sequence) return;
       curtain.hidden = true;
@@ -321,14 +322,14 @@ const storyJourney = (() => {
       if (token !== sequence) return;
       guildGame.stop();
       scene.classList.remove("is-game-active");
-      if (saved) {
+      if (saved || directLibrary) {
         phase = "title";
         title.hidden = false;
         title.inert = false;
         scene.classList.remove("is-story-active");
         scene.setAttribute("aria-label", "그린스토아 타이틀 화면");
         const message = document.querySelector("#title-save-message");
-        message.textContent = "여정을 불러오지 못했어요. 저장 기록은 유지됩니다. 다시 이어해 주세요.";
+        message.textContent = directLibrary ? "도서관을 불러오지 못했어요. 다시 시도해 주세요." : "여정을 불러오지 못했어요. 저장 기록은 유지됩니다. 다시 이어해 주세요.";
         message.hidden = false;
       } else {
         showPage("complete");
@@ -350,6 +351,15 @@ const storyJourney = (() => {
     message.textContent = "이어할 수 있는 저장 기록이 없어요.";
     message.hidden = false;
     document.dispatchEvent(new Event("greenstoa:savechange"));
+  }
+  function skipToLibrary() {
+    if (busy || phase !== "title") return;
+    draftName = journeySave.read()?.name || "여행자";
+    try {
+      const saved = JSON.parse(localStorage.getItem("greenstoa-player") || "null");
+      if (typeof saved?.name === "string" && saved.name.trim()) draftName = saved.name;
+    } catch {}
+    return beginGame(null, true);
   }
   nextButton.addEventListener("click", next);
   skipButton.addEventListener("click", showName);
@@ -429,6 +439,7 @@ const storyJourney = (() => {
   return {
     start,
     continue: continueGame,
+    skipToLibrary,
     get active() {
       return phase !== "title";
     },
