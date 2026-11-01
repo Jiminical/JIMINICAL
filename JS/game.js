@@ -1714,15 +1714,15 @@ const guildGame = (() => {
       { kind: "scout", expression: "welcoming", text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—" },
       { kind: "scout", expression: "welcoming", text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—" },
       { kind: "scout", expression: "welcoming", text: "이종족연합국, 그린스토아다." },
-    ], () => showRegionIntroduction("greenstoa", () => showVista("sanctuary", () => {
+    ], () => showVista("sanctuary", () => {
       storyStep = "arrived";
       gameAudio.setGreenstoaReady(true);
       resumeWorld(() => {
         npcs = [actor("scout", 442, 312, "left")];
         updateObjective();
-        notify("그린스토아에 도착했다.");
+        showRegionIntroduction("greenstoa", () => notify("그린스토아에 도착했다."));
       });
-    })));
+    }));
   }
 
   function kaniaConversation({ walking = false } = {}) {

@@ -29,12 +29,12 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   await start(fixture({location:'gate',storyStep:'arrival',questAccepted:true,player:{x:360,y:384,dir:'up'},npcs:[{id:'scout',x:360,y:305,dir:'down',talkCount:0}],visited:['guild','city','gate'],regionIntroductions:['zerdia']}));
   check(tag+' Greenstoa title waits for Kania to introduce the country',await p.evaluate(()=>guildGame.getState().speaker==='scout'&&!regionIntroduction.active));
   for(let i=0;i<8&&(await p.evaluate(()=>guildGame.getState().phase))==='dialogue';i++)await press();
-  await capture('greenstoa','- 그린스토아 -','이종족연합국');await press();await p.waitForFunction(()=>guildGame.getState().vista==='sanctuary');
-  check(tag+' Greenstoa title continues to the original Mother Tree cutscene',await p.evaluate(()=>guildGame.getState().regionIntroductions.includes('greenstoa')&&!regionIntroduction.active));
-  // Restoring the midway arrival cannot repeat the regional title.
-  const arrival=await p.evaluate(()=>journeySave.read());await start(arrival);
-  for(let i=0;i<8&&(await p.evaluate(()=>guildGame.getState().phase))==='dialogue';i++)await press();
-  await p.waitForFunction(()=>guildGame.getState().vista==='sanctuary');check(tag+' reload midway through arrival does not repeat Greenstoa title',await p.locator('#region-introduction').isHidden());
+  await p.waitForFunction(()=>guildGame.getState().vista==='sanctuary'&&guildGame.getState().phase==='vista');
+  check(tag+' Mother Tree cutscene plays before the Greenstoa title',await p.evaluate(()=>!regionIntroduction.active&&!guildGame.getState().regionIntroductions.includes('greenstoa')));
+  await press();await press();await capture('greenstoa','- 그린스토아 -','이종족연합국');
+  check(tag+' Greenstoa title appears on the gate field after the cutscene',await p.evaluate(()=>guildGame.getState().vista===null&&guildGame.getState().location==='gate'&&guildGame.getState().storyStep==='arrived'));
+  const arrival=await p.evaluate(()=>journeySave.read());await press();await p.waitForFunction(()=>guildGame.getState().phase==='free');await start(arrival);
+  check(tag+' reload after the cutscene cannot repeat Greenstoa title',await p.locator('#region-introduction').isHidden()&&await p.evaluate(()=>guildGame.getState().storyStep==='arrived'&&guildGame.getState().phase==='free'));
   const dirs=await p.evaluate(()=>['down','left','right','up'].map(dir=>{const e=fieldSprites.make('scout',dir,0),d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;let count=0;for(let i=3;i<d.length;i+=4)if(d[i])count++;return{dir,count,width:e.width,height:e.height}}));
   check(tag+' all four new Kania field directions remain readable',dirs.every(d=>d.count>400&&d.width===56&&d.height===80));
   await p.emulateMedia({reducedMotion:'reduce'});await start(fixture());await press();await p.waitForFunction(()=>regionIntroduction.active);
