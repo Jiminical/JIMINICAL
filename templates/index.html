@@ -22,6 +22,7 @@
     <script src="JS/events.js" defer></script>
     <script src="JS/fields.js" defer></script>
     <script src="JS/field-paths.js" defer></script>
+    <script src="JS/region-intro.js" defer></script>
     <script src="JS/terrain.js" defer></script>
     <script src="JS/character-chats.js" defer></script>
     <script src="JS/lore.js" defer></script>
@@ -431,6 +432,9 @@
             메뉴 <kbd>C</kbd>
           </button>
         </header>
+        <section id="region-introduction" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <div><h2></h2><p></p></div>
+        </section>
         <aside id="game-objective" class="game-objective" aria-label="현재 목표" hidden>
   <div class="objective-copy" role="status" aria-live="polite" aria-atomic="true">
     <span class="objective-kicker" aria-hidden="true">◆ 현재 목표</span>

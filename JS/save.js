@@ -18,6 +18,9 @@ const journeySave = (() => {
       point(save.player) && integer(save.hp, 1, 24) && integer(save.coins, 0, 999999) &&
       typeof save.questAccepted === "boolean" && ["city", "grove"].includes(save.shopOrigin) &&
       save.fieldFlags && flags.every(flag => typeof save.fieldFlags[flag] === "boolean") &&
+      (save.regionIntroductions === undefined || (Array.isArray(save.regionIntroductions) &&
+        save.regionIntroductions.length <= 2 && new Set(save.regionIntroductions).size === save.regionIntroductions.length &&
+        save.regionIntroductions.every(id => ["zerdia","greenstoa"].includes(id)))) &&
       (save.journeyMusic === undefined || (save.journeyMusic && typeof save.journeyMusic.active === "boolean" &&
         Number.isFinite(save.journeyMusic.offset) && save.journeyMusic.offset >= 0 && save.journeyMusic.offset <= 86400)) &&
       (save.objectiveGuide === undefined || (save.objectiveGuide &&

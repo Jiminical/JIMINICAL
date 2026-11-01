@@ -50,6 +50,15 @@ test('opening checkpoints remain valid and restricted to the guild', () => {
   assert.equal(save.write({ ...state, resume: 'opening', location: 'guild' }), true);
   assert.equal(save.write({ ...state, resume: 'opening' }), false);
 });
+test('region introduction markers are optional in v1 and survive reload without duplicates', () => {
+  const {save,state}=setup();
+  assert.equal(save.write(state),true);
+  assert.equal(save.read().regionIntroductions,undefined);
+  assert.equal(save.write({...state,regionIntroductions:['zerdia','greenstoa']}),true);
+  assert.deepEqual(Array.from(save.read().regionIntroductions),['zerdia','greenstoa']);
+  for(const markers of [null,'zerdia',['unknown'],['zerdia','zerdia'],[4]])
+    assert.equal(save.write({...state,regionIntroductions:markers}),false);
+});
 test('new cliff field keeps the existing v1 save format and legacy locations', () => {
   const {save,state}=setup();
   assert.equal(save.write({...state,location:'cliff',player:{x:360,y:108,dir:'down'},npcs:[],visited:['guild','city','cliff']}),true);

@@ -218,6 +218,7 @@ const guildGame = (() => {
   let resumingSave = false;
   let restoredMusic = null;
   let libraryShortcut = false;
+  let introducedRegions = new Set();
   let boundaryContact = null;
   const background = document.createElement("canvas");
   background.width = W;
@@ -319,6 +320,7 @@ const guildGame = (() => {
   }
   async function transitionTo(prepare, after) {
     saveProgress();
+    regionIntroduction.hide();
     const token = ++transitionSerial;
     phase = "transition";
     root.dataset.phase = phase;
@@ -384,7 +386,26 @@ const guildGame = (() => {
       buildMap();
       updateObjective();
       drawWorld();
-    }, after);
+    }, () => {
+      if (destination === "city") showRegionIntroduction("zerdia", after);
+      else if (after) after();
+    });
+  }
+  function showRegionIntroduction(id, after) {
+    if (introducedRegions.has(id) || libraryShortcut) { after?.(); return; }
+    introducedRegions.add(id);
+    // Save the seen marker before the short card, so reloading cannot replay it.
+    saveProgress();
+    phase = "region-intro";
+    root.dataset.phase = phase;
+    keys.clear(); prompt.hidden = true;
+    updateObjective();
+    regionIntroduction.show(id, motion(), () => {
+      if (!active) return;
+      phase = "free"; root.dataset.phase = phase;
+      updateObjective(); canvas.focus({preventScroll:true});
+      after?.();
+    });
   }
   function hideEvent() {
     eventScenes.hide();
@@ -1074,7 +1095,6 @@ const guildGame = (() => {
       },
       scout: {
         image: "kania",
-        columnEdges: [0, 542, 1064, 1536],
         columns: 3,
         rows: 2,
         poses: {
@@ -1694,7 +1714,7 @@ const guildGame = (() => {
       { kind: "scout", expression: "welcoming", text: "다시 한번, 환영한다.\n네가 지금부터 들어갈 곳은—" },
       { kind: "scout", expression: "welcoming", text: "어머니 나무의 품 아래 자리 잡은 안식처.\n수없이 많은 종족이 하나의 이름 아래 살아가는 제루스의 성역—" },
       { kind: "scout", expression: "welcoming", text: "이종족연합국, 그린스토아다." },
-    ], () => showVista("sanctuary", () => {
+    ], () => showRegionIntroduction("greenstoa", () => showVista("sanctuary", () => {
       storyStep = "arrived";
       gameAudio.setGreenstoaReady(true);
       resumeWorld(() => {
@@ -1702,7 +1722,7 @@ const guildGame = (() => {
         updateObjective();
         notify("그린스토아에 도착했다.");
       });
-    }));
+    })));
   }
 
   function kaniaConversation({ walking = false } = {}) {
@@ -2479,6 +2499,13 @@ const guildGame = (() => {
       }
       return;
     }
+    if (phase === "region-intro") {
+      if (["KeyE","Enter","Escape","Space"].includes(code)) {
+        event.preventDefault();
+        if (!repeat) regionIntroduction.finish();
+      }
+      return;
+    }
     if (phase === "letter") {
       if (libraryLetter.handle(code, repeat, event.shiftKey))
         event.preventDefault();
@@ -2801,6 +2828,7 @@ const guildGame = (() => {
       inventory: inventory.map(item => ({ ...item })),
       shopStocks,
       fieldFlags: { ...fieldFlags },
+      regionIntroductions: [...introducedRegions],
       visited: [...visited],
       journeyMusic: gameAudio.getJourneyState(),
       objectiveGuide: objectiveGuide.snapshot(),
@@ -2820,6 +2848,10 @@ const guildGame = (() => {
     await ready;
     stop();
     libraryShortcut = options.libraryShortcut === true;
+    introducedRegions = new Set(saved?.regionIntroductions ?? [
+      ...(saved?.visited.includes("city") ? ["zerdia"] : []),
+      ...(saved?.storyStep === "arrived" ? ["greenstoa"] : []),
+    ]);
     inputLocked = true;
     root.dataset.ready = "false";
     playerName = name;
@@ -2933,6 +2965,7 @@ const guildGame = (() => {
   function stop() {
     saveProgress();
     active = false;
+    regionIntroduction.hide();
     noticeBoard.hide();
     updateObjective();
     ++transitionSerial;
@@ -2989,6 +3022,8 @@ const guildGame = (() => {
       return {
         phase,
         libraryShortcut,
+        regionIntro: regionIntroduction.id,
+        regionIntroductions: [...introducedRegions],
         location,
         storyStep,
         event: eventScenes.kind,

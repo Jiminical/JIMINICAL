@@ -15,7 +15,7 @@ const kaniaWalk = (() => {
   }
   function draw(ctx,portrait,seconds,x=0,y=58,moving=true){
     const p=pose(seconds,moving);
-    ctx.save();ctx.imageSmoothingEnabled=true;
+    ctx.save();ctx.imageSmoothingEnabled=false;
     ctx.translate(x+230+p.x,y+300+p.y);ctx.rotate(p.roll);
     ctx.drawImage(portrait.body,portrait.x-230,portrait.y-300,portrait.body.width*portrait.scale,portrait.body.height*portrait.scale);
     ctx.restore();

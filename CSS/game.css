@@ -623,6 +623,45 @@
 .game-touch {
   display: none;
 }
+#region-introduction {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  text-align: center;
+  color: #fff6dc;
+  opacity: 0;
+}
+#region-introduction[hidden] { display: none; }
+#region-introduction > div {
+  width: 100%;
+  padding: 38px 16px;
+  background: linear-gradient(transparent, #0c171e99 25%, #0c171eaa 70%, transparent);
+  text-shadow: 0 2px 3px #000, 0 0 14px #000a;
+}
+#region-introduction h2 {
+  margin: 0;
+  font-size: clamp(26px, 5.4vw, 64px);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 2px;
+  overflow-wrap: anywhere;
+}
+#region-introduction p {
+  margin: 12px 0 0;
+  color: #dfd4ad;
+  font-size: clamp(12px, 1.8vw, 20px);
+  line-height: 1.6;
+  letter-spacing: 2px;
+}
+.game-screen[data-phase="region-intro"] > .game-hud,
+.game-screen[data-phase="region-intro"] > .game-touch,
+.game-screen[data-phase="region-intro"] > .game-controls { visibility: hidden; }
+@media (max-width: 700px) {
+  #region-introduction h2, #region-introduction p { letter-spacing: 0; }
+}
 .game-touch, .game-touch *, #battle-touch-pad, #battle-touch-pad * {
   touch-action: none;
   user-select: none;
