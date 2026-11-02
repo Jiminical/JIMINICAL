@@ -113,7 +113,7 @@ const webtoonMedia = (() => {
         else if (!firstPages.has(entry.number)) entry.image?.removeAttribute("src");
       }
     },{root:scroll,rootMargin:"800px 0px"});
-    for (const image of strip.children) observer.observe(image);
+    for (const image of strip.querySelectorAll("img[data-page]")) observer.observe(image);
   }
   return {pages:Object.freeze(pages),preload,getStatus:status,releaseView,mount,
     image(number) { preload(); return imageFor(entries.get(number)); }};

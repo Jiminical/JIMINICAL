@@ -163,7 +163,16 @@ const libraryArchive = (() => {
       page.append(paragraph("프롤로그를 웹툰으로 다시 복기하세요", "archive-comic-note"));
       const strip = document.createElement("div");
       strip.className = "archive-comic";
-      webtoonMedia.pages.forEach(({number}) => strip.append(webtoonMedia.image(number)));
+      webtoonMedia.pages.forEach(({number}) => {
+        const image = webtoonMedia.image(number);
+        if (number === 10) {
+          // The final illustration ends at row 1660; the rest is blank paper.
+          const ending = document.createElement("div");
+          ending.className = "archive-comic-ending";
+          ending.append(image);
+          strip.append(ending);
+        } else strip.append(image);
+      });
       page.append(strip);
       webtoonMedia.mount(strip,scroll);
     }

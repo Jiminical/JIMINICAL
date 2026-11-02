@@ -27,15 +27,18 @@ const fixture=()=>({version:1,savedAt:Date.now(),name:'여행자',resume:'world'
   check(tag+' offscreen animation decoding stays deferred',await p.locator('.archive-comic img:not([src])').count()>=4);
   await p.screenshot({path:path.join(out,tag+'-first.png')});
   const stripBounds=await p.locator('.archive-comic').boundingBox(),scrollBounds=await p.locator('#archive-scroll').boundingBox();
-  check(tag+' comic uses the reader width with no chapter sidebar',stripBounds.width>=scrollBounds.width-24&&stripBounds.x>=scrollBounds.x-1);
+  const readerWidth=Math.min(scrollBounds.width-9,height<=500&&width>=701?480:720);
+  check(tag+' comic fits a narrower centered reading column',Math.abs(stripBounds.width-readerWidth)<=12&&stripBounds.x>=scrollBounds.x-1&&Math.abs(stripBounds.x+stripBounds.width/2-(scrollBounds.x+(scrollBounds.width-9)/2))<=6);
   for(const number of order){
    const img=p.locator('.archive-comic img[data-page="'+number+'"]');
-   await img.evaluate(i=>{const sc=document.querySelector('#archive-scroll');sc.scrollTop=i.offsetTop});await p.waitForFunction(number=>{const i=document.querySelector('.archive-comic img[data-page="'+number+'"]');return i.complete&&i.naturalWidth>0},number);await img.evaluate(i=>i.decode());
+   await img.evaluate(i=>{const sc=document.querySelector('#archive-scroll');sc.scrollTop+=i.getBoundingClientRect().top-sc.getBoundingClientRect().top});await p.waitForFunction(number=>{const i=document.querySelector('.archive-comic img[data-page="'+number+'"]');return i.complete&&i.naturalWidth>0},number);await img.evaluate(i=>i.decode());
    const metrics=await img.evaluate(i=>{const r=i.getBoundingClientRect(),s=document.querySelector('#archive-scroll');return{number:Number(i.dataset.page),naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,width:r.width,height:r.height,scrollWidth:s.scrollWidth,clientWidth:s.clientWidth,source:i.dataset.source}});
    check(tag+' original strip '+number+' loads without cropping or stretching',metrics.naturalWidth>0&&metrics.naturalHeight>0&&Math.abs(metrics.width/metrics.height-metrics.naturalWidth/metrics.naturalHeight)<.001&&metrics.scrollWidth<=metrics.clientWidth+1&&metrics.source.endsWith('web'+number+(number===10?'.png':'.webp')));
    report.measurements.push({tag,...metrics});
   }
   await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=e.scrollHeight);await p.screenshot({path:path.join(out,tag+'-last.png')});
+  const ending=await p.locator('.archive-comic-ending').evaluate(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=getComputedStyle(e);return{width:r.width,height:r.height,imageHeight:i.getBoundingClientRect().height,overflow:s.overflow,top:getComputedStyle(e,'::before').backgroundImage,bottom:getComputedStyle(e,'::after').backgroundImage}});
+  check(tag+' final panel removes only its blank tail and fades into the paper and reader',Math.abs(ending.width/ending.height-826/1660)<.001&&ending.imageHeight>ending.height&&ending.overflow==='hidden'&&ending.top.includes('linear-gradient')&&ending.top.includes('255, 255, 255')&&ending.bottom.includes('linear-gradient')&&ending.bottom.includes('32, 49, 45'));
   check(tag+' final image can be read to the bottom',await p.locator('#archive-scroll').evaluate(e=>Math.abs(e.scrollHeight-e.clientHeight-e.scrollTop)<2));
   // Native touch scrolling must stay inside the reader, never move the world.
   if(width!==1280){const cdp=await context.newCDPSession(p);await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=0);const r=await p.locator('#archive-scroll').boundingBox(),x=r.x+r.width/2,y=r.y+r.height*.8;

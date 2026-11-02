@@ -1959,7 +1959,7 @@
   border-top: 1px solid #536a55;
 }
 .archive-comic {
-  max-width: 1080px;
+  max-width: 720px;
   margin: auto;
   background: #fff;
 }
@@ -1971,6 +1971,35 @@
   image-rendering: auto;
 }
 .archive-comic img:not([src]) { color: transparent; }
+.archive-comic-ending {
+  position: relative;
+  width: 100%;
+  max-width: 826px;
+  aspect-ratio: 826 / 1660;
+  margin: 0 auto;
+  overflow: hidden;
+}
+.archive-comic-ending::before,
+.archive-comic-ending::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7%;
+  pointer-events: none;
+}
+/* Enter from the paper; finish against the reader instead of a white cutoff. */
+.archive-comic-ending::before {
+  top: 0;
+  background: linear-gradient(#fff, #fff0);
+}
+.archive-comic-ending::after {
+  bottom: 0;
+  background: linear-gradient(#20312d00, #20312d);
+}
+@media (max-height: 500px) and (min-width: 701px) {
+  .archive-comic { max-width: 480px; }
+}
 .library-reader[data-tab="comic"] .archive-body {
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
