@@ -1980,12 +1980,13 @@
 .archive-person-relationships button { min-height: 44px; padding: 8px 10px; border: 1px solid #657c5e; border-radius: 3px; background: #30463a; color: #f0dfaa; font: inherit; overflow-wrap: anywhere; }
 .archive-relationship-detail { min-width: 0; overflow-wrap: anywhere; }
 .archive-relationship-reaction {
-  display: block;
+  display: inline-block;
   position: relative;
-  width: 128px;
-  height: 128px;
-  margin-top: 6px;
+  width: 64px;
+  height: 64px;
+  margin-left: 6px;
   overflow: hidden;
+  vertical-align: middle;
 }
 .archive-relationship-reaction[hidden] { display: none; }
 .archive-relationship-reaction img {
