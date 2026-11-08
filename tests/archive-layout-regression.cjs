@@ -19,11 +19,24 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   for(let i=0;i<titles.length;i++){await p.locator('#archive-index button').nth(i).click();check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null)}
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
   await p.locator('[data-archive-tab="people"]').click();
-  check(tag+' portrait slot defaults to the current Lucy artwork',await p.locator('.archive-person-photo canvas[role="img"]').count()===1);
+  const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘렌','캐롤라','세이아','장위','???'];
+  const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
+  check(tag+' roster contains exactly the requested 24 names in order',await p.locator('#archive-index button').evaluateAll(es=>es.map(e=>e.textContent.replace(/^[▸　 ]+/,''))).then(actual=>JSON.stringify(actual)===JSON.stringify(names)));
+  const sections=await p.locator('.archive-index-group').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,count:e.querySelectorAll('button').length})));
+  check(tag+' people are split into 16 leads and 8 supporting characters',JSON.stringify(sections)===JSON.stringify([{title:'주연',count:16},{title:'조연',count:8}]));
+  for(let i=0;i<names.length;i++){
+   await p.locator('#archive-index button').nth(i).click();
+   const kind=await p.evaluate(i=>greenstoaLore.people[i].portraitKind,i);
+   check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&(kind==='unrevealed'?await p.locator('.archive-person-unrevealed').count()===1:await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)})));
+  }
+  await p.screenshot({path:path.join(out,tag+'-supporting-last.png')});
+  if(width<=700)check(tag+' both cast section headings remain visible on mobile',await p.locator('.archive-index-group h4').evaluateAll(es=>{const r=document.querySelector('#archive-index').getBoundingClientRect();return es.every(e=>{const b=e.getBoundingClientRect();return b.top>=r.top-1&&b.bottom<=r.bottom+1})}));
+  await p.locator('#archive-index button').first().click();
+  check(tag+' portrait slot defaults to the current Mareri artwork',await p.locator('.archive-person-photo canvas[role="img"]').count()===1);
   check(tag+' changing tabs brings the selected first entry into view',await p.locator('#archive-index').evaluate(e=>e.scrollLeft===0&&e.scrollTop===0));
   check(tag+' short introduction is larger than the old kicker',await p.locator('.archive-person-role').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=12));
-  check(tag+' name and multiple hashtag features are separate',await p.locator('.archive-person-copy h3').innerText()==='루시'&&await p.locator('.archive-person-tags li').count()>=3&&await p.locator('.archive-person-tags li').evaluateAll(es=>es.every(e=>e.textContent.startsWith('#'))));
-  check(tag+' all people have independent photo paths and multiple tags',await p.evaluate(()=>greenstoaLore.people.every(p=>'portraitSrc'in p&&p.tags.length>=3)));
+  check(tag+' name and multiple hashtag features are separate',await p.locator('.archive-person-copy h3').innerText()==='마르에리'&&await p.locator('.archive-person-tags li').count()>=3&&await p.locator('.archive-person-tags li').evaluateAll(es=>es.every(e=>e.textContent.startsWith('#'))));
+  check(tag+' all people have independent photo paths and known profiles retain multiple tags',await p.evaluate(()=>greenstoaLore.people.every(p=>'portraitSrc'in p&&Array.isArray(p.tags)&&(p.portraitKind==='unrevealed'||p.tags.length>=3))));
   await p.screenshot({path:path.join(out,tag+'-people.png')});
   const original=await p.evaluate(()=>{const person=greenstoaLore.people[0];const saved={body:person.body,tags:person.tags,portraitSrc:person.portraitSrc};person.body=Array.from({length:18},(_,i)=>'상세 설명 '+(i+1)+'. '+person.body);person.tags=[...person.tags,'아주긴특징설명'.repeat(14)];const c=document.createElement('canvas');c.width=120;c.height=180;c.getContext('2d').fillRect(0,0,120,180);person.portraitSrc=c.toDataURL('image/png');return saved});
   await p.locator('#archive-index button').first().click();await p.locator('.archive-person-image').evaluate(i=>i.decode());
@@ -42,7 +55,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' last biography paragraph is reachable and bottom hint disappears',await p.locator('.archive-person-biography p').last().evaluate(e=>e.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1));
   await p.screenshot({path:path.join(out,tag+'-long-biography-end.png')});
   await p.keyboard.press('Home');await p.waitForFunction(()=>!document.querySelector('#archive-scroll-more').hidden);await p.keyboard.press('PageDown');
-  check(tag+' keyboard can scroll without switching the person',await p.locator('#archive-scroll').evaluate(e=>e.scrollTop>0)&&await p.locator('.archive-person-copy h3').innerText()==='루시');
+  check(tag+' keyboard can scroll without switching the person',await p.locator('#archive-scroll').evaluate(e=>e.scrollTop>0)&&await p.locator('.archive-person-copy h3').innerText()==='마르에리');
   await p.evaluate(saved=>Object.assign(greenstoaLore.people[0],saved),original);await p.locator('#archive-index button').nth(1).click();
   check(tag+' selecting another person resets reading position',await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.locator('.archive-person-copy h3').innerText()==='카니아');
   await p.evaluate(()=>{greenstoaLore.people[0].portraitSrc='data:image/png;base64,bm90YW5pbWFnZQ=='});await p.locator('#archive-index button').first().click();await p.waitForFunction(()=>document.querySelector('.archive-person-photo canvas'));

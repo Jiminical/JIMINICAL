@@ -136,7 +136,7 @@ const greenstoaLore = (() => {
       ],
     },
   ];
-  const people = [
+  const recordedPeople = [
     {
       "id": "lucy",
       "name": "루시",
@@ -255,6 +255,43 @@ const greenstoaLore = (() => {
       "body": "옅은 은백색 머리와 길게 내려온 앞머리, 느슨하게 묶은 뒷머리, 장난기 있는 짙은 눈, 붉은 망토, 검은 사슬갑옷 위의 은빛 판금갑옷과 금속 건틀릿. 기사로서의 실력은 최고지만 늘 능청스러운 농담으로 기루스의 잔소리를 부른다. 경계 근무와 임무 설명에서는 빈틈없는 면모가 드러난다."
     },
   ];
+  const peopleGroups = [
+    { id: "lead", title: "주연" },
+    { id: "supporting", title: "조연" },
+  ];
+  const roster = {
+    lead: [
+      ["mareri", "마르에리"], ["scout", "카니아"], ["henia", "헤니아"],
+      ["helen", "헬렌"], ["aran", "아란"], ["klone", "클로네"],
+      ["remu", "레무"], ["runya", "루냐"], ["shunya", "슈냐"],
+      ["sif", "시프"], ["rael", "뮈르슈"], ["ellen", "엘렌"],
+      ["carola", "캐롤라"], ["seia", "세이아"], ["sena", "장위"],
+      ["unrevealed", "???"],
+    ],
+    supporting: [
+      ["lucy", "루시"], ["rose", "아르다"], ["mia", "하나리"],
+      ["bran", "이보리아"], ["aiherde", "아이헤르데"], ["edan", "기루스"],
+      ["bord", "보르드"], ["godric", "고드릭"],
+    ],
+  };
+  const mareri = {
+    id: "mareri", name: "마르에리", portraitSrc: "", portraitKind: "title",
+    tags: ["첫 만남", "시니컬", "은근한 배려", "머리의 꽃"],
+    role: "모험가를 맞이하는 첫 만남의 인물",
+    summary: "시니컬한 말투 속에 은근한 배려를 숨긴 인물.",
+    body: "처음 만난 모험가에게 이름을 기억해 두라고 말한다. 반말로 시니컬하게 툭툭 말하지만, 길을 잃으면 함께 찾아 주고 밥을 챙기라며 은근히 마음을 쓴다. 머리에는 꽃을 꽂고 있다.",
+  };
+  const people = peopleGroups.flatMap(group => roster[group.id].map(([id, name]) => {
+    const recorded = id === "mareri" ? mareri : recordedPeople.find(person => person.id === id);
+    if (recorded) return { ...recorded, portraitKind: recorded.portraitKind || "actor", group: group.id };
+    // Unannounced cast members have their own entries, never another actor's biography or art.
+    return {
+      id, name, group: group.id, portraitSrc: "", portraitKind: "unrevealed",
+      tags: ["미공개"], role: group.title,
+      summary: "자세한 인물 정보는 아직 공개되지 않았다.",
+      body: "이 인물의 모습과 자세한 이야기는 아직 공개되지 않았다.",
+    };
+  }));
   const holder = document.querySelector("#chronicle-art");
   const art = { early: new Image(), late: new Image() };
   art.early.src = holder.dataset.artSrc;
@@ -285,5 +322,5 @@ const greenstoaLore = (() => {
     canvas.dataset.chapter = String(index);
     canvas.setAttribute("aria-label", scene.art);
   }
-  return { scenes, articles, people, ready, paintChapter };
+  return { scenes, articles, people, peopleGroups, ready, paintChapter };
 })();

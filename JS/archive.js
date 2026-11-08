@@ -67,14 +67,19 @@ const libraryArchive = (() => {
       tab === "world"
         ? greenstoaLore.articles
         : greenstoaLore.people;
-    let target = list;
+    let target = list, currentGroup = null;
     entries.forEach((item, index) => {
-      if (tab === "world" && (index === 0 || index === 4)) {
+      const section = tab === "world"
+        ? {id:index < 4 ? "background" : "present", title:index < 4 ? "배경 이야기" : "지금 알아야 할 것"}
+        : greenstoaLore.peopleGroups.find(group => group.id === item.group);
+      if (section && section.id !== currentGroup) {
+        currentGroup = section.id;
         const group = document.createElement("section");
         group.className = "archive-index-group";
+        group.dataset.group = section.id;
         const label = document.createElement("h4");
-        label.textContent = index === 0 ? "배경 이야기" : "지금 알아야 할 것";
-        label.id = "archive-group-" + index;
+        label.textContent = section.title;
+        label.id = "archive-" + tab + "-group-" + section.id;
         group.setAttribute("aria-labelledby", label.id);
         target = document.createElement("div");
         target.className = "archive-index-entries";
@@ -120,11 +125,29 @@ const libraryArchive = (() => {
       const portrait = document.createElement("figure");
       portrait.className = "archive-person-photo";
       function fallbackPortrait() {
+        if (person.portraitKind === "unrevealed") {
+          const placeholder = document.createElement("div");
+          placeholder.className = "archive-person-unrevealed";
+          placeholder.setAttribute("role", "img");
+          placeholder.setAttribute("aria-label", person.name + "의 모습은 아직 미공개");
+          const mark = document.createElement("span");
+          mark.textContent = "?";
+          mark.setAttribute("aria-hidden", "true");
+          placeholder.append(mark, paragraph("미공개"));
+          portrait.replaceChildren(placeholder);
+          return;
+        }
         const art = canvas(640, 560);
         art.className = "archive-person";
         art.setAttribute("role", "img");
         art.setAttribute("aria-label", person.name + "의 상반신 초상화");
-        state.drawPortrait(art, person.id);
+        if (person.portraitKind === "title") {
+          // Reuse Mareri's already-loaded title sprite without a duplicate image download.
+          const source = document.querySelector(".character-sprite"), c = art.getContext("2d");
+          const scale = Math.min(art.width / source.width, art.height / source.height);
+          c.imageSmoothingEnabled = false;
+          c.drawImage(source, (art.width - source.width * scale) / 2, art.height - source.height * scale, source.width * scale, source.height * scale);
+        } else if (state) state.drawPortrait(art, person.id);
         portrait.replaceChildren(art);
       }
       if (person.portraitSrc) {
@@ -153,7 +176,7 @@ const libraryArchive = (() => {
       (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(paragraph(text)));
       copy.append(
         paragraph(person.role, "archive-kicker archive-person-role"),
-        heading(person.id === "hero" ? state.playerName : person.name),
+        heading(person.name),
         tags,
         biography,
       );
