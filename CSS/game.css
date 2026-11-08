@@ -1969,6 +1969,16 @@
   padding-top: 16px;
   border-top: 1px solid #536a55;
 }
+.archive-person-relationships {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #536a55;
+}
+.archive-person-relationships h4 { margin: 0 0 12px; color: #e8ddb0; font-size: 14px; font-weight: 400; }
+.archive-person-relationships ul { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
+.archive-person-relationships li { display: grid; grid-template-columns: minmax(0, auto) auto minmax(0, 1fr); align-items: center; gap: 10px; line-height: 1.8; }
+.archive-person-relationships button { min-height: 44px; padding: 8px 10px; border: 1px solid #657c5e; border-radius: 3px; background: #30463a; color: #f0dfaa; font: inherit; overflow-wrap: anywhere; }
+.archive-relationship-detail { min-width: 0; overflow-wrap: anywhere; }
 .archive-comic {
   max-width: 720px;
   margin: auto;

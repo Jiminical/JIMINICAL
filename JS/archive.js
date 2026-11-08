@@ -180,6 +180,31 @@ const libraryArchive = (() => {
         tags,
         biography,
       );
+      if (person.relationships?.length) {
+        const relationships = document.createElement("section"), label = document.createElement("h4"), links = document.createElement("ul");
+        relationships.className = "archive-person-relationships";
+        label.id = "archive-relationships-" + person.id;
+        label.textContent = "관계도";
+        relationships.setAttribute("aria-labelledby", label.id);
+        person.relationships.forEach(({targetId, relation}) => {
+          const targetIndex = greenstoaLore.people.findIndex(target => target.id === targetId);
+          if (targetIndex < 0) return;
+          const target = greenstoaLore.people[targetIndex], row = document.createElement("li"), name = document.createElement("button"), arrow = document.createElement("span"), detail = document.createElement("span");
+          name.type = "button";
+          name.dataset.target = target.id;
+          name.textContent = target.name;
+          name.setAttribute("aria-label", target.name + " 인물 소개 보기");
+          name.addEventListener("click", () => choose(targetIndex, true));
+          arrow.textContent = "→";
+          arrow.setAttribute("aria-hidden", "true");
+          detail.className = "archive-relationship-detail";
+          detail.textContent = relation;
+          row.append(name, arrow, detail);
+          links.append(row);
+        });
+        relationships.append(label, links);
+        copy.append(relationships);
+      }
       page.append(portrait, copy);
     } else {
       // 프롤로그를 웹툰으로 다시 복기하세요

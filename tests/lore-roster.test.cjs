@@ -6,7 +6,7 @@ const lore=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../JS/lore.js
 });
 const people=JSON.parse(JSON.stringify(lore.people));
 test('archive lists the requested 16 leads and 8 supporting characters in order',()=>{
-  assert.deepEqual(people.filter(p=>p.group==='lead').map(p=>p.name),['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘렌','캐롤라','세이아','장위','???']);
+  assert.deepEqual(people.filter(p=>p.group==='lead').map(p=>p.name),['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???']);
   assert.deepEqual(people.filter(p=>p.group==='supporting').map(p=>p.name),['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭']);
   assert.equal(people.length,24);assert.equal(new Set(people.map(p=>p.id)).size,24);
   assert.deepEqual(JSON.parse(JSON.stringify(lore.peopleGroups)).map(g=>g.title),['주연','조연']);
@@ -24,4 +24,16 @@ test('new supporting characters are separate people, without borrowed artwork or
   }
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,15);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
+});
+test('relationships exist only for the six requested sources and keep the requested target order',()=>{
+  const expected={'헤니아':['카니아','클로네'],'카니아':['클로네','헤니아'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  assert.equal(people.filter(p=>p.relationships.length).length,6);
+  for(const person of people){
+    const targets=person.relationships.map(link=>{
+      const target=people.find(p=>p.id===link.targetId);assert.ok(target);assert.equal(link.relation,'미공개');return target.name;
+    });
+    assert.deepEqual(targets,expected[person.name]||[],person.name);
+  }
+  assert.equal(people.find(p=>p.id==='ellen').name,'엘레나');
+  assert.ok(!people.some(p=>p.name==='엘렌'));
 });

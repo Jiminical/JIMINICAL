@@ -19,8 +19,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   for(let i=0;i<titles.length;i++){await p.locator('#archive-index button').nth(i).click();check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null)}
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
   await p.locator('[data-archive-tab="people"]').click();
-  const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘렌','캐롤라','세이아','장위','???'];
+  const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
+  const relationships={'헤니아':['카니아','클로네'],'카니아':['클로네','헤니아'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
   check(tag+' roster contains exactly the requested 24 names in order',await p.locator('#archive-index button').evaluateAll(es=>es.map(e=>e.textContent.replace(/^[▸　 ]+/,''))).then(actual=>JSON.stringify(actual)===JSON.stringify(names)));
   const sections=await p.locator('.archive-index-group').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,count:e.querySelectorAll('button').length})));
   check(tag+' people are split into 16 leads and 8 supporting characters',JSON.stringify(sections)===JSON.stringify([{title:'주연',count:16},{title:'조연',count:8}]));
@@ -28,8 +29,19 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    await p.locator('#archive-index button').nth(i).click();
    const kind=await p.evaluate(i=>greenstoaLore.people[i].portraitKind,i);
    check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&(kind==='unrevealed'?await p.locator('.archive-person-unrevealed').count()===1:await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)})));
+   const targets=relationships[names[i]]||[];
+   check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships button').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>actual.every(text=>text==='미공개')));
   }
   await p.screenshot({path:path.join(out,tag+'-supporting-last.png')});
+  for(const [source,targets]of Object.entries(relationships))for(const target of targets){
+   await p.locator('#archive-index button').nth(names.indexOf(source)).click();
+   const link=p.locator('.archive-person-relationships button').filter({hasText:target});
+   await link.scrollIntoViewIfNeeded();
+   check(tag+' '+source+' to '+target+' relationship link is a reachable touch target',await link.evaluate(e=>{const r=e.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.height>=44&&r.left>=s.left&&r.right<=s.right}));
+   if(source==='헤니아'&&target==='카니아'||source==='엘레나')await p.screenshot({path:path.join(out,tag+'-relationships-'+(source==='헤니아'?'henia':'elena')+'.png')});
+   await link.click();
+   check(tag+' relationship opens '+target+' without losing archive state',await p.locator('.archive-person-copy h3').innerText()===target&&await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.evaluate(()=>guildGame.getState().archive==='people'));
+  }
   if(width<=700)check(tag+' both cast section headings remain visible on mobile',await p.locator('.archive-index-group h4').evaluateAll(es=>{const r=document.querySelector('#archive-index').getBoundingClientRect();return es.every(e=>{const b=e.getBoundingClientRect();return b.top>=r.top-1&&b.bottom<=r.bottom+1})}));
   await p.locator('#archive-index button').first().click();
   check(tag+' portrait slot defaults to the current Mareri artwork',await p.locator('.archive-person-photo canvas[role="img"]').count()===1);
