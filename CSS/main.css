@@ -1124,6 +1124,9 @@ body:has(.scene.is-story-active) {
   display: block;
   padding: 0;
 }
+.story-screen[data-phase="prologue"] .story-page {
+  padding-top: clamp(64px, 10cqh, 96px);
+}
 .story-page {
   display: flex;
   flex-direction: column;
@@ -1155,13 +1158,13 @@ body:has(.scene.is-story-active) {
 .chronicle-art {
   display: block;
   flex-shrink: 0;
-  width: min(64%, 800px, 100cqh);
+  width: min(100%, 960px, calc(max(120px, 100cqh - 300px) * 16 / 9));
   height: auto;
-  aspect-ratio: 9 / 4;
+  aspect-ratio: 16 / 9;
   min-height: 0;
   margin: 0;
   background: #000;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .narration-block {
   position: relative;
@@ -1340,6 +1343,9 @@ body:has(.scene.is-story-active) {
     width: 100%;
     max-width: 520px;
   }
+  .story-screen[data-phase="prologue"] .story-page {
+    padding: 72px 20px 12px;
+  }
   .story-header,
   .story-footer {
     gap: 4px;
@@ -1389,7 +1395,7 @@ body:has(.scene.is-story-active) {
     padding-top: 70px;
   }
   .chronicle-art {
-    width: min(64%, 600px);
+    width: min(100%, 760px, calc(max(120px, 100cqh - 260px) * 16 / 9));
   }
   .narration-block {
     padding-top: 24px;

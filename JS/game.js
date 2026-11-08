@@ -1142,6 +1142,13 @@ const guildGame = (() => {
       sy = sheet.rowEdges[row];
       ch = sheet.rowEdges[row + 1] - sy;
     }
+    if (sheet.image === "muirshu") {
+      // The previous pose's wing crosses into these cells' empty left gutters.
+      // Exclude that gutter before measuring alpha, preserving this pose's art.
+      const inset = [0, 12, 0, 0, 12, 22][index] * image.naturalWidth / 768;
+      sx += inset;
+      cw -= inset;
+    }
     target.dataset.sheet = sheet.image;
     target.dataset.frame = String(index);
     const frameKey = kind + expression;

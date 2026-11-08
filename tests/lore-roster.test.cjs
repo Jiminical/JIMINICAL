@@ -1,10 +1,24 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const lore=vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../JS/lore.js'),'utf8')+';greenstoaLore',{
-  document:{querySelector:()=>({dataset:{artSrc:'early',lateSrc:'late'}})},
-  Image:class{decode(){return Promise.resolve()}},
+  document:{querySelector:()=>({dataset:Object.fromEntries(Array.from({length:9},(_,i)=>['chapter'+(i+1)+'Src','chapter-'+i]))})},
+  Image:class{naturalWidth=1280;naturalHeight=720;decode(){return Promise.resolve()}},
 });
 const people=JSON.parse(JSON.stringify(lore.people));
+
+test('all nine opening chapters draw their complete independent image within the canvas',()=>{
+  assert.equal(lore.scenes.length,9);
+  assert.equal(new Set(lore.scenes.map(scene=>scene.asset)).size,9);
+  for(let index=0;index<9;index++)for(const [width,height]of [[800,400],[400,800]]){
+    const calls=[],context={clearRect(){},drawImage(...args){calls.push(args)}},canvas={width,height,dataset:{},getContext:()=>context,setAttribute(){}};
+    lore.paintChapter(canvas,index);
+    assert.equal(calls.length,1);assert.equal(calls[0].length,5,'draw the entire source, without atlas cropping');
+    const [image,x,y,w,h]=calls[0];
+    assert.equal(image.src,'chapter-'+index);assert.ok(x>=0&&y>=0&&x+w<=width+.001&&y+h<=height+.001);
+    assert.ok(Math.abs(w/h-16/9)<.0001);assert.equal(context.imageSmoothingQuality,'high');
+    assert.ok(fs.existsSync(path.join(__dirname,'../assets/opening-'+String(index+1).padStart(2,'0')+'.webp')));
+  }
+});
 test('archive lists the requested 16 leads and 8 supporting characters in order',()=>{
   assert.deepEqual(people.filter(p=>p.group==='lead').map(p=>p.name),['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???']);
   assert.deepEqual(people.filter(p=>p.group==='supporting').map(p=>p.name),['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭']);

@@ -78,8 +78,8 @@ page = page.replace("</body>", script_tag + "\n</body>")
 assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert 'data-sprite-src="data:image/webp;base64,' in page
-assert 'data-art-src="data:image/webp;base64,' in page
-assert 'data-late-src="data:image/webp;base64,' in page
+for chapter in range(1, 10):
+    assert f'data-chapter{chapter}-src="data:image/webp;base64,' in page
 for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-rogue', 'city', 'grove', 'shop', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 for attribute in ('demon-actions', 'item-specimens', 'first-person-arms', 'forest-ambush', 'journey-carriage'):

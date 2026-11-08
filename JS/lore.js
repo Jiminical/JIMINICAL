@@ -1,65 +1,56 @@
-// Shared source for the opening and the library. Every chapter has its own panel.
+// Shared source for the opening and the library. Each chapter has a whole illustration.
 const greenstoaLore = (() => {
   const scenes = [
     {
-      sheet: "early",
-      panel: 0,
+      asset: "chapter1",
       title: "나라 이전의 시대",
       text: "먼 옛날, 아직 나라와 국경조차 없던 시대.\n제루스 대륙은 끝없는 혼돈에 휩싸여 있었다.",
       art: "폭풍과 어둠에 뒤덮인 고대 제루스 대륙의 기록화.",
     },
     {
-      sheet: "early",
-      panel: 1,
+      asset: "chapter2",
       title: "어둠의 위협",
       text: "들끓는 마족과 포악한 짐승, 사악한 악령들.\n약탈과 죽음이 끊이지 않았고, 어디에도 안전한 땅은 없었다.",
       art: "마족과 짐승, 악령이 여행자의 길을 가로막는 기록화.",
     },
     {
-      sheet: "early",
-      panel: 2,
+      asset: "chapter3",
       title: "어머니 나무",
       text: "그러나 대륙이 제루스라 불리기 수천 년 전부터, 생명의 거목 ‘어머니 나무’는 굳건히 서 있었다.\n순수한 생명력이 깃든 그 성역만큼은 누구도 감히 침범하지 못했다.",
       art: "어둠 속에서도 빛나는 성역을 지키는 거대한 어머니 나무.",
     },
     {
-      sheet: "early",
-      panel: 3,
+      asset: "chapter4",
       title: "엘프의 탄생",
       text: "어머니 나무로부터 태어나 그 힘을 나눠 받고, 성역을 지키며 살아가는 이들.\n세상은 그 종족을 ‘엘프’라 불렀다.",
-      art: "어머니 나무의 생명력으로 빛나는 고대 성역의 기록화.",
+      art: "어머니 나무 아래 빛나는 숲에 모인 고대 엘프들의 기록화.",
     },
     {
-      sheet: "early",
-      panel: 4,
+      asset: "chapter5",
       title: "평등과 자유의 건국",
       text: "하지만 어머니 나무의 힘을 나눠 받은 고대 엘프들조차 대륙의 혼란을 잠재우기에는 역부족이었다.\n마침내 그들은 나라의 필요성을 깨닫고, 평등과 자유를 기치로 성역 주변에 중립 국가를 세웠다.",
       art: "어머니 나무 아래에 모여 새로운 나라의 터를 닦는 고대 엘프들.",
     },
     {
-      sheet: "early",
-      panel: 5,
+      asset: "chapter6",
       title: "새로운 시민들",
       text: "그 나라의 이름은 그린스토아.\n인간들의 차별을 피해 자유를 갈망하던 이종족들이 대륙 각지에서 모여들었다.\n그들은 평등과 보금자리에 보답하며, 시민이자 성역을 지키는 힘이 되었다.",
       art: "어머니 나무와 강을 둘러싼 도시, 함께 살아가는 여러 종족들.",
     },
     {
-      sheet: "late",
-      panel: 0,
+      asset: "chapter7",
       title: "용사 제르와 동맹",
       text: "그리고 마침내 나타난 최초의 용사, 제르.\n당대 최강의 인간들과 그린스토아는 동맹을 맺고 선대 마왕을 격퇴했다.\n흩어진 대륙이 하나로 이어지고, 이 땅에는 긴 평화가 찾아왔다.",
-      art: "여러 종족이 나란히 바라보는 평화로운 성역의 도시.",
+      art: "용사 제르와 여러 종족의 동맹이 마왕에 맞서는 기록화.",
     },
     {
-      sheet: "late",
-      panel: 1,
+      asset: "chapter8",
       title: "이종족연합국 그린스토아",
       text: "오늘날 그린스토아는 제루스 대륙의 허파이자, 수려한 대자연을 품은 이종족들의 연합국.\n종족도 신분도 묻지 않는 중립 지대, 열정으로 꿈을 현실로 만들 수 있는 땅이다.",
       art: "강과 숲, 어머니 나무의 품 아래 살아가는 그린스토아.",
     },
     {
-      sheet: "late",
-      panel: 2,
+      asset: "chapter9",
       title: "성역에 스미는 그림자",
       text: "그러나 최근, 이 신성한 땅에도 불길한 기운이 감돈다는 소문이 들려온다.\n제르디아 기사단은 성역을 조사할 모험가를 찾기 시작했다.\n그리고 지금, 한 모험가가 길드의 접수대 앞에 서 있다…",
       art: "고요한 성역의 나무 뿌리 사이로 스며드는 불길한 그림자.",
@@ -310,27 +301,26 @@ const greenstoaLore = (() => {
     };
   }));
   const holder = document.querySelector("#chronicle-art");
-  const art = { early: new Image(), late: new Image() };
-  art.early.src = holder.dataset.artSrc;
-  art.late.src = holder.dataset.lateSrc;
+  const art = Object.fromEntries(scenes.map(scene => {
+    const image = new Image();
+    image.src = holder.dataset[scene.asset + "Src"];
+    return [scene.asset, image];
+  }));
   const ready = Promise.all(Object.values(art).map((image) => image.decode()));
   ready.catch(() => {});
   function paintChapter(canvas, index) {
     const scene = scenes[index],
-      image = art[scene.sheet],
+      image = art[scene.asset],
       c = canvas.getContext("2d");
     if (!image.naturalWidth) return;
-    const w = image.naturalWidth / 2,
-      h = image.naturalHeight / 3,
+    const w = image.naturalWidth,
+      h = image.naturalHeight,
       scale = Math.min(canvas.width / w, canvas.height / h);
-    c.imageSmoothingEnabled = false;
+    c.imageSmoothingEnabled = true;
+    c.imageSmoothingQuality = "high";
     c.clearRect(0, 0, canvas.width, canvas.height);
     c.drawImage(
       image,
-      (scene.panel % 2) * w,
-      Math.floor(scene.panel / 2) * h,
-      w,
-      h,
       (canvas.width - w * scale) / 2,
       (canvas.height - h * scale) / 2,
       w * scale,

@@ -178,7 +178,7 @@
   .written-name { font-size: 28px; margin: 12px 0 24px; }
   .record-note { margin-bottom: 18px; font-size: 12px; }
   .story-screen[data-phase="prologue"] .story-content { padding: 0; min-height: 0; overflow: hidden; }
-  .story-page {
+  .story-screen[data-phase="prologue"] .story-page {
     display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
     align-items: center; gap: 18px; padding: 60px 20px 12px;
   }
