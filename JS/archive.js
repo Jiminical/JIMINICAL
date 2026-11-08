@@ -47,6 +47,28 @@ const libraryArchive = (() => {
     c.height = height;
     return c;
   }
+  function reactionIcon(person, emotion = "neutral") {
+    const source = document.querySelector("#relationship-reactions").dataset[person.reactionAsset + "Src"];
+    if (!source) return null;
+    const frames = {neutral:0,annoyed:1,puzzled:2,flustered:3};
+    const labels = {neutral:"기본",annoyed:"짜증",puzzled:"의아함",flustered:"당황"};
+    const frame = frames[emotion] ?? 0, icon = document.createElement("span"), image = new Image();
+    icon.className = "archive-relationship-reaction";
+    icon.dataset.person = person.id;
+    icon.dataset.emotion = emotion;
+    icon.setAttribute("role", "img");
+    icon.setAttribute("aria-label", person.name + ": " + (labels[emotion] || labels.neutral) + " 표정");
+    icon.title = icon.getAttribute("aria-label");
+    image.alt = "";
+    image.decoding = "async";
+    image.draggable = false;
+    image.style.left = -(frame % 2) * 100 + "%";
+    image.style.top = -Math.floor(frame / 2) * 100 + "%";
+    image.addEventListener("error", () => { icon.hidden = true; }, {once:true});
+    image.src = source;
+    icon.append(image);
+    return icon;
+  }
   function choose(index, focus = false) {
     selected = index;
     gameAudio.sfx("paper");
@@ -186,7 +208,7 @@ const libraryArchive = (() => {
         label.id = "archive-relationships-" + person.id;
         label.textContent = "관계도";
         relationships.setAttribute("aria-labelledby", label.id);
-        person.relationships.forEach(({targetId, relation}) => {
+        person.relationships.forEach(({targetId, relation, emotion}) => {
           const targetIndex = greenstoaLore.people.findIndex(target => target.id === targetId);
           if (targetIndex < 0) return;
           const target = greenstoaLore.people[targetIndex], row = document.createElement("li"), name = document.createElement("button"), arrow = document.createElement("span"), detail = document.createElement("span");
@@ -199,6 +221,8 @@ const libraryArchive = (() => {
           arrow.setAttribute("aria-hidden", "true");
           detail.className = "archive-relationship-detail";
           detail.textContent = relation;
+          const reaction = reactionIcon(person, emotion);
+          if (reaction) detail.append(reaction);
           row.append(name, arrow, detail);
           links.append(row);
         });

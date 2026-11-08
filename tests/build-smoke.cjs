@@ -16,6 +16,11 @@ const {gunzipSync}=require('zlib');
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file)));
  }
+ const reactions=html.split('id="relationship-reactions"')[1].split('</div>')[0];
+ for(const id of ['kania','henia','helen','aran','remu','elena']){
+  const encoded=reactions.match(new RegExp('data-'+id+'-src="data:image/webp;base64,([^" ]+)"'))[1];
+  assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/reaction-'+id+'.webp')));
+ }
  const ardaField=html.match(/data-sd-arda-src="data:image\/webp;base64,([^" ]+)"/)[1];
  assert.deepEqual(Buffer.from(ardaField,'base64'),fs.readFileSync(path.join(root,'assets/sd-arda.webp')));
  const jangwiField=html.match(/data-sd-jangwi-src="data:image\/webp;base64,([^" ]+)"/)[1];

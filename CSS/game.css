@@ -1979,6 +1979,26 @@
 .archive-person-relationships li { display: grid; grid-template-columns: minmax(0, auto) auto minmax(0, 1fr); align-items: center; gap: 10px; line-height: 1.8; }
 .archive-person-relationships button { min-height: 44px; padding: 8px 10px; border: 1px solid #657c5e; border-radius: 3px; background: #30463a; color: #f0dfaa; font: inherit; overflow-wrap: anywhere; }
 .archive-relationship-detail { min-width: 0; overflow-wrap: anywhere; }
+.archive-relationship-reaction {
+  display: inline-block;
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-left: 6px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.archive-relationship-reaction[hidden] { display: none; }
+.archive-relationship-reaction img {
+  position: absolute;
+  display: block;
+  width: 200%;
+  height: 200%;
+  max-width: none;
+  margin: 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
 .archive-comic {
   max-width: 720px;
   margin: auto;

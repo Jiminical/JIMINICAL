@@ -282,20 +282,28 @@ const greenstoaLore = (() => {
     body: "처음 만난 모험가에게 이름을 기억해 두라고 말한다. 반말로 시니컬하게 툭툭 말하지만, 길을 잃으면 함께 찾아 주고 밥을 챙기라며 은근히 마음을 쓴다. 머리에는 꽃을 꽂고 있다.",
   };
   const personRelationships = {
-    henia: [{ targetId: "scout", relation: "미공개" }, { targetId: "klone", relation: "미공개" }],
-    scout: [{ targetId: "klone", relation: "미공개" }, { targetId: "henia", relation: "미공개" }],
+    henia: [
+      { targetId: "scout", relation: "악우. 하이엘프인데도 정찰대를 자원하다니?", emotion: "puzzled" },
+      { targetId: "klone", relation: "이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?", emotion: "annoyed" },
+    ],
+    scout: [
+      { targetId: "henia", relation: "악우. 온실 속 화초 주제에 정찰대를 흉본다!", emotion: "annoyed" },
+      { targetId: "klone", relation: "신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...", emotion: "flustered" },
+    ],
     helen: [{ targetId: "aran", relation: "미공개" }],
     aran: [{ targetId: "helen", relation: "미공개" }],
     remu: [{ targetId: "ellen", relation: "미공개" }],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };
+  const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena" };
   const people = peopleGroups.flatMap(group => roster[group.id].map(([id, name]) => {
     const recorded = id === "mareri" ? mareri : recordedPeople.find(person => person.id === id);
     const relationships = personRelationships[id] || [];
-    if (recorded) return { ...recorded, portraitKind: recorded.portraitKind || "actor", group: group.id, relationships };
+    const reactionAsset = reactionAssets[id] || "";
+    if (recorded) return { ...recorded, portraitKind: recorded.portraitKind || "actor", group: group.id, relationships, reactionAsset };
     // Unannounced cast members have their own entries, never another actor's biography or art.
     return {
-      id, name, group: group.id, portraitSrc: "", portraitKind: "unrevealed", relationships,
+      id, name, group: group.id, portraitSrc: "", portraitKind: "unrevealed", relationships, reactionAsset,
       tags: ["미공개"], role: group.title,
       summary: "자세한 인물 정보는 아직 공개되지 않았다.",
       body: "이 인물의 모습과 자세한 이야기는 아직 공개되지 않았다.",
