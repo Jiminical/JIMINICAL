@@ -10,13 +10,35 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
  const check=(name,ok)=>{assert.ok(ok,name);report.checks.push(name);console.log('PASS '+name)};
  try{for(const [width,height]of (process.env.ARCHIVE_SINGLE_VIEW?[[390,844]]:[[1280,800],[390,844],[320,568],[844,390]])){
   const tag=width+'x'+height,context=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'}),p=await context.newPage();
+  const worldImageRequests=[];
+  p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
+  check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
   await p.evaluate(async save=>{document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},fixture);
   const before=await p.evaluate(()=>guildGame.getState());await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');
   await p.locator('[data-archive-tab="world"]').click();
   check(tag+' seven world topics match the requested titles',await p.evaluate(t=>JSON.stringify(greenstoaLore.articles.map(a=>a.title))===JSON.stringify(t),titles));
-  for(let i=0;i<titles.length;i++){await p.locator('#archive-index button').nth(i).click();check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null)}
+  for(let i=0;i<titles.length;i++){
+   await p.locator('#archive-index button').nth(i).click();
+   if(i===0){
+    for(const image of await p.locator('.archive-world-image').all()){await image.scrollIntoViewIfNeeded();await image.evaluate(image=>image.decode())}
+    check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.locator('.archive-world-image').count()===3);
+    check(tag+' overview image precedes the title and the two countries keep the requested image-title-copy order',await p.evaluate(()=>{
+     const page=document.querySelector('#archive-page'),sections=[...page.querySelectorAll('.archive-world-section')];
+     return page.firstElementChild.dataset.illustration==='worldOverview'&&JSON.stringify(sections.map(section=>({image:section.firstElementChild.dataset.illustration,title:section.children[1].textContent,copy:section.lastElementChild.tagName})))===JSON.stringify([{image:'greenstoa',title:'이종족연합국 그린스토아',copy:'P'},{image:'zerdia',title:'제르디아 왕국',copy:'P'}])&&[...page.querySelectorAll('p:not(.archive-kicker)')].map(p=>p.textContent).join('\n')===[...greenstoaLore.articles[0].body,...greenstoaLore.articles[0].sections.flatMap(section=>section.body)].join('\n');
+    }));
+    check(tag+' all supplied images remain complete and fit the reading width',await p.locator('.archive-world-image').evaluateAll(images=>{const viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return images.every(image=>{const rect=image.getBoundingClientRect();return image.naturalWidth===1216&&image.naturalHeight===448&&Math.abs(rect.width/rect.height-1216/448)<.01&&rect.left>=viewport.left&&rect.right<=viewport.right&&getComputedStyle(image).imageRendering==='auto'})}));
+    check(tag+' country subtitles are visibly larger than their paragraphs',await p.locator('.archive-world-section').evaluateAll(sections=>sections.every(section=>parseFloat(getComputedStyle(section.querySelector('h4')).fontSize)>=parseFloat(getComputedStyle(section.querySelector('p')).fontSize)+4)));
+    await p.locator('#archive-scroll').evaluate(element=>element.scrollTop=0);await p.waitForFunction(()=>!document.querySelector('#archive-scroll-more').hidden);
+    await p.screenshot({path:path.join(out,tag+'-world-top.png')});
+    await p.locator('#archive-scroll-more').click();check(tag+' world article scroll hint advances the long introduction',await p.locator('#archive-scroll').evaluate(element=>element.scrollTop>0));
+    await p.locator('.archive-world-section h4').first().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-world-greenstoa.png')});
+    await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForFunction(()=>document.querySelector('#archive-scroll-more').hidden);
+    check(tag+' Zerdia final paragraph is reachable without horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+    await p.screenshot({path:path.join(out,tag+'-world-zerdia.png')});
+   }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
+  }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];

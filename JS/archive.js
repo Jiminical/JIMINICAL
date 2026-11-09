@@ -41,6 +41,19 @@ const libraryArchive = (() => {
     h.textContent = text;
     return h;
   }
+  function articleImage(illustration, lazy = false) {
+    const image = new Image();
+    image.className = "archive-world-image";
+    image.dataset.illustration = illustration.asset;
+    image.alt = illustration.alt;
+    image.width = 1216;
+    image.height = 448;
+    image.decoding = "async";
+    image.loading = lazy ? "lazy" : "eager";
+    image.addEventListener("load", updateScrollCue);
+    image.src = document.querySelector("#archive-illustrations").dataset[illustration.asset + "Src"];
+    return image;
+  }
   function canvas(width, height) {
     const c = document.createElement("canvas");
     c.width = width;
@@ -136,12 +149,26 @@ const libraryArchive = (() => {
     scroll.scrollTop = 0;
     if (tab === "world") {
       const item = greenstoaLore.articles[selected];
+      if (item.hero) page.append(articleImage(item.hero));
       page.append(paragraph(item.tag, "archive-kicker"), heading(item.title));
       item.body.forEach((text) => page.append(paragraph(text)));
-      const art = canvas(768, 342);
-      art.className = "archive-world-art";
-      greenstoaLore.paintChapter(art, item.chapter);
-      page.append(art);
+      item.sections?.forEach((section, index) => {
+        const block = document.createElement("section"), label = document.createElement("h4");
+        block.className = "archive-world-section";
+        label.id = "archive-world-section-" + index;
+        label.textContent = section.title;
+        block.setAttribute("aria-labelledby", label.id);
+        if (section.image) block.append(articleImage(section.image, true));
+        block.append(label);
+        section.body.forEach(text => block.append(paragraph(text)));
+        page.append(block);
+      });
+      if (!item.hero) {
+        const art = canvas(768, 342);
+        art.className = "archive-world-art";
+        greenstoaLore.paintChapter(art, item.chapter);
+        page.append(art);
+      }
     } else if (tab === "people") {
       const person = greenstoaLore.people[selected];
       const portrait = document.createElement("figure");

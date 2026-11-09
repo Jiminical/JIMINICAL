@@ -1893,6 +1893,23 @@
   margin-top: 28px;
   image-rendering: pixelated;
 }
+.archive-world-image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 22px;
+  image-rendering: auto;
+}
+.archive-world-section { margin-top: 28px; }
+#archive-page .archive-world-section h4 {
+  margin: 0 0 12px;
+  color: #f4e7b8;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.6;
+  word-break: keep-all;
+}
 .library-reader[data-tab="people"] #archive-page {
   display: grid;
   grid-template-columns: minmax(140px, 0.9fr) minmax(0, 1.1fr);
@@ -2333,6 +2350,7 @@
     font-size: 12px;
     line-height: 1.95;
   }
+  #archive-page .archive-world-section h4 { font-size: 18px; }
   .library-reader[data-tab="people"] #archive-page {
     display: flex;
     flex-direction: column;
