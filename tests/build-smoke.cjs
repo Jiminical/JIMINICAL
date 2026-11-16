@@ -9,7 +9,7 @@ const {gunzipSync}=require('zlib');
  const length=Number(raw.match(/\.textContent,(\d+)\)/)[1]);
  const html=gunzipSync(decodePortable(payload,length)).toString('utf8');
  const worldImages=html.split('id="archive-illustrations"')[1].split('</div>')[0];
- for(const [attribute,file]of [['world-overview','world-overview'],['greenstoa','world-greenstoa'],['zerdia','world-zerdia']]){
+ for(const [attribute,file]of [['world-overview','world-overview'],['greenstoa','world-greenstoa'],['zerdia','world-zerdia'],['demon-king','world-demon-king'],['zer-alliance','world-zer-alliance']]){
   const encoded=worldImages.match(new RegExp('data-'+attribute+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file+'.webp')));
  }

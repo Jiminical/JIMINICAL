@@ -46,8 +46,8 @@ const libraryArchive = (() => {
     image.className = "archive-world-image";
     image.dataset.illustration = illustration.asset;
     image.alt = illustration.alt;
-    image.width = 1216;
-    image.height = 448;
+    image.width = illustration.width || 1216;
+    image.height = illustration.height || 448;
     image.decoding = "async";
     image.loading = lazy ? "lazy" : "eager";
     image.addEventListener("load", updateScrollCue);
@@ -153,13 +153,16 @@ const libraryArchive = (() => {
       page.append(paragraph(item.tag, "archive-kicker"), heading(item.title));
       item.body.forEach((text) => page.append(paragraph(text)));
       item.sections?.forEach((section, index) => {
-        const block = document.createElement("section"), label = document.createElement("h4");
+        const block = document.createElement(section.title ? "section" : "div");
         block.className = "archive-world-section";
-        label.id = "archive-world-section-" + index;
-        label.textContent = section.title;
-        block.setAttribute("aria-labelledby", label.id);
         if (section.image) block.append(articleImage(section.image, true));
-        block.append(label);
+        if (section.title) {
+          const label = document.createElement("h4");
+          label.id = "archive-world-section-" + index;
+          label.textContent = section.title;
+          block.setAttribute("aria-labelledby", label.id);
+          block.append(label);
+        }
         section.body.forEach(text => block.append(paragraph(text)));
         page.append(block);
       });

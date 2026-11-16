@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const out=process.env.TEST_OUTPUT||path.join(__dirname,'../../previews/archive-layout');fs.mkdirSync(out,{recursive:true});
-const titles=['세계와 국가들','마왕과 대혼란','어머니 나무와 그린스토아','용사 그리고 동맹','그린스토아 조사 의뢰','종족 탐구','도구들'];
+const titles=['세계와 국가들','어머니 나무와 그린스토아','마왕과 대혼란','용사 그리고 동맹','그린스토아 조사 의뢰','종족 탐구','도구들'];
 const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',location:'library',storyStep:'arrived',questAccepted:true,hp:1,coins:15,shopOrigin:'city',player:{x:552,y:290,dir:'up'},npcs:[{id:'rael',x:360,y:108,dir:'down',talkCount:3}],inventory:[{id:'credentials',name:'모험가증',description:'등록증',count:1},{id:'libraryLetter',name:'편지',description:'도착 편지',count:1}],visited:['guild','city','gate','grove','library'],shopStocks:{city:{bread:5,tonic:3,bandage:4}},fieldFlags:{lucyFarewell:true,leafTaken:false,springUsed:false,libraryReached:true,libraryLetterRead:true,libraryAmbushCleared:true}};
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
@@ -11,7 +11,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
  try{for(const [width,height]of (process.env.ARCHIVE_SINGLE_VIEW?[[390,844]]:[[1280,800],[390,844],[320,568],[844,390]])){
   const tag=width+'x'+height,context=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'}),p=await context.newPage();
   const worldImageRequests=[];
-  p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
+  p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia|demon-king|zer-alliance)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
@@ -37,6 +37,20 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForFunction(()=>document.querySelector('#archive-scroll-more').hidden);
     check(tag+' Zerdia final paragraph is reachable without horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
     await p.screenshot({path:path.join(out,tag+'-world-zerdia.png')});
+   }else if(i===2){
+    for(const image of await p.locator('.archive-world-image').all()){await image.scrollIntoViewIfNeeded();await image.evaluate(image=>image.decode())}
+    check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.locator('.archive-world-image').count()===2);
+    check(tag+' demon image leads the article and Zer image separates the last paragraph without an empty subtitle',await p.evaluate(()=>{
+     const page=document.querySelector('#archive-page'),parts=[...page.children],item=greenstoaLore.articles[2],section=page.querySelector('.archive-world-section');
+     return parts[0].dataset.illustration==='demonKing'&&parts[3].tagName==='P'&&parts[4].tagName==='P'&&parts[5]===section&&section.firstElementChild.dataset.illustration==='zerAlliance'&&section.lastElementChild.tagName==='P'&&!page.querySelector('h4')&&!page.querySelector('canvas.archive-world-art')&&[...page.querySelectorAll('p:not(.archive-kicker)')].map(p=>p.textContent).join('\n')===[...item.body,...item.sections[0].body].join('\n')&&!page.textContent.includes('&#x20;');
+    }));
+    check(tag+' both chaos images preserve their complete 1216 by 640 composition',await p.locator('.archive-world-image').evaluateAll(images=>{const viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return images.every(image=>{const rect=image.getBoundingClientRect();return image.naturalWidth===1216&&image.naturalHeight===640&&image.width>0&&Number(image.getAttribute('height'))===640&&Math.abs(rect.width/rect.height-1216/640)<.01&&rect.left>=viewport.left&&rect.right<=viewport.right})}));
+    await p.locator('#archive-scroll').evaluate(element=>element.scrollTop=0);await p.waitForFunction(()=>!document.querySelector('#archive-scroll-more').hidden);await p.screenshot({path:path.join(out,tag+'-chaos-top.png')});
+    await p.locator('#archive-scroll-more').click();check(tag+' chaos article scroll hint advances the content',await p.locator('#archive-scroll').evaluate(element=>element.scrollTop>0));
+    await p.locator('[data-illustration="zerAlliance"]').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-chaos-zer.png')});
+    await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForFunction(()=>document.querySelector('#archive-scroll-more').hidden);
+    check(tag+' chaos final paragraph is reachable and the article has no horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+    await p.screenshot({path:path.join(out,tag+'-chaos-end.png')});
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
