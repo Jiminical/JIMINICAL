@@ -19,8 +19,8 @@ const legacy={version:1,savedAt:Date.now(),name:'기존여행자',resume:'world'
   check(tag+' confirm opens library world lore directly',await p.evaluate(()=>guildGame.getState().location==='library'&&guildGame.getState().libraryShortcut&&guildGame.getState().archive==='world'));
   check(tag+' no letter is delivered or added to inventory',await p.evaluate(()=>!libraryLetter.waiting&&guildGame.getState().letter===null&&!guildGame.getState().items.some(i=>i.id==='libraryLetter')));
   const groups=await p.locator('.archive-index-group').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,count:e.querySelectorAll('button').length})));
-  check(tag+' world sections group four background and three present topics',JSON.stringify(groups)===JSON.stringify([{title:'배경 이야기',count:4},{title:'지금 알아야 할 것',count:3}]));
-  for(let i=0;i<7;i++){await p.locator('#archive-index button').nth(i).click();check(tag+' grouped topic '+i+' remains selectable',await p.locator('#archive-index button').nth(i).getAttribute('aria-pressed')==='true')}
+  check(tag+' world sections group four background and four present topics',JSON.stringify(groups)===JSON.stringify([{title:'배경 이야기',count:4},{title:'지금 알아야 할 것',count:4}]));
+  for(let i=0;i<8;i++){await p.locator('#archive-index button').nth(i).click();check(tag+' grouped topic '+i+' remains selectable',await p.locator('#archive-index button').nth(i).getAttribute('aria-pressed')==='true')}
   await p.screenshot({path:path.join(out,tag+'-grouped-world.png')});
   await p.locator('#archive-close').click();check(tag+' library visit preserves exact previous save bytes',await p.evaluate(()=>localStorage.getItem(journeySave.key))===before);
   await p.keyboard.press('c');await p.locator('#guild-save').click();check(tag+' manual save during the reading visit preserves the original slot',await p.evaluate(()=>localStorage.getItem(journeySave.key))===before);

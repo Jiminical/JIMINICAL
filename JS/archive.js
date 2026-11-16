@@ -102,7 +102,7 @@ const libraryArchive = (() => {
       tab === "world"
         ? greenstoaLore.articles
         : greenstoaLore.people;
-    let target = list, currentGroup = null;
+    let target = list, groupEntries = list, currentGroup = null, currentSubgroup = null;
     entries.forEach((item, index) => {
       const section = tab === "world"
         ? {id:index < 4 ? "background" : "present", title:index < 4 ? "배경 이야기" : "지금 알아야 할 것"}
@@ -118,8 +118,30 @@ const libraryArchive = (() => {
         group.setAttribute("aria-labelledby", label.id);
         target = document.createElement("div");
         target.className = "archive-index-entries";
+        groupEntries = target;
+        currentSubgroup = null;
         group.append(label, target);
         list.append(group);
+      }
+      if (tab === "world" && index < 4) {
+        const subgroup = index < 2
+          ? { id: "setting", title: "세계관" }
+          : { id: "history", title: "역사" };
+        if (subgroup.id !== currentSubgroup) {
+          currentSubgroup = subgroup.id;
+          groupEntries.classList.add("has-subgroups");
+          const group = document.createElement("section");
+          group.className = "archive-index-subgroup";
+          group.dataset.subgroup = subgroup.id;
+          const label = document.createElement("h5");
+          label.textContent = subgroup.title;
+          label.id = "archive-world-subgroup-" + subgroup.id;
+          group.setAttribute("aria-labelledby", label.id);
+          target = document.createElement("div");
+          target.className = "archive-index-subentries";
+          group.append(label, target);
+          groupEntries.append(group);
+        }
       }
       const b = document.createElement("button");
       b.type = "button";

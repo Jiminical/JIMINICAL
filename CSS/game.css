@@ -1804,6 +1804,10 @@
 .archive-index-group + .archive-index-group { margin-top: 14px; padding-top: 14px; border-top: 1px solid #536a55; }
 .archive-index-group h4 { margin: 0 8px 8px; color: #d3cba3; font-size: 11px; font-weight: 400; line-height: 1.6; }
 .archive-index-entries { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.archive-index-subgroup { min-width: 0; }
+.archive-index-subgroup + .archive-index-subgroup { margin-top: 8px; }
+.archive-index-subgroup h5 { margin: 4px 8px; color: #9eaf99; font-size: 10px; font-weight: 400; line-height: 1.6; }
+.archive-index-subentries { display: flex; flex-direction: column; gap: 4px; }
 .archive-reading-pane {
   position: relative;
   display: flex;
@@ -2331,10 +2335,15 @@
   }
   .library-reader[data-tab="world"] #archive-index,
   .library-reader[data-tab="people"] #archive-index { flex: 0 0 104px; max-height: 104px; flex-direction: column; }
+  .library-reader[data-tab="world"] #archive-index { flex-basis: 128px; max-height: 128px; }
   .archive-index-group { display: grid; grid-template-columns: 86px minmax(0, 1fr); align-items: center; }
   .archive-index-group + .archive-index-group { margin-top: 0; padding-top: 4px; }
   .archive-index-group h4 { margin: 0 4px; font-size: 10px; }
   .archive-index-entries { flex-direction: row; overflow-x: auto; scrollbar-color: #849071 #1b2927; }
+  .archive-index-subgroup { flex: 0 0 auto; }
+  .archive-index-subgroup + .archive-index-subgroup { margin-top: 0; margin-left: 8px; }
+  .archive-index-subgroup h5 { position: sticky; left: 0; width: max-content; margin: 0 10px 2px; font-size: 9px; }
+  .archive-index-subentries { flex-direction: row; }
   .library-reader[data-tab="people"] .archive-index-group { grid-template-columns: 48px minmax(0, 1fr); }
   .library-reader[data-tab="people"] #archive-index { flex-basis: 124px; max-height: 124px; }
   .library-reader[data-tab="people"] .archive-index-entries { scrollbar-width: thin; touch-action: pan-x; overscroll-behavior-x: contain; }

@@ -2,7 +2,7 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const out=process.env.TEST_OUTPUT||path.join(__dirname,'../../previews/archive-layout');fs.mkdirSync(out,{recursive:true});
-const titles=['세계와 국가들','어머니 나무와 엘프들','마왕과 대혼란','용사 그리고 동맹','그린스토아 조사 의뢰','종족 탐구','도구들'];
+const titles=['세계와 국가들','어머니 나무와 엘프들','마왕과 대혼란','이어져온 평화, 그리고 위기','그린스토아 조사 의뢰','엘프 외의 종족','그린스토아의 행정','외부'];
 const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',location:'library',storyStep:'arrived',questAccepted:true,hp:1,coins:15,shopOrigin:'city',player:{x:552,y:290,dir:'up'},npcs:[{id:'rael',x:360,y:108,dir:'down',talkCount:3}],inventory:[{id:'credentials',name:'모험가증',description:'등록증',count:1},{id:'libraryLetter',name:'편지',description:'도착 편지',count:1}],visited:['guild','city','gate','grove','library'],shopStocks:{city:{bread:5,tonic:3,bandage:4}},fieldFlags:{lucyFarewell:true,leafTaken:false,springUsed:false,libraryReached:true,libraryLetterRead:true,libraryAmbushCleared:true}};
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
@@ -15,12 +15,17 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
-  await p.evaluate(async save=>{document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},fixture);
+  // Resume from a real saved slot instead of depending on an autosave frame before opening the book.
+  await p.evaluate(async save=>{if(!journeySave.write(save))throw new Error('Unable to prepare the existing journey save');document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},fixture);
   const before=await p.evaluate(()=>guildGame.getState());await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');
   await p.locator('[data-archive-tab="world"]').click();
-  check(tag+' seven world topics match the requested titles',await p.evaluate(t=>JSON.stringify(greenstoaLore.articles.map(a=>a.title))===JSON.stringify(t),titles));
+  check(tag+' eight world topics match the requested titles',await p.evaluate(t=>JSON.stringify(greenstoaLore.articles.map(a=>a.title))===JSON.stringify(t),titles));
+  check(tag+' background subcategories group two setting and two history topics in order',await p.locator('.archive-index-subgroup').evaluateAll(groups=>JSON.stringify(groups.map(group=>({title:group.querySelector('h5').textContent,topics:[...group.querySelectorAll('button')].map(button=>button.textContent.replace(/^[▸　 ]+/,''))}))))===JSON.stringify([{title:'세계관',topics:titles.slice(0,2)},{title:'역사',topics:titles.slice(2,4)}]));
+  check(tag+' subcategory labels are smaller than the parent background heading',await p.locator('.archive-index-subgroup h5').evaluateAll(labels=>labels.every(label=>parseFloat(getComputedStyle(label).fontSize)<parseFloat(getComputedStyle(label.closest('.archive-index-group').querySelector('h4')).fontSize))));
+  check(tag+' current topics retain their own four-entry group',await p.locator('.archive-index-group[data-group="present"] button').allTextContents().then(names=>JSON.stringify(names.map(name=>name.replace(/^[▸　 ]+/,'')))===JSON.stringify(titles.slice(4))));
   for(let i=0;i<titles.length;i++){
    await p.locator('#archive-index button').nth(i).click();
+   if(i<4)check(tag+' active background topic '+i+' keeps its subcategory label visible',await p.locator('#archive-index button').nth(i).evaluate(button=>{const label=button.closest('.archive-index-subgroup').querySelector('h5').getBoundingClientRect(),viewport=button.closest('.archive-index-entries').getBoundingClientRect();return label.top>=viewport.top-1&&label.bottom<=viewport.bottom+1&&label.left>=viewport.left-1&&label.right<=viewport.right+1}));
    if(i===0){
     for(const image of await p.locator('.archive-world-image').all()){await image.scrollIntoViewIfNeeded();await image.evaluate(image=>image.decode())}
     check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.locator('.archive-world-image').count()===3);
@@ -66,6 +71,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForFunction(()=>document.querySelector('#archive-scroll-more').hidden);
     check(tag+' chaos final paragraph is reachable and the article has no horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
     await p.screenshot({path:path.join(out,tag+'-chaos-end.png')});
+   }else if(i===3){
+    check(tag+' peace and crisis article has the requested present-day subtitle and three paragraphs',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('.archive-world-section h4').innerText()==='953년 10월 1일, 현 시점'&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.evaluate(()=>{const item=greenstoaLore.articles[3],section=document.querySelector('.archive-world-section');return section.firstElementChild.tagName==='H4'&&[...document.querySelectorAll('#archive-page p:not(.archive-kicker)')].map(p=>p.textContent).join('\n')===[...item.body,...item.sections[0].body].join('\n')}));
+    await p.screenshot({path:path.join(out,tag+'-crisis-top.png')});
+    await p.locator('.archive-world-section h4').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-crisis-present.png')});
+    await p.locator('.archive-world-section p').last().scrollIntoViewIfNeeded();
+    check(tag+' present-day epilogue is readable without horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>{const rect=element.getBoundingClientRect(),viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return rect.top>=viewport.top-1&&rect.bottom<=viewport.bottom+1&&element.textContent==='다행히도 바로 지금, 제르디아의 한 모험가 또한 이 현상에 흥미를 붙였습니다...'})&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+    await p.screenshot({path:path.join(out,tag+'-crisis-epilogue.png')});
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
