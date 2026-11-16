@@ -1879,7 +1879,8 @@
   margin: 0 0 20px;
   word-break: keep-all;
 }
-#archive-page p:not(.archive-kicker) {
+#archive-page p:not(.archive-kicker),
+#archive-page .archive-world-points {
   font-size: 14px;
   line-height: 2;
   word-break: keep-all;
@@ -1902,6 +1903,8 @@
   image-rendering: auto;
 }
 .archive-world-section { margin-top: 28px; }
+.archive-world-points { padding-left: 22px; list-style-type: disc; overflow-wrap: anywhere; }
+.archive-world-points li + li { margin-top: 10px; }
 #archive-page .archive-world-section h4 {
   margin: 0 0 12px;
   color: #f4e7b8;
@@ -2346,7 +2349,8 @@
     font-size: 21px;
     margin-bottom: 14px;
   }
-  #archive-page p:not(.archive-kicker) {
+  #archive-page p:not(.archive-kicker),
+  #archive-page .archive-world-points {
     font-size: 12px;
     line-height: 1.95;
   }
@@ -2414,7 +2418,8 @@
     font-size: 19px;
     margin-bottom: 12px;
   }
-  #archive-page p:not(.archive-kicker) {
+  #archive-page p:not(.archive-kicker),
+  #archive-page .archive-world-points {
     font-size: 12px;
     line-height: 1.8;
   }

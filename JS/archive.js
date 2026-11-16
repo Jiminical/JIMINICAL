@@ -163,7 +163,17 @@ const libraryArchive = (() => {
           block.setAttribute("aria-labelledby", label.id);
           block.append(label);
         }
-        section.body.forEach(text => block.append(paragraph(text)));
+        section.body?.forEach(text => block.append(paragraph(text)));
+        if (section.bullets?.length) {
+          const points = document.createElement("ul");
+          points.className = "archive-world-points";
+          section.bullets.forEach(text => {
+            const point = document.createElement("li");
+            point.textContent = text;
+            points.append(point);
+          });
+          block.append(points);
+        }
         page.append(block);
       });
       if (!item.hero) {
