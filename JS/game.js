@@ -1075,7 +1075,6 @@ const guildGame = (() => {
       hero: { image: "cast", columns: 1, rows: 1, poses: { neutral: 0 } },
       rose: {
         image: "arda", columns: 3, rows: 2,
-        columnEdges: [0,268,524,768],
         poses: {neutral:0,smile:1,curious:2,surprised:3,excited:4,thoughtful:5},
       },
       lucy: {

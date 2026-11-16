@@ -6,9 +6,14 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH}),report={url:process.env.TEST_URL||'http://127.0.0.1:8766/dist-cloudflare/',checks:[],errors:[],measurements:[]};
  const check=(s,ok)=>{assert.ok(ok,s);report.checks.push(s);console.log('PASS '+s)};
- try {for(const [width,height]of [[1280,800],[320,568],[844,390]]){
+ const viewports=process.env.ARDA_SINGLE_VIEW?[[390,844]]:process.env.ARDA_SPRITES_ONLY?[[1280,800],[320,568],[390,844],[844,390]]:[[1280,800],[320,568],[844,390]];
+ try {for(const [width,height]of viewports){
   const tag=width+'x'+height,ctx=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'}),p=await ctx.newPage();
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));p.on('response',r=>{if(r.status()>=400)report.errors.push(tag+': HTTP '+r.status()+' '+r.url())});
+  if(process.env.ARDA_SPRITES_ONLY)await p.route('**/JS/game.js',async route=>{
+   const response=await route.fetch({maxRetries:2}),source=(await response.text()).replace(/\r\n/g,'\n'),needle='  return {\n    ready,';assert.ok(source.includes(needle));
+   await route.fulfill({response,body:source.replace(needle,'  window.__paintArdaForRegression=expression=>{portraitFor("rose",expression);fitPortrait();};\n'+needle)});
+  });
   await p.goto(report.url);await p.evaluate(()=>guildGame.ready);
   const start=async save=>{await p.evaluate(async save=>{document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},save);await p.waitForTimeout(80)};
   const state=()=>p.evaluate(()=>guildGame.getState());
@@ -19,7 +24,23 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   check(tag+' curious portrait uses the new pixel sheet',await p.locator('#dialogue-portrait').evaluate(e=>e.dataset.sheet==='arda'&&e.dataset.frame==='2'));
   const portrait=await p.locator('#dialogue-portrait-frame').boundingBox(),box=await p.locator('#game-dialogue').boundingBox();
   check(tag+' full portrait stays above the dialogue',portrait.y>=0&&portrait.y+portrait.height<=box.y+1);
-  await p.screenshot({path:path.join(out,tag+'-arda.png')});await press();
+  await p.screenshot({path:path.join(out,tag+'-arda.png')});
+  if(process.env.ARDA_SPRITES_ONLY){
+   check(tag+' new dialogue and field atlases have complete equal-cell layouts',await p.evaluate(async()=>{const assets=document.querySelector('#guild-assets').dataset,ld=new Image(),sd=new Image();ld.src=assets.ardaSrc;sd.src=assets.sdArdaSrc;await Promise.all([ld.decode(),sd.decode()]);return ld.naturalWidth===1536&&ld.naturalHeight===1024&&sd.naturalWidth===1024&&sd.naturalHeight===384}));
+   for(const expression of ['neutral','smile','curious','surprised','excited','thoughtful']){
+    await p.evaluate(expression=>window.__paintArdaForRegression(expression),expression);
+    const pieces=await p.locator('#dialogue-portrait').evaluate(canvas=>{
+     const w=canvas.width,h=canvas.height,pixels=canvas.getContext('2d').getImageData(0,0,w,h).data,seen=new Uint8Array(w*h),areas=[];let clipped=false;
+     for(let y=0;y<h;y++)for(let x=0;x<w;x++){const key=y*w+x;if(seen[key]||pixels[key*4+3]<96)continue;if(x===0||x===w-1||y===0)clipped=true;let count=0;const queue=[key];seen[key]=1;
+      while(queue.length){const at=queue.pop(),xx=at%w,yy=Math.floor(at/w);count++;for(const [dx,dy]of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]]){const nx=xx+dx,ny=yy+dy;if(nx<0||nx>=w||ny<0||ny>=h)continue;const next=ny*w+nx;if(!seen[next]&&pixels[next*4+3]>=96){seen[next]=1;queue.push(next)}}}areas.push(count);
+     }
+     const frame=document.querySelector('#dialogue-portrait-frame').getBoundingClientRect(),dialogue=document.querySelector('#game-dialogue').getBoundingClientRect();return {areas:areas.sort((a,b)=>b-a),clipped,fits:frame.top>=0&&frame.bottom<=dialogue.top+1};
+    });
+    check(tag+' '+expression+' keeps the hat and ribbon without detached neighboring artwork '+JSON.stringify(pieces),pieces.areas[0]>20000&&(pieces.areas[1]||0)<=16&&!pieces.clipped&&pieces.fits);
+    if(['neutral','curious','excited'].includes(expression))await p.screenshot({path:path.join(out,tag+'-arda-'+expression+'.png')});
+   }
+  }
+  await press();
   check(tag+' second line uses smile and curious speech',await p.locator('#dialogue-portrait').evaluate(e=>e.dataset.frame==='1')&&(await p.locator('#game-dialogue-live').innerText()).includes('궁금한 게 너무 많아용'));
   for(let i=0;i<8&&(await state()).phase!=='shop';i++)await press();
   check(tag+' original trade flow opens renamed shop',(await state()).phase==='shop'&&(await p.locator('#shop-title').innerText())==='아르다의 잡화점');
@@ -30,8 +51,15 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   await start(saved);check(tag+' merchant save reload keeps purchases',(await state()).coins===15&&(await state()).items.find(i=>i.id==='bread').count===3);
   const sprites=await p.evaluate(()=>['down','left','right','up'].map(dir=>{const a=fieldSprites.make('rose',dir,0),d=a.getContext('2d').getImageData(0,0,a.width,a.height).data;let n=0,l=56,r=0,t=80,b=0;for(let y=0;y<a.height;y++)for(let x=0;x<a.width;x++)if(d[(y*a.width+x)*4+3]){n++;l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y)}return {dir,n,l,r,t,b,pixels:a.toDataURL()}}));
   check(tag+' four field views are opaque, distinct and fully inside sprite cells',sprites.every(s=>s.n>400&&s.l>=2&&s.r<54&&s.t>=0&&s.b<80)&&new Set(sprites.map(s=>s.pixels)).size===4);
-  check(tag+' codex uses the new identity',await p.evaluate(()=>{const a=greenstoaLore.people.find(p=>p.id==='rose');return a.name==='아르다'&&a.body.includes('호박빛')&&a.summary.includes('호기심')}));
+  check(tag+' codex uses the new identity',await p.evaluate(()=>{const a=greenstoaLore.people.find(p=>p.id==='rose');return a.name==='아르다'&&a.body.includes('호박빛')&&a.body.includes('밀짚모자')&&a.body.includes('흰 리본')&&a.summary.includes('호기심')}));
   check(tag+' mobile page has no overflow',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
+  if(process.env.ARDA_SPRITES_ONLY){
+   await start(fixture({location:'library',storyStep:'arrived',player:{x:552,y:290,dir:'up'},npcs:[],fieldFlags:{...fixture().fieldFlags,libraryReached:true,libraryLetterRead:true,libraryAmbushCleared:true}}));
+   await press();await p.waitForFunction(()=>guildGame.getState().archive==='comic');await p.locator('[data-archive-tab="people"]').click();
+   await p.locator('#archive-index button').filter({hasText:'아르다'}).click();
+   check(tag+' codex displays the same new Arda portrait',await p.locator('.archive-person-photo canvas').getAttribute('data-sheet')==='arda'&&await p.locator('.archive-person-copy h3').innerText()==='아르다');
+   await p.screenshot({path:path.join(out,tag+'-arda-codex.png')});await ctx.close();continue;
+  }
   // Test the actual shared renderer with original backgrounds, including masks.
   await p.emulateMedia({reducedMotion:'no-preference'});await p.evaluate(()=>document.body.classList.remove('no-motion'));
   if(width===1280){
