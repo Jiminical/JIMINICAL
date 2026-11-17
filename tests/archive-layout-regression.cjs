@@ -94,6 +94,32 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('#archive-page p:not(.archive-kicker)').last().scrollIntoViewIfNeeded();
     check(tag+' investigation ending is reachable without horizontal overflow',await p.locator('#archive-scroll').evaluate(e=>e.scrollWidth<=e.clientWidth+1)&&await p.locator('#archive-page p:not(.archive-kicker)').last().evaluate(e=>e.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1));
     await p.screenshot({path:path.join(out,tag+'-investigation.png')});
+   }else if(i===5){
+    const expected=[['seia','shunya','runya','rael','carola','sif'],['ellen','bran','unrevealed'],['sena','remu','seia','ellen'],['lucy','rose','edan','bord','godric','mia','aiherde']];
+    check(tag+' four race sections preserve requested member order and overlap',await p.locator('.archive-world-section').evaluateAll((sections,expected)=>JSON.stringify(sections.map(s=>[...s.querySelectorAll('.archive-race-members a')].map(a=>a.dataset.person)))===JSON.stringify(expected),expected));
+    check(tag+' each race has its full paragraph and names under square icons',await p.locator('.archive-world-section').evaluateAll(sections=>sections.length===4&&sections.every(s=>s.querySelector('h4')&&s.querySelector('p')&&[...s.querySelectorAll('.archive-race-members a')].every(a=>a.querySelector('.archive-race-icon').getBoundingClientRect().width===64&&a.querySelector('.archive-race-name').textContent))));
+    check(tag+' Iboria is labelled as Main',await p.locator('[data-person="bran"] small').innerText()==='마인');
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
+    for(const [label,id] of [['헬렌','helen'],['캐롤라','carola']]){
+     await p.locator('#archive-page a.archive-person-link').filter({hasText:label}).click();
+     check(tag+' inline '+label+' link opens correct biography',await p.locator('#archive-page h3').innerText()===label);
+     await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();
+    }
+    for(const id of [...new Set(expected.flat())]){
+     const link=p.locator('.archive-race-members a[data-person="'+id+'"]').first();
+     const label=await link.locator('.archive-race-name').innerText();await link.click();
+     check(tag+' race icon '+id+' opens matching biography',await p.locator('#archive-page h3').innerText()===label&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement));
+     await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();
+    }
+    const link=p.locator('.archive-race-members a[data-person="lucy"]');await link.focus();await p.keyboard.press('Shift+Tab');await p.keyboard.press('Tab');
+    check(tag+' race icons are reachable with keyboard Tab',await link.evaluate(e=>e===document.activeElement));await p.keyboard.press('Enter');
+    check(tag+' keyboard opens race biography without changing save bytes',await p.locator('#archive-page h3').innerText()==='루시'&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
+    await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();
+    for(const [index,name]of ['beast','demon','undead','human'].entries()){
+     const section=p.locator('.archive-world-section').nth(index);await section.locator('h4').scrollIntoViewIfNeeded();
+     check(tag+' '+name+' race cards fit reading width',await section.locator('.archive-race-members').evaluate(e=>e.scrollWidth<=e.clientWidth+1&&e.getBoundingClientRect().right<=document.querySelector('#archive-scroll').getBoundingClientRect().right+1));
+     await p.screenshot({path:path.join(out,tag+'-races-'+name+'.png')});
+    }
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));

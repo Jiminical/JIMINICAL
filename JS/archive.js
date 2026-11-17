@@ -61,6 +61,53 @@ const libraryArchive = (() => {
     }
     return p;
   }
+  function personCards(members) {
+    const list = document.createElement("ul");
+    list.className = "archive-race-members";
+    for (const member of members) {
+      const { id, note } = typeof member === "string" ? { id: member } : member;
+      const targetIndex = greenstoaLore.people.findIndex(person => person.id === id);
+      if (targetIndex < 0) continue;
+      const person = greenstoaLore.people[targetIndex];
+      const row = document.createElement("li"), link = document.createElement("a");
+      link.href = "#archive-person-" + id;
+      link.dataset.person = id;
+      link.setAttribute("aria-label", person.name + (note ? " · " + note : "") + " 인물 소개 보기");
+      link.addEventListener("click", event => {
+        event.preventDefault();
+        tab = "people";
+        choose(targetIndex, true);
+      });
+      const icon = document.createElement("span");
+      icon.className = "archive-race-icon";
+      icon.setAttribute("aria-hidden", "true");
+      const reaction = person.reactionAsset && reactionIcon(person);
+      if (reaction) icon.append(reaction);
+      else if (person.portraitKind === "actor") {
+        const source = canvas(128, 128), face = canvas(64, 64);
+        state.drawPortrait(source, id);
+        const context = face.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        context.drawImage(source, 0, 0, 128, 128, 0, 0, 64, 64);
+        icon.append(face);
+      } else {
+        icon.textContent = "?";
+        icon.classList.add("is-unrevealed");
+      }
+      const name = document.createElement("span");
+      name.className = "archive-race-name";
+      name.textContent = person.name;
+      link.append(icon, name);
+      if (note) {
+        const label = document.createElement("small");
+        label.textContent = note;
+        link.append(label);
+      }
+      row.append(link);
+      list.append(row);
+    }
+    return list;
+  }
   function heading(text) {
     const h = document.createElement("h3");
     h.textContent = text;
@@ -217,7 +264,7 @@ const libraryArchive = (() => {
           block.setAttribute("aria-labelledby", label.id);
           block.append(label);
         }
-        section.body?.forEach(text => block.append(paragraph(text)));
+        section.body?.forEach(text => block.append(worldParagraph(text, section.personLinks)));
         if (section.bullets?.length) {
           const points = document.createElement("ul");
           points.className = "archive-world-points";
@@ -228,6 +275,7 @@ const libraryArchive = (() => {
           });
           block.append(points);
         }
+        if (section.members?.length) block.append(personCards(section.members));
         page.append(block);
       });
       if (!item.hero) {

@@ -2517,3 +2517,15 @@
 .archive-person-link:focus-visible { outline: 2px solid #f0dfaa; outline-offset: 3px; }
 
 .archive-world-divider { border: 0; border-top: 1px solid #657c5e; margin: 24px 0; }
+
+.archive-race-members { display: grid; grid-template-columns: repeat(auto-fit, 88px); gap: 12px; padding: 0; margin: 18px 0 28px; list-style: none; }
+.archive-race-members li { min-width: 0; }
+.archive-race-members a { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 104px; padding: 8px 4px; border: 1px solid #657c5e; border-radius: 3px; background: #273e33; color: #f0dfaa; text-decoration: none; }
+.archive-race-members a:hover { background: #3c5541; border-color: #f0dfaa; }
+.archive-race-members a:focus-visible { outline: 2px solid #f0dfaa; outline-offset: 3px; }
+.archive-race-icon { display: block; width: 64px; height: 64px; overflow: hidden; }
+.archive-race-icon canvas { display: block; width: 64px; height: 64px; image-rendering: pixelated; }
+.archive-race-icon .archive-relationship-reaction { margin: 0; vertical-align: top; }
+.archive-race-icon.is-unrevealed { display: grid; place-items: center; background: #1c3028; color: #a9b7a2; font-size: 36px; }
+.archive-race-name { font-size: 14px; line-height: 1.4; overflow-wrap: anywhere; }
+.archive-race-members small { font-size: 12px; color: #c0c9b7; }
