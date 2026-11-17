@@ -121,8 +121,8 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
      await p.screenshot({path:path.join(out,tag+'-races-'+name+'.png')});
     }
    }else if(i===6){
-    const headings=['지도자','그린스토아 본청','힐리아스 여관','동부','서부','남부','북부','중심 상권'];
-    check(tag+' administration has eight requested sections and complete paragraphs',await p.locator('.archive-world-section').evaluateAll((sections,headings)=>JSON.stringify(sections.map(s=>s.querySelector('h4').textContent))===JSON.stringify(headings)&&sections.every(s=>s.querySelectorAll('p').length===1),headings)&&await p.evaluate(()=>[...document.querySelectorAll('.archive-world-section p')].map(p=>p.textContent).join('\n')===greenstoaLore.articles[6].sections.flatMap(s=>s.body).join('\n')));
+    const headings=['지도자','그린스토아 본청','힐리아스 여관','동부','서부','남부','북부','중심 상권','정찰대'];
+    check(tag+' administration has nine requested sections and complete paragraphs',await p.locator('.archive-world-section').evaluateAll((sections,headings)=>JSON.stringify(sections.map(s=>s.querySelector('h4').textContent))===JSON.stringify(headings)&&sections.every(s=>s.querySelectorAll('p').length===1),headings)&&await p.evaluate(()=>[...document.querySelectorAll('.archive-world-section p')].map(p=>p.textContent).join('\n')===greenstoaLore.articles[6].sections.flatMap(s=>s.body).join('\n')));
     check(tag+' leader cards show former Helen and current Aran',await p.locator('.archive-race-members a').evaluateAll(links=>JSON.stringify(links.map(a=>[a.dataset.person,a.querySelector('small').textContent]))===JSON.stringify([['helen','전임'],['aran','현임']])));
     check(tag+' inn hobby phrase is bold without literal markdown',await p.locator('.archive-world-section strong').innerText()==='취미 삼아'&&!await p.locator('#archive-page').innerText().then(t=>t.includes('**')));
     const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
@@ -138,6 +138,19 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     }
     await p.locator('.archive-world-section').last().locator('p').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-administration-end.png')});
     await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=0);await p.screenshot({path:path.join(out,tag+'-administration-leaders.png')});
+   }else if(i===7){
+    check(tag+' exterior introduces the journey and three requested sections',await p.locator('.archive-world-section h4').evaluateAll(es=>JSON.stringify(es.map(e=>e.textContent))===JSON.stringify(['제르디아 모험가 길드','아이리스 제국','월화국']))&&await p.evaluate(()=>[...document.querySelectorAll('#archive-page p:not(.archive-kicker)')].map(e=>e.textContent).join('\n')===[...greenstoaLore.articles[7].body,...greenstoaLore.articles[7].sections.flatMap(s=>s.body)].join('\n')));
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
+    const hanari=p.locator('.archive-race-members a[data-person="mia"]');
+    check(tag+' Wolhwa has a named Hanari icon',await hanari.locator('.archive-race-name').innerText()==='하나리'&&await hanari.locator('canvas').count()===1);
+    await hanari.focus();await p.keyboard.press('Enter');
+    check(tag+' Hanari icon opens her biography without changing the save',await p.locator('#archive-page h3').innerText()==='하나리'&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
+    await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(7).click();
+    for(let j=0;j<3;j++){
+     const section=p.locator('.archive-world-section').nth(j);await section.locator('p').scrollIntoViewIfNeeded();
+     check(tag+' exterior section '+j+' is reachable without overflow',await section.evaluate(e=>{const r=e.getBoundingClientRect(),v=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top<v.bottom&&r.bottom>v.top&&e.scrollWidth<=e.clientWidth+1}));
+    }
+    await p.locator('.archive-race-members').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-exterior-hanari.png')});
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
