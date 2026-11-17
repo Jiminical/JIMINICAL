@@ -26,7 +26,7 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   check(tag+' full portrait stays above the dialogue',portrait.y>=0&&portrait.y+portrait.height<=box.y+1);
   await p.screenshot({path:path.join(out,tag+'-arda.png')});
   if(process.env.ARDA_SPRITES_ONLY){
-   check(tag+' new dialogue and field atlases have complete equal-cell layouts',await p.evaluate(async()=>{const assets=document.querySelector('#guild-assets').dataset,ld=new Image(),sd=new Image();ld.src=assets.ardaSrc;sd.src=assets.sdArdaSrc;await Promise.all([ld.decode(),sd.decode()]);return ld.naturalWidth===1536&&ld.naturalHeight===1024&&sd.naturalWidth===1024&&sd.naturalHeight===384}));
+   check(tag+' new dialogue and field atlases have complete equal-cell layouts',await p.evaluate(async()=>{const assets=document.querySelector('#guild-assets').dataset,ld=new Image(),sd=new Image();ld.src=assets.ardaSrc;sd.src=assets.sdArdaSrc;await Promise.all([ld.decode(),sd.decode()]);return ld.naturalWidth===1536&&ld.naturalHeight===1024&&sd.naturalWidth===2172&&sd.naturalHeight===724}));
    for(const expression of ['neutral','smile','curious','surprised','excited','thoughtful']){
     await p.evaluate(expression=>window.__paintArdaForRegression(expression),expression);
     const pieces=await p.locator('#dialogue-portrait').evaluate(canvas=>{
