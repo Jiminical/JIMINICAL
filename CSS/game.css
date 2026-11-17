@@ -2515,3 +2515,5 @@
 .archive-person-link { color: #f0dfaa; text-decoration: underline; text-underline-offset: 3px; }
 .archive-person-link:hover { color: #fff3cb; }
 .archive-person-link:focus-visible { outline: 2px solid #f0dfaa; outline-offset: 3px; }
+
+.archive-world-divider { border: 0; border-top: 1px solid #657c5e; margin: 24px 0; }

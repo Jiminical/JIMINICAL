@@ -80,6 +80,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.screenshot({path:path.join(out,tag+'-crisis-epilogue.png')});
    }else if(i===4){
     check(tag+' investigation has four complete paragraphs and a Lucy link',await p.locator('#archive-page p:not(.archive-kicker)').count()===4&&await p.locator('.archive-person-link').innerText()==='루시'&&await p.evaluate(()=>[...document.querySelectorAll('#archive-page p:not(.archive-kicker)')].map(p=>p.textContent).join('\n')===greenstoaLore.articles[4].body.join('\n')));
+    check(tag+' investigation divider separates the unclaimed request from the decision',await p.locator('hr.archive-world-divider').count()===1&&await p.locator('hr.archive-world-divider').evaluate(e=>e.previousElementSibling.textContent.endsWith('수주하지 않았습니다.')&&e.nextElementSibling.textContent.startsWith('허나 위험을')));
     const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
     await p.locator('.archive-person-link').click();
     check(tag+' Lucy link opens her biography and focuses her selected index',await p.locator('#archive-page h3').innerText()==='루시'&&await p.locator('[data-archive-tab="people"]').getAttribute('aria-pressed')==='true'&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement&&e.textContent.includes('루시')));

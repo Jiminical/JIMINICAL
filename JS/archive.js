@@ -198,7 +198,14 @@ const libraryArchive = (() => {
       const item = greenstoaLore.articles[selected];
       if (item.hero) page.append(articleImage(item.hero));
       page.append(paragraph(item.tag, "archive-kicker"), heading(item.title));
-      item.body.forEach((text) => page.append(worldParagraph(text, item.personLinks)));
+      item.body.forEach((text, index) => {
+        if (index === item.dividerBefore) {
+          const divider = document.createElement("hr");
+          divider.className = "archive-world-divider";
+          page.append(divider);
+        }
+        page.append(worldParagraph(text, item.personLinks));
+      });
       item.sections?.forEach((section, index) => {
         const block = document.createElement(section.title ? "section" : "div");
         block.className = "archive-world-section";
