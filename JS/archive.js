@@ -36,6 +36,31 @@ const libraryArchive = (() => {
     p.className = className;
     return p;
   }
+  function worldParagraph(text, links = []) {
+    const p = paragraph(text);
+    for (const { name, targetId } of links) {
+      const targetIndex = greenstoaLore.people.findIndex(person => person.id === targetId);
+      if (targetIndex < 0) continue;
+      for (const node of [...p.childNodes]) {
+        if (node.nodeType !== Node.TEXT_NODE) continue;
+        const offset = node.textContent.indexOf(name);
+        if (offset < 0) continue;
+        const link = document.createElement("a");
+        link.href = "#archive-person-" + targetId;
+        link.className = "archive-person-link";
+        link.textContent = name;
+        link.setAttribute("aria-label", name + " 인물 소개 보기");
+        link.addEventListener("click", event => {
+          event.preventDefault();
+          tab = "people";
+          choose(targetIndex, true);
+        });
+        const text = node.textContent;
+        node.replaceWith(document.createTextNode(text.slice(0, offset)), link, document.createTextNode(text.slice(offset + name.length)));
+      }
+    }
+    return p;
+  }
   function heading(text) {
     const h = document.createElement("h3");
     h.textContent = text;
@@ -173,7 +198,7 @@ const libraryArchive = (() => {
       const item = greenstoaLore.articles[selected];
       if (item.hero) page.append(articleImage(item.hero));
       page.append(paragraph(item.tag, "archive-kicker"), heading(item.title));
-      item.body.forEach((text) => page.append(paragraph(text)));
+      item.body.forEach((text) => page.append(worldParagraph(text, item.personLinks)));
       item.sections?.forEach((section, index) => {
         const block = document.createElement(section.title ? "section" : "div");
         block.className = "archive-world-section";
@@ -351,7 +376,7 @@ const libraryArchive = (() => {
     if (!state) return false;
     if (code === "Tab") {
       const focusable = [
-        ...root.querySelectorAll("button:not([disabled]),[tabindex='0']"),
+        ...root.querySelectorAll("button:not([disabled]),a[href],[tabindex='0']"),
         document.querySelector("#game-sound-toggle"),
       ].filter((e) => e.getClientRects().length);
       const index = focusable.indexOf(document.activeElement),

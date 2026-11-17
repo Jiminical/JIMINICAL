@@ -78,6 +78,21 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('.archive-world-section p').last().scrollIntoViewIfNeeded();
     check(tag+' present-day epilogue is readable without horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>{const rect=element.getBoundingClientRect(),viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return rect.top>=viewport.top-1&&rect.bottom<=viewport.bottom+1&&element.textContent==='다행히도 바로 지금, 제르디아의 한 모험가 또한 이 현상에 흥미를 붙였습니다...'})&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
     await p.screenshot({path:path.join(out,tag+'-crisis-epilogue.png')});
+   }else if(i===4){
+    check(tag+' investigation has four complete paragraphs and a Lucy link',await p.locator('#archive-page p:not(.archive-kicker)').count()===4&&await p.locator('.archive-person-link').innerText()==='루시'&&await p.evaluate(()=>[...document.querySelectorAll('#archive-page p:not(.archive-kicker)')].map(p=>p.textContent).join('\n')===greenstoaLore.articles[4].body.join('\n')));
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
+    await p.locator('.archive-person-link').click();
+    check(tag+' Lucy link opens her biography and focuses her selected index',await p.locator('#archive-page h3').innerText()==='루시'&&await p.locator('[data-archive-tab="people"]').getAttribute('aria-pressed')==='true'&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement&&e.textContent.includes('루시')));
+    check(tag+' Lucy navigation preserves the save and URL',await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved&&new URL(p.url()).hash==='');
+    await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(4).click();
+    await p.locator('.archive-person-link').focus();await p.keyboard.press('Shift+Tab');await p.keyboard.press('Tab');
+    check(tag+' Lucy link participates in the keyboard focus cycle',await p.locator('.archive-person-link').evaluate(e=>e===document.activeElement));
+    await p.keyboard.press('Enter');
+    check(tag+' Enter opens Lucy biography',await p.locator('#archive-page h3').innerText()==='루시');
+    await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(4).click();
+    await p.locator('#archive-page p:not(.archive-kicker)').last().scrollIntoViewIfNeeded();
+    check(tag+' investigation ending is reachable without horizontal overflow',await p.locator('#archive-scroll').evaluate(e=>e.scrollWidth<=e.clientWidth+1)&&await p.locator('#archive-page p:not(.archive-kicker)').last().evaluate(e=>e.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1));
+    await p.screenshot({path:path.join(out,tag+'-investigation.png')});
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
