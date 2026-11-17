@@ -36,7 +36,7 @@ const libraryArchive = (() => {
     p.className = className;
     return p;
   }
-  function worldParagraph(text, links = []) {
+  function worldParagraph(text, links = [], emphasis = []) {
     const p = paragraph(text);
     for (const { name, targetId } of links) {
       const targetIndex = greenstoaLore.people.findIndex(person => person.id === targetId);
@@ -57,6 +57,16 @@ const libraryArchive = (() => {
         });
         const text = node.textContent;
         node.replaceWith(document.createTextNode(text.slice(0, offset)), link, document.createTextNode(text.slice(offset + name.length)));
+      }
+    }
+    for (const phrase of emphasis) {
+      for (const node of [...p.childNodes]) {
+        if (node.nodeType !== Node.TEXT_NODE) continue;
+        const text = node.textContent, offset = text.indexOf(phrase);
+        if (offset < 0) continue;
+        const strong = document.createElement("strong");
+        strong.textContent = phrase;
+        node.replaceWith(document.createTextNode(text.slice(0, offset)), strong, document.createTextNode(text.slice(offset + phrase.length)));
       }
     }
     return p;
@@ -264,7 +274,7 @@ const libraryArchive = (() => {
           block.setAttribute("aria-labelledby", label.id);
           block.append(label);
         }
-        section.body?.forEach(text => block.append(worldParagraph(text, section.personLinks)));
+        section.body?.forEach(text => block.append(worldParagraph(text, section.personLinks, section.emphasis)));
         if (section.bullets?.length) {
           const points = document.createElement("ul");
           points.className = "archive-world-points";
