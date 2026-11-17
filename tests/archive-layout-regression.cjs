@@ -11,7 +11,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
  try{for(const [width,height]of (process.env.ARCHIVE_SINGLE_VIEW?[[390,844]]:[[1280,800],[390,844],[320,568],[844,390]])){
   const tag=width+'x'+height,context=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'}),p=await context.newPage();
   const worldImageRequests=[];
-  p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia|demon-king|zer-alliance)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
+  p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia|demon-king|zer-alliance|mother-tree|high-elf|half-elf|wood-elf)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
@@ -43,7 +43,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' Zerdia final paragraph is reachable without horizontal overflow',await p.locator('.archive-world-section p').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
     await p.screenshot({path:path.join(out,tag+'-world-zerdia.png')});
    }else if(i===1){
-    check(tag+' article '+titles[i]+' has the introduction and original tree artwork',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')==='2');
+    for(const image of await p.locator('.archive-world-image').all()){await image.scrollIntoViewIfNeeded();await image.evaluate(image=>image.decode())}
+    check(tag+' elf article uses four uploaded images and removes the old chapter artwork',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()===3&&await p.locator('.archive-world-image').count()===4&&await p.locator('canvas.archive-world-art').count()===0);
+    check(tag+' uploaded files 1 2 3 4 precede the title and matching elf headings',await p.evaluate(()=>{
+     const page=document.querySelector('#archive-page'),sections=[...page.querySelectorAll('.archive-world-section')];
+     return page.firstElementChild.dataset.illustration==='motherTree'&&JSON.stringify(sections.map(s=>[s.firstElementChild.dataset.illustration,s.children[1].textContent]))===JSON.stringify([['highElf','하이엘프'],['halfElf','하프엘프'],['woodElf','우드엘프']]);
+    }));
+    check(tag+' all four elf images preserve original dimensions and full composition',await p.locator('.archive-world-image').evaluateAll(images=>{const viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return images.every((image,index)=>{const height=index===0?640:832,r=image.getBoundingClientRect();return image.naturalWidth===1216&&image.naturalHeight===height&&Math.abs(r.width/r.height-1216/height)<.01&&r.left>=viewport.left&&r.right<=viewport.right})}));
     check(tag+' high half and wood elves each have three semantic list items in order',await p.evaluate(()=>{
      const sections=[...document.querySelectorAll('.archive-world-section')],item=greenstoaLore.articles[1];
      return JSON.stringify(sections.map(section=>section.querySelector('h4').textContent))===JSON.stringify(['하이엘프','하프엘프','우드엘프'])&&sections.every((section,index)=>{const list=section.querySelector('ul.archive-world-points');return list&&list.children.length===3&&[...list.children].every(child=>child.tagName==='LI')&&JSON.stringify([...list.children].map(child=>child.textContent))===JSON.stringify(item.sections[index].bullets)})&&![...document.querySelectorAll('#archive-page p,#archive-page li')].some(element=>/보디|일부을|업으나|&#x20;/.test(element.textContent));
@@ -51,11 +57,11 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' elf lists use readable body text and stay inside the reading width',await p.locator('.archive-world-points').evaluateAll(lists=>{const viewport=document.querySelector('#archive-scroll').getBoundingClientRect(),bodySize=parseFloat(getComputedStyle(document.querySelector('#archive-page p:not(.archive-kicker)')).fontSize);return lists.every(list=>{const bounds=list.getBoundingClientRect();return getComputedStyle(list).listStyleType==='disc'&&parseFloat(getComputedStyle(list).fontSize)===bodySize&&bounds.left>=viewport.left&&bounds.right<=viewport.right&&list.scrollWidth<=list.clientWidth+1})}));
     await p.locator('#archive-scroll').evaluate(element=>element.scrollTop=0);await p.waitForFunction(()=>!document.querySelector('#archive-scroll-more').hidden);await p.screenshot({path:path.join(out,tag+'-elves-top.png')});
     await p.locator('#archive-scroll-more').click();check(tag+' elf article scroll hint advances the long lore',await p.locator('#archive-scroll').evaluate(element=>element.scrollTop>0));
-    for(const [index,name]of ['high','half','wood'].entries()){await p.locator('.archive-world-section h4').nth(index).scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-elves-'+name+'.png')})}
+    for(const [index,name]of ['high','half','wood'].entries()){await p.locator('.archive-world-section .archive-world-image').nth(index).scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-elves-'+name+'.png')})}
     await p.locator('.archive-world-points li').last().scrollIntoViewIfNeeded();
     check(tag+' final wood elf tattoo description is reachable',await p.locator('.archive-world-points li').last().evaluate(element=>{const bounds=element.getBoundingClientRect(),viewport=document.querySelector('#archive-scroll').getBoundingClientRect();return bounds.top>=viewport.top&&bounds.bottom<=viewport.bottom+1&&element.textContent.includes('원 모양 문신')}));
     await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForFunction(()=>document.querySelector('#archive-scroll-more').hidden);
-    check(tag+' original Mother Tree artwork is reachable after the lists without overflow',await p.locator('canvas.archive-world-art').evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+    check(tag+' elf article ends with the original wood elf text without overflow',await p.locator('.archive-world-points li').last().evaluate(element=>element.getBoundingClientRect().bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1)&&await p.locator('#archive-scroll').evaluate(element=>element.scrollWidth<=element.clientWidth+1));
     await p.screenshot({path:path.join(out,tag+'-elves-end.png')});
    }else if(i===2){
     for(const image of await p.locator('.archive-world-image').all()){await image.scrollIntoViewIfNeeded();await image.evaluate(image=>image.decode())}

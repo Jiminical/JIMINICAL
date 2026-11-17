@@ -13,6 +13,12 @@ const {gunzipSync}=require('zlib');
   const encoded=worldImages.match(new RegExp('data-'+attribute+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file+'.webp')));
  }
+ for(const [attribute,file]of [['mother-tree','world-mother-tree'],['high-elf','world-high-elf'],['half-elf','world-half-elf'],['wood-elf','world-wood-elf']]){
+  assert.ok(worldImages.includes('data-'+attribute+'-src="assets/'+file+'.webp"'));
+ }
+ const companions=JSON.parse(fs.readFileSync(path.join(root,'scripts/offline-assets.json'),'utf8'));
+ assert.equal(new Set(companions).size,13);
+ for(const file of companions){assert.ok(fs.existsSync(path.join(root,file)));assert.ok(html.includes(file));}
  for(let chapter=1;chapter<=9;chapter++){
   const encoded=html.match(new RegExp('data-chapter'+chapter+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/opening-'+String(chapter).padStart(2,'0')+'.webp')));
@@ -48,7 +54,7 @@ const {gunzipSync}=require('zlib');
  assert.ok(Buffer.byteLength(raw)<100*1024**2);console.log('PASS portable payload: active portrait sheets and original opening music byte-identical, below 100 MiB');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});
  try {
- for(const url of [pathToFileURL(path.join(root,'index.html')).href,process.env.TEST_COMPACT_URL||'http://127.0.0.1:8000/dist-cloudflare-compact/']) {
+ for(const url of [process.env.TEST_PORTABLE_URL||pathToFileURL(path.join(root,'index.html')).href,process.env.TEST_COMPACT_URL||'http://127.0.0.1:8000/dist-cloudflare-compact/']) {
   const context=await browser.newContext(),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'load',timeout:120000});
