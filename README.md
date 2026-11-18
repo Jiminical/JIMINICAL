@@ -4,7 +4,8 @@
 스타일, 동작 코드가 모두 포함되어 있어 별도 설치나 빌드 없이 열 수 있습니다.
 도서관 웹툰(`assets/webtoon/`)과 어머니 나무·엘프 삽화 4장(`assets/world-mother-tree.webp`,
 `world-high-elf.webp`, `world-half-elf.webp`, `world-wood-elf.webp`) 및 평화·현 시점 삽화
-(`assets/world-peace.webp`, `assets/world-crisis.webp`)는 원본을 보존한 별도 파일로
+(`assets/world-peace.webp`, `assets/world-crisis.webp`), 조사 의뢰 삽화
+(`assets/world-investigation-lucy.webp`, `assets/world-investigation-greenstoa.webp`)는 원본을 보존한 별도 파일로
 불러옵니다. 오프라인 패키지에는 필요한 그림을 모두 포함하며, HTML과 `assets` 폴더를 함께 보관하세요.
 
 2026-11-18 ‘어머니 나무와 엘프들’은 업로드한 `4.zip`의 파일명대로 1번 나무를 맨 위에,
@@ -14,6 +15,10 @@
 2026-11-18 ‘이어져온 평화, 그리고 위기’는 첨부 1번 그림을 항목 맨 위에,
 2번 그림을 ‘953년 10월 1일, 현 시점’ 소제목 위에 표시합니다. 원본 1216×704 비율과
 본문을 보존하며, 오프라인 패키지에도 두 그림을 함께 포함합니다.
+
+2026-11-18 ‘그린스토아 조사 의뢰’는 첨부 1번 루시 그림을 항목 맨 위에,
+2번 그린스토아 전경을 ‘허나 위험을…’ 문단 바로 위에 표시합니다. 구분선·루시 인물 링크와
+본문은 유지하고, 원본 비율의 두 삽화를 오프라인 패키지에도 포함합니다.
 
 로컬 서버로 확인하려면 저장소에서 `python3 -m http.server 8000`을 실행하세요.
 

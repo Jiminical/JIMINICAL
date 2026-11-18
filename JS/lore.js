@@ -157,7 +157,7 @@ const greenstoaLore = (() => {
     {
       title: "그린스토아 조사 의뢰",
       tag: "현재의 여정",
-      chapter: 8,
+      hero: { asset: "investigationLucy", width: 1300, height: 700, alt: "제르디아 모험가 길드 접수원 루시" },
       body: [
         "당신은 제르디아 모험가 길드 소속의 모험가입니다. 길드에는 수색을 비롯한 여러 의뢰가 모이고, 당신 역시 루시를 통해 여러 의뢰를 수행해왔습니다.",
         "그린스토아의 이상현상에 대하여 제르디아 왕국 기사단은 사전 조사를 맡길 모험가를 구했습니다. 하지만, 그 어머니 나무를 건드릴 정도의 힘이 있는 자를 상대한다면 생환을 기대하기 어렵기 때문에 그 누구도 아직 의뢰를 수주하지 않았습니다.",
@@ -166,6 +166,9 @@ const greenstoaLore = (() => {
       ],
       personLinks: [{ name: "루시", targetId: "lucy" }],
       dividerBefore: 2,
+      bodyImages: {
+        2: { asset: "investigationGreenstoa", width: 1920, height: 1088, alt: "거대한 나무와 폭포, 푸른 수정이 빛나는 그린스토아 전경" },
+      },
     },
     {
       title: "엘프 외의 종족",

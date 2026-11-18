@@ -261,6 +261,7 @@ const libraryArchive = (() => {
           divider.className = "archive-world-divider";
           page.append(divider);
         }
+        if (item.bodyImages?.[index]) page.append(articleImage(item.bodyImages[index], true));
         page.append(worldParagraph(text, item.personLinks));
       });
       item.sections?.forEach((section, index) => {
