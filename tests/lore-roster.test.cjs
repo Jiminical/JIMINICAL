@@ -36,7 +36,7 @@ test('new supporting characters are separate people, without borrowed artwork or
     const person=people.find(p=>p.name===name);assert.equal(person.portraitKind,'unrevealed');assert.equal(person.portraitSrc,'');assert.match(person.body,/공개되지/);
     assert.ok(!['nara','tobin','leon'].includes(person.id));
   }
-  assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,10);
+  assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,5);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
 test('relationships exist only for the six requested sources and keep the requested target order',()=>{
@@ -65,9 +65,9 @@ test('relationship copy and reactions match the four supplied descriptions',()=>
   assert.equal(people.filter(p=>p.reactionAsset).length,6);
 });
 
-test('six supplied landscape cards map to their own people without duplicating Seia',()=>{
-  const expected={runya:'runya',carola:'carola',seia:'seia',sif:'sif',sena:'jangwi',shunya:'shunya'};
-  assert.equal(people.filter(p=>p.portraitSrc).length,6);
+test('thirteen supplied landscape cards map to their own people without duplicating Seia',()=>{
+  const expected={runya:'runya',carola:'carola',seia:'seia',sif:'sif',sena:'jangwi',shunya:'shunya',aran:'aran',remu:'remu',mareri:'mareri',klone:'klone',helen:'helen',rael:'muirshu',ellen:'elena'};
+  assert.equal(people.filter(p=>p.portraitSrc).length,13);
   assert.equal(people.filter(p=>p.name==='세이아').length,1);
   for(const [id,file]of Object.entries(expected)){
     const person=people.find(p=>p.id===id);

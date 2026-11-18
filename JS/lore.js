@@ -312,7 +312,7 @@ const greenstoaLore = (() => {
     {
       id: "rael",
       name: "뮈르슈",
-      portraitSrc: "",
+      portraitSrc: "assets/person-muirshu.webp",
       tags: ["하프 드래곤", "이슬잎 사서", "장난기", "어른스러운 여유", "건드리지 말아야 할 역린"],
       role: "이슬잎 도서관의 사서 · 하프 드래곤 수인",
       summary: "활발한 장난기와 어른스러운 차분함을 함께 지닌, 자존심 강한 하프 드래곤.",
@@ -460,6 +460,78 @@ const greenstoaLore = (() => {
       "summary": "토끼 수인이자 뱀파이어이며 몬스터에 속하는 인물.",
       "body": "21세. 토끼 수인이자 뱀파이어이며 몬스터에 속한다."
     },
+    {
+      "id": "aran",
+      "name": "아란",
+      "portraitSrc": "assets/person-aran.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "하프엘프",
+        "현임 지도자",
+        "헬렌의 딸"
+      ],
+      "role": "그린스토아 현임 지도자 · 하프엘프",
+      "summary": "헬렌의 딸인 그린스토아의 현임 지도자.",
+      "body": "160세의 하프엘프. 그린스토아의 현임 지도자이며 헬렌의 딸이다."
+    },
+    {
+      "id": "remu",
+      "name": "레무",
+      "portraitSrc": "assets/person-remu.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "슬라임",
+        "대장장이",
+        "몬스터",
+        "형태변환"
+      ],
+      "role": "대장장이 · 슬라임",
+      "summary": "형태변환을 할 수 있는 슬라임 대장장이.",
+      "body": "슬라임 대장장이이며 몬스터에 속한다. 형태를 변환할 수 있다."
+    },
+    {
+      "id": "klone",
+      "name": "클로네",
+      "portraitSrc": "assets/person-klone.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "우드엘프",
+        "마법 탐구자",
+        "개방적 생활문화"
+      ],
+      "role": "마법 탐구자 · 우드엘프",
+      "summary": "개방적인 생활문화를 지닌 우드엘프 마법 탐구자.",
+      "body": "311세의 우드엘프 마법 탐구자. 개방적인 생활문화를 지녔다."
+    },
+    {
+      "id": "helen",
+      "name": "헬렌",
+      "portraitSrc": "assets/person-helen.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "하프엘프",
+        "전임 지도자",
+        "여관 주인"
+      ],
+      "role": "그린스토아 전임 지도자 · 여관 주인",
+      "summary": "그린스토아의 전임 지도자인 하프엘프 여관 주인.",
+      "body": "417세의 하프엘프. 그린스토아의 전임 지도자이며 여관 주인이다."
+    },
+    {
+      "id": "ellen",
+      "name": "엘레나",
+      "portraitSrc": "assets/person-elena.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "서큐버스",
+        "조건부 불로",
+        "몬스터",
+        "마족"
+      ],
+      "role": "서큐버스 · 몬스터와 마족",
+      "summary": "조건부 불로의 특성을 지닌 서큐버스.",
+      "body": "100세의 서큐버스. 조건부 불로의 특성을 지녔으며 몬스터와 마족에 속한다."
+    },
   ];
   const peopleGroups = [
     { id: "lead", title: "주연" },
@@ -481,11 +553,11 @@ const greenstoaLore = (() => {
     ],
   };
   const mareri = {
-    id: "mareri", name: "마르에리", portraitSrc: "", portraitKind: "title",
-    tags: ["첫 만남", "시니컬", "은근한 배려", "머리의 꽃"],
+    id: "mareri", name: "마르에리", portraitSrc: "assets/person-mareri.webp", portraitKind: "title",
+    tags: ["첫 만남", "시니컬", "은근한 배려", "머리의 꽃", "하프엘프", "정령술사", "애주가", "앳된 외견"],
     role: "모험가를 맞이하는 첫 만남의 인물",
     summary: "시니컬한 말투 속에 은근한 배려를 숨긴 인물.",
-    body: "처음 만난 모험가에게 이름을 기억해 두라고 말한다. 반말로 시니컬하게 툭툭 말하지만, 길을 잃으면 함께 찾아 주고 밥을 챙기라며 은근히 마음을 쓴다. 머리에는 꽃을 꽂고 있다.",
+    body: "처음 만난 모험가에게 이름을 기억해 두라고 말한다. 반말로 시니컬하게 툭툭 말하지만, 길을 잃으면 함께 찾아 주고 밥을 챙기라며 은근히 마음을 쓴다. 머리에는 꽃을 꽂고 있다. 251세의 하프엘프 정령술사이며, 애주가이고 앳된 외견을 지녔다.",
   };
   const personRelationships = {
     henia: [

@@ -213,14 +213,15 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    await link.click();
    check(tag+' relationship opens '+target+' without losing archive state',await p.locator('.archive-person-copy h3').innerText()===target&&await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.evaluate(()=>guildGame.getState().archive==='people'));
   }
-  check(tag+' six unique supplied cards include one Seia entry',await p.evaluate(()=>greenstoaLore.people.filter(p=>p.portraitSrc).length===6&&greenstoaLore.people.filter(p=>p.name==='세이아').length===1));
+  check(tag+' thirteen unique supplied cards include one Seia entry',await p.evaluate(()=>greenstoaLore.people.filter(p=>p.portraitSrc).length===13&&greenstoaLore.people.filter(p=>p.name==='세이아').length===1));
   const seiaSource=await p.evaluate(()=>{const person=greenstoaLore.people.find(p=>p.id==='seia'),original=person.portraitSrc;person.portraitSrc='data:image/png;base64,bm90YW5pbWFnZQ==';return original});
   await p.locator('#archive-index button').filter({hasText:'세이아'}).click();await p.waitForFunction(()=>document.querySelector('.archive-person-unrevealed'));
   check(tag+' an unavailable supplied card falls back safely without borrowing an actor',await p.locator('.archive-person-photo canvas').count()===0&&await p.locator('.archive-person-unrevealed').innerText().then(t=>t.includes('이미지 없음')));
   await p.evaluate(src=>greenstoaLore.people.find(p=>p.id==='seia').portraitSrc=src,seiaSource);
   if(width<=700)check(tag+' both cast section headings remain visible on mobile',await p.locator('.archive-index-group h4').evaluateAll(es=>{const r=document.querySelector('#archive-index').getBoundingClientRect();return es.every(e=>{const b=e.getBoundingClientRect();return b.top>=r.top-1&&b.bottom<=r.bottom+1})}));
   await p.locator('#archive-index button').first().click();
-  check(tag+' portrait slot defaults to the current Mareri artwork',await p.locator('.archive-person-photo canvas[role="img"]').count()===1);
+  await p.locator('.archive-person-image').evaluate(image=>image.decode());
+  check(tag+' portrait slot defaults to the supplied Mareri card',await p.locator('.archive-person-image').evaluate(image=>image.src.endsWith('/assets/person-mareri.webp')&&image.naturalWidth===1300&&image.naturalHeight===700));
   check(tag+' changing tabs brings the selected first entry into view',await p.locator('#archive-index').evaluate(e=>e.scrollLeft===0&&e.scrollTop===0));
   check(tag+' short introduction is larger than the old kicker',await p.locator('.archive-person-role').evaluate(e=>parseFloat(getComputedStyle(e).fontSize)>=12));
   check(tag+' name and multiple hashtag features are separate',await p.locator('.archive-person-copy h3').innerText()==='마르에리'&&await p.locator('.archive-person-tags li').count()>=3&&await p.locator('.archive-person-tags li').evaluateAll(es=>es.every(e=>e.textContent.startsWith('#'))));
@@ -248,7 +249,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' selecting another person resets reading position',await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.locator('.archive-person-copy h3').innerText()==='카니아');
   await p.evaluate(()=>{greenstoaLore.people[0].portraitSrc='data:image/png;base64,bm90YW5pbWFnZQ=='});await p.locator('#archive-index button').first().click();await p.waitForFunction(()=>document.querySelector('.archive-person-photo canvas'));
   check(tag+' a failed photo gracefully returns to the existing portrait',await p.locator('.archive-person-photo canvas').count()===1);
-  await p.evaluate(()=>greenstoaLore.people[0].portraitSrc='');
+  await p.evaluate(src=>greenstoaLore.people[0].portraitSrc=src,original.portraitSrc);
   check(tag+' archive fits the screen without outer scrolling',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
   await p.locator('#archive-close').click();const after=await p.evaluate(()=>guildGame.getState());
   check(tag+' closing preserves position, quest and save data',after.phase==='free'&&JSON.stringify(after.player)===JSON.stringify(before.player)&&after.hp===before.hp&&after.questAccepted===before.questAccepted&&JSON.stringify(after.items)===JSON.stringify(before.items)&&await p.evaluate(()=>journeySave.valid(journeySave.read())));
