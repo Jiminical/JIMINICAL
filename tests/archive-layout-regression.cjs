@@ -213,7 +213,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    await link.click();
    check(tag+' relationship opens '+target+' without losing archive state',await p.locator('.archive-person-copy h3').innerText()===target&&await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.evaluate(()=>guildGame.getState().archive==='people'));
   }
-  check(tag+' thirteen unique supplied cards include one Seia entry',await p.evaluate(()=>greenstoaLore.people.filter(p=>p.portraitSrc).length===13&&greenstoaLore.people.filter(p=>p.name==='세이아').length===1));
+  check(tag+' eighteen unique supplied cards include one Seia entry',await p.evaluate(()=>greenstoaLore.people.filter(p=>p.portraitSrc).length===18&&greenstoaLore.people.filter(p=>p.name==='세이아').length===1));
   const seiaSource=await p.evaluate(()=>{const person=greenstoaLore.people.find(p=>p.id==='seia'),original=person.portraitSrc;person.portraitSrc='data:image/png;base64,bm90YW5pbWFnZQ==';return original});
   await p.locator('#archive-index button').filter({hasText:'세이아'}).click();await p.waitForFunction(()=>document.querySelector('.archive-person-unrevealed'));
   check(tag+' an unavailable supplied card falls back safely without borrowing an actor',await p.locator('.archive-person-photo canvas').count()===0&&await p.locator('.archive-person-unrevealed').innerText().then(t=>t.includes('이미지 없음')));
