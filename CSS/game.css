@@ -2531,3 +2531,23 @@
 .archive-race-members small { font-size: 12px; color: #c0c9b7; }
 
 .archive-race-photo { display: block; width: 64px; height: 64px; object-fit: cover; object-position: right center; }
+
+/* Shared pixel faces in the cast index, world cards and relationship links. */
+.archive-person-icon {
+  display: inline-block;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.archive-person-icon > .archive-relationship-reaction { width: 100%; height: 100%; margin: 0; vertical-align: top; }
+.archive-person-icon.is-unrevealed { background: #1c3028; color: #a9b7a2; text-align: center; }
+.archive-person-icon.is-unrevealed::after { content: "?"; font-size: 24px; line-height: 32px; }
+#archive-index .archive-person-index { display: flex; align-items: center; gap: 8px; }
+.archive-person-relationships .archive-relationship-target { display: inline-flex; align-items: center; gap: 6px; text-align: left; }
+.archive-relationship-target .archive-person-icon { width: 24px; height: 24px; flex-basis: 24px; }
+.archive-relationship-target .archive-person-icon.is-unrevealed::after { font-size: 18px; line-height: 24px; }
+.archive-race-icon > .archive-person-icon { width: 64px; height: 64px; }
+.archive-race-icon .archive-person-icon.is-unrevealed::after { font-size: 36px; line-height: 64px; }

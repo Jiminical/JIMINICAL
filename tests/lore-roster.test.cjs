@@ -39,9 +39,9 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the six requested sources and keep the requested target order',()=>{
-  const expected={'헤니아':['카니아','클로네'],'카니아':['헤니아','클로네'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
-  assert.equal(people.filter(p=>p.relationships.length).length,6);
+test('relationships exist only for the seven requested sources and keep the requested target order',()=>{
+  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네'],'카니아':['헤니아','클로네'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  assert.equal(people.filter(p=>p.relationships.length).length,7);
   for(const person of people){
     const targets=person.relationships.map(link=>{
       const target=people.find(p=>p.id===link.targetId);assert.ok(target);assert.ok(link.relation);return target.name;
@@ -51,8 +51,9 @@ test('relationships exist only for the six requested sources and keep the reques
   assert.equal(people.find(p=>p.id==='ellen').name,'엘레나');
   assert.ok(!people.some(p=>p.name==='엘렌'));
 });
-test('relationship copy and reactions match the four supplied descriptions',()=>{
+test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    mareri:[['henia','고지식한 녀석','neutral'],['helen','술친구','neutral'],['aran','어리버리.','neutral']],
     scout:[['henia','악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],['klone','신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered']],
     henia:[['scout','악우. 하이엘프인데도 정찰대를 자원하다니?','puzzled'],['klone','이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed']],
   };
@@ -62,7 +63,7 @@ test('relationship copy and reactions match the four supplied descriptions',()=>
     for(const r of p.relationships)assert.ok(['neutral','annoyed','puzzled','flustered'].includes(r.emotion||'neutral'));
     if(!expected[p.id])assert.ok(p.relationships.every(r=>r.relation==='미공개'));
   }
-  assert.equal(people.filter(p=>p.reactionAsset).length,6);
+  assert.equal(people.filter(p=>p.reactionAsset).length,20);
 });
 
 test('eighteen supplied landscape cards map to their own people without duplicating Seia',()=>{
@@ -76,4 +77,15 @@ test('eighteen supplied landscape cards map to their own people without duplicat
     assert.ok(!person.tags.includes('미공개'));assert.ok(!person.body.includes('아직 공개되지'));
   }
   assert.equal(people.find(p=>p.id==='sena').portraitKind,'actor');
+});
+
+test('every revealed person owns four dot-face frames and hidden cast stays unknown',()=>{
+  const owners=new Set();
+  for(const person of people){
+    if(person.portraitKind==='unrevealed'){assert.equal(person.reactionAsset,'');continue;}
+    assert.ok(person.reactionAsset,person.name);
+    const grid=person.reactionGrid;assert.ok(grid&&grid.start>=0&&grid.start+3<grid.columns*grid.rows);
+    const key=person.reactionAsset+':'+grid.start;assert.ok(!owners.has(key),person.name);owners.add(key);
+  }
+  assert.equal(owners.size,20);
 });

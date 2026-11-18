@@ -567,13 +567,28 @@ const greenstoaLore = (() => {
     ],
   };
   const mareri = {
-    id: "mareri", name: "마르에리", portraitSrc: "assets/person-mareri.webp", portraitKind: "title",
-    tags: ["첫 만남", "시니컬", "은근한 배려", "머리의 꽃", "하프엘프", "정령술사", "애주가", "앳된 외견"],
-    role: "모험가를 맞이하는 첫 만남의 인물",
-    summary: "시니컬한 말투 속에 은근한 배려를 숨긴 인물.",
-    body: "처음 만난 모험가에게 이름을 기억해 두라고 말한다. 반말로 시니컬하게 툭툭 말하지만, 길을 잃으면 함께 찾아 주고 밥을 챙기라며 은근히 마음을 쓴다. 머리에는 꽃을 꽂고 있다. 251세의 하프엘프 정령술사이며, 애주가이고 앳된 외견을 지녔다.",
+    "id": "mareri",
+    "name": "마르에리",
+    "portraitSrc": "assets/person-mareri.webp",
+    "portraitKind": "title",
+    "tags": [
+      "하프엘프",
+      "정령술사",
+      "애주가",
+      "앳된 외견",
+      "시니컬",
+      "251세"
+    ],
+    "role": "주정뱅이 정령사",
+    "summary": "주정뱅이 정령사",
+    "body": "그린스토아 이곳저곳을 돌아다니며 상등품 술을 찾아다니는 정령술사입니다. 소요를 좋아하여 자연발생하듯 나타나 짧게 머무르는 생활을 하며, 이따금씩 그린스토아 밖에서도 나타나고는 합니다. 앳되어보이는 외견과 달리 나이가 많은 편이고 하루 종일 술과 함께하며 성격도 시니컬합니다. 예법이나 지위같은 고리타분한 것들은 그녀의 취향이 아닙니다."
   };
   const personRelationships = {
+    mareri: [
+      { targetId: "henia", relation: "고지식한 녀석", emotion: "neutral" },
+      { targetId: "helen", relation: "술친구", emotion: "neutral" },
+      { targetId: "aran", relation: "어리버리.", emotion: "neutral" },
+    ],
     henia: [
       { targetId: "scout", relation: "악우. 하이엘프인데도 정찰대를 자원하다니?", emotion: "puzzled" },
       { targetId: "klone", relation: "이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?", emotion: "annoyed" },
@@ -588,14 +603,25 @@ const greenstoaLore = (() => {
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };
   const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena" };
+  const reactionGrids = {};
+  for (const [asset, members] of Object.entries({
+    casta: ["mareri", "klone", "runya", "shunya"],
+    castb: ["sif", "rael", "carola", "seia"],
+    castc: ["sena", "lucy", "rose"],
+    castd: ["mia", "bran", "edan"],
+  })) members.forEach((id, row) => {
+    reactionAssets[id] = asset;
+    reactionGrids[id] = { columns: 4, rows: members.length, start: row * 4 };
+  });
   const people = peopleGroups.flatMap(group => roster[group.id].map(([id, name]) => {
     const recorded = id === "mareri" ? mareri : recordedPeople.find(person => person.id === id);
     const relationships = personRelationships[id] || [];
     const reactionAsset = reactionAssets[id] || "";
-    if (recorded) return { ...recorded, portraitKind: recorded.portraitKind || "actor", group: group.id, relationships, reactionAsset };
+    const reactionGrid = reactionAsset ? reactionGrids[id] || { columns: 2, rows: 2, start: 0 } : null;
+    if (recorded) return { ...recorded, portraitKind: recorded.portraitKind || "actor", group: group.id, relationships, reactionAsset, reactionGrid };
     // Unannounced cast members have their own entries, never another actor's biography or art.
     return {
-      id, name, group: group.id, portraitSrc: "", portraitKind: "unrevealed", relationships, reactionAsset,
+      id, name, group: group.id, portraitSrc: "", portraitKind: "unrevealed", relationships, reactionAsset, reactionGrid,
       tags: ["미공개"], role: group.title,
       summary: "자세한 인물 정보는 아직 공개되지 않았다.",
       body: "이 인물의 모습과 자세한 이야기는 아직 공개되지 않았다.",

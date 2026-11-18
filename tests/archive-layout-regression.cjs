@@ -159,7 +159,8 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' exterior introduces the journey and three requested sections',await p.locator('.archive-world-section h4').evaluateAll(es=>JSON.stringify(es.map(e=>e.textContent))===JSON.stringify(['제르디아 모험가 길드','아이리스 제국','월화국']))&&await p.evaluate(()=>[...document.querySelectorAll('#archive-page p:not(.archive-kicker)')].map(e=>e.textContent).join('\n')===[...greenstoaLore.articles[7].body,...greenstoaLore.articles[7].sections.flatMap(s=>s.body)].join('\n')));
     const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key));
     const hanari=p.locator('.archive-race-members a[data-person="mia"]');
-    check(tag+' Wolhwa has a named Hanari icon',await hanari.locator('.archive-race-name').innerText()==='하나리'&&await hanari.locator('canvas').count()===1);
+    await hanari.locator('.archive-person-icon img').evaluate(image=>image.decode());
+    check(tag+' Wolhwa has a named Hanari dot icon',await hanari.locator('.archive-race-name').innerText()==='하나리'&&await hanari.locator('.archive-person-icon[data-person="mia"] img').count()===1);
     await hanari.focus();await p.keyboard.press('Enter');
     check(tag+' Hanari icon opens her biography without changing the save',await p.locator('#archive-page h3').innerText()==='하나리'&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
     await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(7).click();
@@ -174,14 +175,19 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'헤니아':['카니아','클로네'],'카니아':['헤니아','클로네'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네'],'카니아':['헤니아','클로네'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
   const copy={
+    '마르에리':{'헤니아':['고지식한 녀석','neutral'],'헬렌':['술친구','neutral'],'아란':['어리버리.','neutral']},
     '카니아':{'헤니아':['악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],'클로네':['신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered']},
     '헤니아':{'카니아':['악우. 하이엘프인데도 정찰대를 자원하다니?','puzzled'],'클로네':['이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed']},
   };
   check(tag+' roster contains exactly the requested 24 names in order',await p.locator('#archive-index button').evaluateAll(es=>es.map(e=>e.textContent.replace(/^[▸　 ]+/,''))).then(actual=>JSON.stringify(actual)===JSON.stringify(names)));
   const sections=await p.locator('.archive-index-group').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,count:e.querySelectorAll('button').length})));
   check(tag+' people are split into 16 leads and 8 supporting characters',JSON.stringify(sections)===JSON.stringify([{title:'주연',count:16},{title:'조연',count:8}]));
+  await p.locator('#archive-index .archive-person-icon img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
+  check(tag+' all 24 people have independent icons with 20 dot faces and four unknown placeholders',await p.locator('#archive-index .archive-person-icon').evaluateAll(icons=>icons.length===24&&icons.filter(icon=>icon.querySelector('img')).length===20&&icons.filter(icon=>icon.classList.contains('is-unrevealed')).length===4&&icons.every((icon,index)=>icon.dataset.person===greenstoaLore.people[index].id&&icon.getAttribute('aria-hidden')==='true')));
+  check(tag+' cast icons fit their buttons without changing the accessible names',await p.locator('#archive-index button').evaluateAll(buttons=>buttons.every(button=>{const icon=button.querySelector('.archive-person-icon'),r=icon.getBoundingClientRect(),b=button.getBoundingClientRect();return r.width===32&&r.height===32&&r.left>=b.left&&r.right<=b.right&&button.textContent.trim().length>0})));
+  check(tag+' Mareri has the requested role and exact six hashtags',await p.locator('.archive-person-role').innerText()==='주정뱅이 정령사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#하프엘프','#정령술사','#애주가','#앳된_외견','#시니컬','#251세'])));
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
    const person=await p.evaluate(i=>({kind:greenstoaLore.people[i].portraitKind,src:greenstoaLore.people[i].portraitSrc,id:greenstoaLore.people[i].id}),i);
@@ -197,10 +203,11 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    const targets=relationships[names[i]]||[];
    check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships button').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
    if(targets.length){
-    await p.locator('.archive-relationship-reaction img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
-    const faces=await p.locator('.archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
+    check(tag+' '+names[i]+' relationship targets have their own dot icons',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>icon.dataset.person===greenstoaLore.people.find(person=>person.name===targets[index]).id&&icon.querySelector('img')),targets));
+    await p.locator('.archive-relationship-detail .archive-relationship-reaction img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
+    const faces=await p.locator('.archive-relationship-detail .archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,columns:Number(e.dataset.columns),rows:Number(e.dataset.rows),frame:Number(e.dataset.frame),renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
     const id=await p.evaluate(i=>greenstoaLore.people[i].id,i);
-    check(tag+' '+names[i]+' shows the correct owner and expression in unclipped compact face sprites',faces.length===targets.length&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[targets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&f.naturalWidth===256&&f.naturalHeight===256&&f.renderedWidth===128&&f.renderedHeight===128&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
+    check(tag+' '+names[i]+' shows the correct owner and expression in unclipped compact face sprites',faces.length===targets.length&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[targets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&Math.abs(f.naturalWidth/f.columns-f.naturalHeight/f.rows)<.1&&f.renderedWidth===64*f.columns&&f.renderedHeight===64*f.rows&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
    }
   }
   await p.screenshot({path:path.join(out,tag+'-supporting-last.png')});
@@ -227,6 +234,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' name and multiple hashtag features are separate',await p.locator('.archive-person-copy h3').innerText()==='마르에리'&&await p.locator('.archive-person-tags li').count()>=3&&await p.locator('.archive-person-tags li').evaluateAll(es=>es.every(e=>e.textContent.startsWith('#'))));
   check(tag+' all people have independent photo paths and known profiles retain multiple tags',await p.evaluate(()=>greenstoaLore.people.every(p=>'portraitSrc'in p&&Array.isArray(p.tags)&&(p.portraitKind==='unrevealed'||p.tags.length>=3))));
   await p.screenshot({path:path.join(out,tag+'-people.png')});
+  if(width===1280){
+   await p.evaluate(()=>{const gallery=document.createElement('section');gallery.id='dot-icon-test-gallery';gallery.style.cssText='position:fixed;top:0;left:0;width:996px;height:512px;z-index:999999;background:#203329;display:grid;grid-template-columns:repeat(6,1fr);padding:16px;box-sizing:border-box;color:#f1e6bf;font:14px sans-serif';for(const button of document.querySelectorAll('#archive-index button')){const card=document.createElement('div'),icon=button.querySelector('.archive-person-icon').cloneNode(true),name=document.createElement('div');card.style.cssText='text-align:center';icon.style.cssText='width:64px;height:64px';name.textContent=button.textContent.replace(/^[▸　 ]+/,'');card.append(icon,name);gallery.append(card)}document.body.append(gallery)});
+   await p.locator('#dot-icon-test-gallery img').evaluateAll(images=>Promise.all(images.map(image=>image.decode())));
+   await p.locator('#dot-icon-test-gallery').screenshot({path:path.join(out,tag+'-all-dot-icons.png')});
+   await p.locator('#dot-icon-test-gallery').evaluate(element=>element.remove());
+  }
   const original=await p.evaluate(()=>{const person=greenstoaLore.people[0];const saved={body:person.body,tags:person.tags,portraitSrc:person.portraitSrc};person.body=Array.from({length:18},(_,i)=>'상세 설명 '+(i+1)+'. '+person.body);person.tags=[...person.tags,'아주긴특징설명'.repeat(14)];const c=document.createElement('canvas');c.width=120;c.height=180;c.getContext('2d').fillRect(0,0,120,180);person.portraitSrc=c.toDataURL('image/png');return saved});
   await p.locator('#archive-index button').first().click();await p.locator('.archive-person-image').evaluate(i=>i.decode());
   check(tag+' supplied portrait photo replaces fallback without stretching',await p.locator('.archive-person-image').evaluate(i=>i.naturalWidth===120&&getComputedStyle(i).objectFit==='contain')&&await p.locator('.archive-person-photo canvas').count()===0);

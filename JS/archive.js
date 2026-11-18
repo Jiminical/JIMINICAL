@@ -92,31 +92,7 @@ const libraryArchive = (() => {
       const icon = document.createElement("span");
       icon.className = "archive-race-icon";
       icon.setAttribute("aria-hidden", "true");
-      const reaction = person.reactionAsset && reactionIcon(person);
-      if (person.portraitSrc) {
-        const photo = new Image();
-        photo.className = "archive-race-photo";
-        photo.alt = "";
-        photo.loading = "lazy";
-        photo.decoding = "async";
-        photo.addEventListener("error", () => {
-          icon.textContent = "?";
-          icon.classList.add("is-unrevealed");
-        }, { once: true });
-        photo.src = person.portraitSrc;
-        icon.append(photo);
-      } else if (reaction) icon.append(reaction);
-      else if (person.portraitKind === "actor") {
-        const source = canvas(128, 128), face = canvas(64, 64);
-        state.drawPortrait(source, id);
-        const context = face.getContext("2d");
-        context.imageSmoothingEnabled = false;
-        context.drawImage(source, 0, 0, 128, 128, 0, 0, 64, 64);
-        icon.append(face);
-      } else {
-        icon.textContent = "?";
-        icon.classList.add("is-unrevealed");
-      }
+      icon.append(personIcon(person));
       const name = document.createElement("span");
       name.className = "archive-race-name";
       name.textContent = person.name;
@@ -155,23 +131,44 @@ const libraryArchive = (() => {
     c.height = height;
     return c;
   }
+  function personIcon(person) {
+    const icon = document.createElement("span");
+    icon.className = "archive-person-icon";
+    icon.dataset.person = person.id;
+    icon.setAttribute("aria-hidden", "true");
+    const face = person.reactionAsset && reactionIcon(person);
+    if (face) {
+      face.querySelector("img").addEventListener("error", () => {
+        face.remove();
+        icon.classList.add("is-unrevealed");
+      }, { once: true });
+      icon.append(face);
+    } else icon.classList.add("is-unrevealed");
+    return icon;
+  }
   function reactionIcon(person, emotion = "neutral") {
     const source = document.querySelector("#relationship-reactions").dataset[person.reactionAsset + "Src"];
     if (!source) return null;
     const frames = {neutral:0,annoyed:1,puzzled:2,flustered:3};
     const labels = {neutral:"기본",annoyed:"짜증",puzzled:"의아함",flustered:"당황"};
-    const frame = frames[emotion] ?? 0, icon = document.createElement("span"), image = new Image();
+    const { columns, rows, start } = person.reactionGrid || { columns: 2, rows: 2, start: 0 };
+    const frame = start + (frames[emotion] ?? 0), icon = document.createElement("span"), image = new Image();
     icon.className = "archive-relationship-reaction";
     icon.dataset.person = person.id;
     icon.dataset.emotion = emotion;
+    icon.dataset.columns = String(columns);
+    icon.dataset.rows = String(rows);
+    icon.dataset.frame = String(frame);
     icon.setAttribute("role", "img");
     icon.setAttribute("aria-label", person.name + ": " + (labels[emotion] || labels.neutral) + " 표정");
     icon.title = icon.getAttribute("aria-label");
     image.alt = "";
     image.decoding = "async";
     image.draggable = false;
-    image.style.left = -(frame % 2) * 100 + "%";
-    image.style.top = -Math.floor(frame / 2) * 100 + "%";
+    image.style.width = columns * 100 + "%";
+    image.style.height = rows * 100 + "%";
+    image.style.left = -(frame % columns) * 100 + "%";
+    image.style.top = -Math.floor(frame / columns) * 100 + "%";
     image.addEventListener("error", () => { icon.hidden = true; }, {once:true});
     image.src = source;
     icon.append(image);
@@ -243,6 +240,10 @@ const libraryArchive = (() => {
       b.textContent =
         (index === selected ? "▸ " : "　") + (item.title || item.name);
       b.className = index === selected ? "is-current" : "";
+      if (tab === "people") {
+        b.classList.add("archive-person-index");
+        b.prepend(personIcon(item));
+      }
       b.setAttribute("aria-pressed", String(index === selected));
       b.addEventListener("click", () => choose(index, true));
       target.append(b);
@@ -382,6 +383,8 @@ const libraryArchive = (() => {
           name.type = "button";
           name.dataset.target = target.id;
           name.textContent = target.name;
+          name.className = "archive-relationship-target";
+          name.prepend(personIcon(target));
           name.setAttribute("aria-label", target.name + " 인물 소개 보기");
           name.addEventListener("click", () => choose(targetIndex, true));
           arrow.textContent = "→";
