@@ -466,13 +466,16 @@ const greenstoaLore = (() => {
       "portraitSrc": "assets/person-aran.webp",
       "portraitKind": "photo",
       "tags": [
+        "허당",
         "하프엘프",
         "현임 지도자",
-        "헬렌의 딸"
+        "품위 연기",
+        "백치미",
+        "160세"
       ],
-      "role": "그린스토아 현임 지도자 · 하프엘프",
-      "summary": "헬렌의 딸인 그린스토아의 현임 지도자.",
-      "body": "160세의 하프엘프. 그린스토아의 현임 지도자이며 헬렌의 딸이다."
+      "role": "얼렁뚱땅 현임 지도자",
+      "summary": "얼렁뚱땅 현임 지도자",
+      "body": "그린스토아의 현임 지도자입니다. 어머니 헬렌의 자리를 이어받은 것에 굉장한 책임감을 느끼면서도, 자부심 또한 갖고 있습니다. 타고난 내향성과 허당기를 지닌 탓에 우유부단하고 사소한 것에 쩔쩔매는 모습도 보입니다. 그녀 자신도 이를 알고 있기에, 꾸준하게 검술을 갈고닦고 있으며 소통을 위해 제 발로 뛰어다니는 중입니다. 그녀를 마주친다면, 작은 응원 한 마디 혹은 짓궃은 지적 한 마디를 건네보세요. 어느 쪽이던 정말 크게 당황할 것입니다."
     },
     {
       "id": "remu",
@@ -614,7 +617,13 @@ const greenstoaLore = (() => {
       { targetId: "klone", relation: "똑똑한 마법탐구자. 옷차림 덕분에 시민들을 놀래키곤 하지만... 말은 잘 통해~", emotion: "neutral" },
       { targetId: "mareri", relation: "술친구. 허울없는 모습이 맘에 들어~", emotion: "neutral" },
     ],
-    aran: [{ targetId: "helen", relation: "미공개" }],
+    aran: [
+      { targetId: "helen", relation: "존경하는 어머니. 기대에 부응할 수 있었으면 좋겠다.", emotion: "neutral" },
+      { targetId: "scout", relation: "신뢰하는 동료. 발빠르게 움직이며 소식을 빠르게 알려준다.", emotion: "neutral" },
+      { targetId: "klone", relation: "뛰어난 마법탐구자. 정말 유능하지만 그... 그 옷차림 만큼은! 어떻게 안 되겠나앗...", emotion: "flustered" },
+      { targetId: "remu", relation: "믿을 수 있는 대장장이. 직접적 만남은 뜸하지만 정찰대의 무기를 수리해주는 고마운 녀석이다.", emotion: "neutral" },
+      { targetId: "henia", relation: "마법은 뛰어난 영애. 카니아와 티격대는 것을 많이 봤는데, 서로 친한가...?", emotion: "puzzled" },
+    ],
     remu: [{ targetId: "ellen", relation: "미공개" }],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };

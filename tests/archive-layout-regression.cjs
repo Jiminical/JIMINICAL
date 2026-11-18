@@ -175,8 +175,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'레무':['엘레나'],'엘레나':['레무']};
   const copy={
+    '아란':{'헬렌':['존경하는 어머니. 기대에 부응할 수 있었으면 좋겠다.','neutral'],'카니아':['신뢰하는 동료. 발빠르게 움직이며 소식을 빠르게 알려준다.','neutral'],'클로네':['뛰어난 마법탐구자. 정말 유능하지만 그... 그 옷차림 만큼은! 어떻게 안 되겠나앗...','flustered'],'레무':['믿을 수 있는 대장장이. 직접적 만남은 뜸하지만 정찰대의 무기를 수리해주는 고마운 녀석이다.','neutral'],'헤니아':['마법은 뛰어난 영애. 카니아와 티격대는 것을 많이 봤는데, 서로 친한가...?','puzzled']},
     '헬렌':{'아란':['딸. 기특하게 잘 해주고 있어~','neutral'],'카니아':['믿음직한 아이. 놀리는게 재밌고 귀여워~.','neutral'],'헤니아':['고양이같은 아이. 틱틱대면서도 주눅드는게 귀여워~','neutral'],'클로네':['똑똑한 마법탐구자. 옷차림 덕분에 시민들을 놀래키곤 하지만... 말은 잘 통해~','neutral'],'마르에리':['술친구. 허울없는 모습이 맘에 들어~','neutral']},
     '마르에리':{'헤니아':['고지식한 녀석','neutral'],'헬렌':['술친구','neutral'],'아란':['어리버리.','neutral']},
     '카니아':{'헤니아':['악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],'클로네':['신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered'],'레무':['신뢰하는 대장장이. 능률이 대단하군.','neutral'],'헬렌':['존경하는 전임 지도자. 헬렌 님께는 예를 갖춰라!','neutral'],'아란':['현임 지도자. 신뢰한다만... 아니, 아니!','flustered']},
@@ -192,6 +193,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
+   if(names[i]==='아란')check(tag+' Aran has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='얼렁뚱땅 현임 지도자'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#허당','#하프엘프','#현임_지도자','#품위_연기','#백치미','#160세'])));
    if(names[i]==='헬렌')check(tag+' Helen has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='전임 지도자, 현임 여관 주인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#너그러움','#나긋나긋','#전임_지도자','#여관_주인','#하프엘프','#417세'])));
    if(names[i]==='헤니아'){
     check(tag+' Henia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='나르시시즘 영애님'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#오만함','#귀족','#영애','#온실_속_화초','#197세'])));
