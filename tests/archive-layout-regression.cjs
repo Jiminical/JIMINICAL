@@ -175,11 +175,11 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
   const copy={
     '마르에리':{'헤니아':['고지식한 녀석','neutral'],'헬렌':['술친구','neutral'],'아란':['어리버리.','neutral']},
     '카니아':{'헤니아':['악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],'클로네':['신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered'],'레무':['신뢰하는 대장장이. 능률이 대단하군.','neutral'],'헬렌':['존경하는 전임 지도자. 헬렌 님께는 예를 갖춰라!','neutral'],'아란':['현임 지도자. 신뢰한다만... 아니, 아니!','flustered']},
-    '헤니아':{'카니아':['악우. 하이엘프인데도 정찰대를 자원하다니?','puzzled'],'클로네':['이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed']},
+    '헤니아':{'카니아':['악우. 정말 안타깝구나, 카니아. 하이엘프라면 응당 품위를 차리는게 종족에 대한 예의 아니겠니? 정찰대같은 진흙탕이 아니라.','puzzled'],'클로네':['이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed'],'헬렌':['인정하는 전임 지도자. 헬렌 님의 체면을 생각해서 순순히 지내는 거란다. 절대 내가 무시당하는 게 아니고!','flustered']},
   };
   check(tag+' roster contains exactly the requested 24 names in order',await p.locator('#archive-index button').evaluateAll(es=>es.map(e=>e.textContent.replace(/^[▸　 ]+/,''))).then(actual=>JSON.stringify(actual)===JSON.stringify(names)));
   const sections=await p.locator('.archive-index-group').evaluateAll(es=>es.map(e=>({title:e.querySelector('h4').textContent,count:e.querySelectorAll('button').length})));
@@ -191,6 +191,17 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
+   if(names[i]==='헤니아'){
+    check(tag+' Henia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='나르시시즘 영애님'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#오만함','#귀족','#영애','#온실_속_화초','#197세'])));
+    check(tag+' Henia citizen sentence follows the idle reveal before the closing description',await p.locator('.archive-person-biography').innerText().then(text=>text.includes('헤니아는 사실 놀고 있다네요! 시민들은 이 사실에 은근히 헤니아를 무시하고 있지만, 본인은 인정 안 한다네요. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.')&&!text.includes('(하이퍼링크)')));
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key)),url=p.url(),inn=p.locator('.archive-person-biography a').filter({hasText:'힐리아스 여관'});
+    check(tag+' Henia biography contains an accessible inn link',await inn.count()===1&&await inn.getAttribute('aria-label')==='힐리아스 여관 설명 보기');
+    await inn.focus();await p.keyboard.press('Enter');
+    check(tag+' inn link opens administration directly at the inn section',await p.locator('[data-archive-tab="world"]').getAttribute('aria-pressed')==='true'&&await p.locator('#archive-page h3').innerText()==='그린스토아의 행정'&&await p.getByRole('heading',{name:'힐리아스 여관',exact:true}).evaluate(heading=>{const r=heading.getBoundingClientRect(),v=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top>=v.top-1&&r.bottom<=v.bottom+1}));
+    check(tag+' inn navigation keeps URL and save unchanged',p.url()===url&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
+    await p.screenshot({path:path.join(out,tag+'-henia-inn-link.png')});
+    await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
+   }
    const person=await p.evaluate(i=>({kind:greenstoaLore.people[i].portraitKind,src:greenstoaLore.people[i].portraitSrc,id:greenstoaLore.people[i].id}),i);
    let portraitOk;
    if(person.src){

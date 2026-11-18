@@ -538,13 +538,16 @@ const greenstoaLore = (() => {
       "portraitSrc": "assets/person-henia.webp",
       "portraitKind": "photo",
       "tags": [
-        "하이엘프",
-        "귀족 영애",
-        "나르시시즘"
+        "오만함",
+        "귀족",
+        "영애",
+        "온실 속 화초",
+        "197세"
       ],
-      "role": "하이엘프 귀족 영애",
-      "summary": "나르시시즘 성향을 지닌 하이엘프 귀족 영애.",
-      "body": "197세의 하이엘프 귀족 영애. 나르시시즘 성향을 지녔다."
+      "role": "나르시시즘 영애님",
+      "summary": "나르시시즘 영애님",
+      "body": "하이엘프 중에서도 가장 깨끗한 피를 지닌 가문의 영애입니다. 취미는 힐리아스 여관에서의 차 한 잔, 카니아 흉보기입니다. 비교적 안전한 곳에서 특출난 마법 재능으로 후방을 지원하는 것이 하이엘프들의 역할이지만, 헤니아는 사실 놀고 있다네요! 시민들은 이 사실에 은근히 헤니아를 무시하고 있지만, 본인은 인정 안 한다네요. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.",
+      "bodyLinks": [{ "name": "힐리아스 여관", "articleTitle": "그린스토아의 행정", "sectionTitle": "힐리아스 여관" }]
     },
   ];
   const peopleGroups = [
@@ -590,8 +593,9 @@ const greenstoaLore = (() => {
       { targetId: "aran", relation: "어리버리.", emotion: "neutral" },
     ],
     henia: [
-      { targetId: "scout", relation: "악우. 하이엘프인데도 정찰대를 자원하다니?", emotion: "puzzled" },
+      { targetId: "scout", relation: "악우. 정말 안타깝구나, 카니아. 하이엘프라면 응당 품위를 차리는게 종족에 대한 예의 아니겠니? 정찰대같은 진흙탕이 아니라.", emotion: "puzzled" },
       { targetId: "klone", relation: "이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?", emotion: "annoyed" },
+      { targetId: "helen", relation: "인정하는 전임 지도자. 헬렌 님의 체면을 생각해서 순순히 지내는 거란다. 절대 내가 무시당하는 게 아니고!", emotion: "flustered" },
     ],
     scout: [
       { targetId: "henia", relation: "악우. 온실 속 화초 주제에 정찰대를 흉본다!", emotion: "annoyed" },

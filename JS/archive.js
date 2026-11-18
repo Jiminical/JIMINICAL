@@ -39,22 +39,33 @@ const libraryArchive = (() => {
   }
   function worldParagraph(text, links = [], emphasis = []) {
     const p = paragraph(text);
-    for (const { name, targetId } of links) {
-      const targetIndex = greenstoaLore.people.findIndex(person => person.id === targetId);
+    for (const { name, targetId, articleTitle, sectionTitle } of links) {
+      const isWorld = Boolean(articleTitle);
+      const targetIndex = isWorld
+        ? greenstoaLore.articles.findIndex(article => article.title === articleTitle)
+        : greenstoaLore.people.findIndex(person => person.id === targetId);
       if (targetIndex < 0) continue;
+      const sectionIndex = isWorld
+        ? greenstoaLore.articles[targetIndex].sections?.findIndex(section => section.title === sectionTitle) ?? -1
+        : -1;
+      if (isWorld && sectionTitle && sectionIndex < 0) continue;
       for (const node of [...p.childNodes]) {
         if (node.nodeType !== Node.TEXT_NODE) continue;
         const offset = node.textContent.indexOf(name);
         if (offset < 0) continue;
         const link = document.createElement("a");
-        link.href = "#archive-person-" + targetId;
+        link.href = isWorld ? "#archive-world-section-" + sectionIndex : "#archive-person-" + targetId;
         link.className = "archive-person-link";
         link.textContent = name;
-        link.setAttribute("aria-label", name + " 인물 소개 보기");
+        link.setAttribute("aria-label", name + (isWorld ? " 설명 보기" : " 인물 소개 보기"));
         link.addEventListener("click", event => {
           event.preventDefault();
-          tab = "people";
+          tab = isWorld ? "world" : "people";
           choose(targetIndex, true);
+          if (isWorld && sectionIndex >= 0) {
+            page.querySelectorAll(".archive-world-section")[sectionIndex]?.scrollIntoView({ block: "start", behavior: "instant" });
+            updateScrollCue();
+          }
         });
         const text = node.textContent;
         node.replaceWith(document.createTextNode(text.slice(0, offset)), link, document.createTextNode(text.slice(offset + name.length)));
@@ -363,7 +374,7 @@ const libraryArchive = (() => {
       const biography = document.createElement("section");
       biography.className = "archive-person-biography";
       biography.setAttribute("aria-label", "자세한 설명");
-      (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(paragraph(text)));
+      (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks)));
       copy.append(
         paragraph(person.role, "archive-kicker archive-person-role"),
         heading(person.name),
