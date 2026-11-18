@@ -15,6 +15,7 @@ const libraryArchive = (() => {
   function updateScrollCue() {
     cancelAnimationFrame(scrollFrame);
     scrollFrame = requestAnimationFrame(() => {
+      page.style.setProperty("--archive-card-max-width", Math.floor(Math.max(96, scroll.clientHeight - 48) * 13 / 7) + "px");
       const more = Boolean(state) && scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop > 6;
       scrollMore.hidden = !more;
       pane.classList.toggle("has-more", more);
@@ -92,7 +93,19 @@ const libraryArchive = (() => {
       icon.className = "archive-race-icon";
       icon.setAttribute("aria-hidden", "true");
       const reaction = person.reactionAsset && reactionIcon(person);
-      if (reaction) icon.append(reaction);
+      if (person.portraitSrc) {
+        const photo = new Image();
+        photo.className = "archive-race-photo";
+        photo.alt = "";
+        photo.loading = "lazy";
+        photo.decoding = "async";
+        photo.addEventListener("error", () => {
+          icon.textContent = "?";
+          icon.classList.add("is-unrevealed");
+        }, { once: true });
+        photo.src = person.portraitSrc;
+        icon.append(photo);
+      } else if (reaction) icon.append(reaction);
       else if (person.portraitKind === "actor") {
         const source = canvas(128, 128), face = canvas(64, 64);
         state.drawPortrait(source, id);
@@ -300,15 +313,16 @@ const libraryArchive = (() => {
       const portrait = document.createElement("figure");
       portrait.className = "archive-person-photo";
       function fallbackPortrait() {
-        if (person.portraitKind === "unrevealed") {
+        if (person.portraitKind === "unrevealed" || person.portraitKind === "photo") {
+          const unrevealed = person.portraitKind === "unrevealed";
           const placeholder = document.createElement("div");
           placeholder.className = "archive-person-unrevealed";
           placeholder.setAttribute("role", "img");
-          placeholder.setAttribute("aria-label", person.name + "의 모습은 아직 미공개");
+          placeholder.setAttribute("aria-label", person.name + (unrevealed ? "의 모습은 아직 미공개" : "의 이미지를 불러오지 못했습니다"));
           const mark = document.createElement("span");
           mark.textContent = "?";
           mark.setAttribute("aria-hidden", "true");
-          placeholder.append(mark, paragraph("미공개"));
+          placeholder.append(mark, paragraph(unrevealed ? "미공개" : "이미지 없음"));
           portrait.replaceChildren(placeholder);
           return;
         }

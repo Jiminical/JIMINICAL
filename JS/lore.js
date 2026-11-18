@@ -321,7 +321,7 @@ const greenstoaLore = (() => {
     {
       id: "sena",
       name: "장위",
-      portraitSrc: "",
+      portraitSrc: "assets/person-jangwi.webp",
       tags: ["강시", "호기심", "순한 겁쟁이", "숲길의 새 이웃", "조심스러운 용기"],
       role: "이슬잎 숲길에 머무는 강시",
       summary: "호기심 많고 순하지만 작은 소리에도 놀라는, 그린스토아의 새 이웃.",
@@ -389,6 +389,76 @@ const greenstoaLore = (() => {
       "role": "길드 내부 보초를 맡은 기사 · 기루스의 동료",
       "summary": "기사로서의 실력은 최고지만 늘 능청스러운 농담으로 기루스의 잔소리를 부른다. 경계 근무와 임무 설명에서는 빈틈없는 면모가 드러난다.",
       "body": "옅은 은백색 머리와 길게 내려온 앞머리, 느슨하게 묶은 뒷머리, 장난기 있는 짙은 눈, 붉은 망토, 검은 사슬갑옷 위의 은빛 판금갑옷과 금속 건틀릿. 기사로서의 실력은 최고지만 늘 능청스러운 농담으로 기루스의 잔소리를 부른다. 경계 근무와 임무 설명에서는 빈틈없는 면모가 드러난다."
+    },
+    {
+      "id": "runya",
+      "name": "루냐",
+      "portraitSrc": "assets/person-runya.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "고양이 수인",
+        "슈냐의 친구",
+        "온순함"
+      ],
+      "role": "슈냐의 친구 · 고양이 수인",
+      "summary": "슈냐의 친구인 온순한 고양이 수인.",
+      "body": "20세의 고양이 수인. 슈냐의 친구이며 온순한 성격이다."
+    },
+    {
+      "id": "shunya",
+      "name": "슈냐",
+      "portraitSrc": "assets/person-shunya.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "고양이 수인",
+        "도적",
+        "악동"
+      ],
+      "role": "고양이 수인 도적",
+      "summary": "악동 같은 면모를 지닌 고양이 수인 도적.",
+      "body": "20세의 고양이 수인. 도적이며 악동 같은 면모를 지녔다."
+    },
+    {
+      "id": "sif",
+      "name": "시프",
+      "portraitSrc": "assets/person-sif.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "양 수인",
+        "여행객",
+        "모험가 선망"
+      ],
+      "role": "모험가를 선망하는 여행객 · 양 수인",
+      "summary": "모험가를 선망하는 양 수인 여행객.",
+      "body": "21세의 양 수인 여행객. 모험가를 선망한다."
+    },
+    {
+      "id": "carola",
+      "name": "캐롤라",
+      "portraitSrc": "assets/person-carola.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "소 수인",
+        "서부 목장 주인",
+        "마당발"
+      ],
+      "role": "그린스토아 서부 목장 주인 · 소 수인",
+      "summary": "서부 목장을 운영하는 마당발 소 수인.",
+      "body": "31세의 소 수인. 그린스토아 서부 목장의 주인이며 마당발이다."
+    },
+    {
+      "id": "seia",
+      "name": "세이아",
+      "portraitSrc": "assets/person-seia.webp",
+      "portraitKind": "photo",
+      "tags": [
+        "토끼 수인",
+        "뱀파이어",
+        "몬스터"
+      ],
+      "role": "토끼 수인 · 뱀파이어",
+      "summary": "토끼 수인이자 뱀파이어이며 몬스터에 속하는 인물.",
+      "body": "21세. 토끼 수인이자 뱀파이어이며 몬스터에 속한다."
     },
   ];
   const peopleGroups = [

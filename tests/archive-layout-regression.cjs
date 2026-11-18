@@ -10,11 +10,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
  const check=(name,ok)=>{assert.ok(ok,name);report.checks.push(name);console.log('PASS '+name)};
  try{for(const [width,height]of (process.env.ARCHIVE_SINGLE_VIEW?[[390,844]]:[[1280,800],[390,844],[320,568],[844,390]])){
   const tag=width+'x'+height,context=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'}),p=await context.newPage();
-  const worldImageRequests=[];
+  const worldImageRequests=[],personImageRequests=[];
   p.on('request',request=>{if(/\/assets\/world-(overview|greenstoa|zerdia|demon-king|zer-alliance|mother-tree|high-elf|half-elf|wood-elf|peace|crisis|investigation-lucy|investigation-greenstoa)\.webp/.test(request.url()))worldImageRequests.push(request.url())});
+  p.on('request',request=>{if(/\/assets\/person-[a-z]+\.webp/.test(request.url()))personImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
+  check(tag+' person cards do not load before the library is opened',personImageRequests.length===0);
   // Resume from a real saved slot instead of depending on an autosave frame before opening the book.
   await p.evaluate(async save=>{if(!journeySave.write(save))throw new Error('Unable to prepare the existing journey save');document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},fixture);
   const before=await p.evaluate(()=>guildGame.getState());await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');
@@ -182,8 +184,16 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' people are split into 16 leads and 8 supporting characters',JSON.stringify(sections)===JSON.stringify([{title:'주연',count:16},{title:'조연',count:8}]));
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
-   const kind=await p.evaluate(i=>greenstoaLore.people[i].portraitKind,i);
-   check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&(kind==='unrevealed'?await p.locator('.archive-person-unrevealed').count()===1:await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)})));
+   const person=await p.evaluate(i=>({kind:greenstoaLore.people[i].portraitKind,src:greenstoaLore.people[i].portraitSrc,id:greenstoaLore.people[i].id}),i);
+   let portraitOk;
+   if(person.src){
+    await p.locator('.archive-person-image').evaluate(image=>image.decode());
+    portraitOk=await p.locator('.archive-person-image').evaluate(image=>image.naturalWidth===1300&&image.naturalHeight===700&&getComputedStyle(image).objectFit==='contain');
+    check(tag+' '+names[i]+' card is landscape and fully visible above its description',await p.locator('.archive-person-photo').evaluate(photo=>{const r=photo.getBoundingClientRect(),page=document.querySelector('#archive-page').getBoundingClientRect(),copy=document.querySelector('.archive-person-copy').getBoundingClientRect();return Math.abs(r.width/r.height-13/7)<.02&&r.width<=page.width+1&&r.top>=document.querySelector('#archive-scroll').getBoundingClientRect().top-1&&r.bottom<=document.querySelector('#archive-scroll').getBoundingClientRect().bottom+1&&copy.top>=r.bottom-1&&copy.right<=page.right+1}));
+    await p.screenshot({path:path.join(out,tag+'-person-'+person.id+'.png')});
+   }else if(person.kind==='unrevealed')portraitOk=await p.locator('.archive-person-unrevealed').count()===1;
+   else portraitOk=await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)});
+   check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&portraitOk);
    const targets=relationships[names[i]]||[];
    check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships button').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
    if(targets.length){
@@ -203,6 +213,11 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    await link.click();
    check(tag+' relationship opens '+target+' without losing archive state',await p.locator('.archive-person-copy h3').innerText()===target&&await p.locator('#archive-scroll').evaluate(e=>e.scrollTop===0)&&await p.evaluate(()=>guildGame.getState().archive==='people'));
   }
+  check(tag+' six unique supplied cards include one Seia entry',await p.evaluate(()=>greenstoaLore.people.filter(p=>p.portraitSrc).length===6&&greenstoaLore.people.filter(p=>p.name==='세이아').length===1));
+  const seiaSource=await p.evaluate(()=>{const person=greenstoaLore.people.find(p=>p.id==='seia'),original=person.portraitSrc;person.portraitSrc='data:image/png;base64,bm90YW5pbWFnZQ==';return original});
+  await p.locator('#archive-index button').filter({hasText:'세이아'}).click();await p.waitForFunction(()=>document.querySelector('.archive-person-unrevealed'));
+  check(tag+' an unavailable supplied card falls back safely without borrowing an actor',await p.locator('.archive-person-photo canvas').count()===0&&await p.locator('.archive-person-unrevealed').innerText().then(t=>t.includes('이미지 없음')));
+  await p.evaluate(src=>greenstoaLore.people.find(p=>p.id==='seia').portraitSrc=src,seiaSource);
   if(width<=700)check(tag+' both cast section headings remain visible on mobile',await p.locator('.archive-index-group h4').evaluateAll(es=>{const r=document.querySelector('#archive-index').getBoundingClientRect();return es.every(e=>{const b=e.getBoundingClientRect();return b.top>=r.top-1&&b.bottom<=r.bottom+1})}));
   await p.locator('#archive-index button').first().click();
   check(tag+' portrait slot defaults to the current Mareri artwork',await p.locator('.archive-person-photo canvas[role="img"]').count()===1);
@@ -218,7 +233,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' long details show an obvious scroll button and scrollbar',await p.locator('#archive-scroll-more').isVisible()&&await p.locator('#archive-scroll').evaluate(e=>e.scrollHeight>e.clientHeight&&getComputedStyle(e).overflowY==='auto'));
   check(tag+' long hashtag wraps within the viewport',await p.evaluate(()=>document.querySelector('#archive-scroll').scrollWidth<=document.querySelector('#archive-scroll').clientWidth+1&&document.documentElement.scrollWidth<=innerWidth+1));
   await p.locator('#archive-scroll-more').click();check(tag+' scroll hint button moves down the content',await p.locator('#archive-scroll').evaluate(e=>e.scrollTop>0));
-  if(width===1280)check(tag+' desktop photo remains visible while biography scrolls',await p.locator('.archive-person-photo').evaluate(e=>e.getBoundingClientRect().top>=document.querySelector('#archive-scroll').getBoundingClientRect().top-1));
+  check(tag+' landscape photo and long biography stay in one readable column',await p.evaluate(()=>{const a=document.querySelector('.archive-person-photo').getBoundingClientRect(),b=document.querySelector('.archive-person-copy').getBoundingClientRect();return Math.abs(a.width/a.height-13/7)<.02&&b.top>=a.bottom-1&&a.left>=b.left-1&&a.right<=b.right+1}));
   if(width!==1280){
    await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=0);const r=await p.locator('#archive-scroll').boundingBox(),x=r.x+20,y=r.y+r.height*.8,cdp=await context.newCDPSession(p);
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y,id:1}]});for(let i=1;i<=6;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-i*Math.min(14,r.height/12),id:1}]});await p.waitForTimeout(20)}await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await p.waitForTimeout(150);
