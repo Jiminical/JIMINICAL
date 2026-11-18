@@ -509,13 +509,16 @@ const greenstoaLore = (() => {
       "portraitSrc": "assets/person-helen.webp",
       "portraitKind": "photo",
       "tags": [
-        "하프엘프",
+        "너그러움",
+        "나긋나긋",
         "전임 지도자",
-        "여관 주인"
+        "여관 주인",
+        "하프엘프",
+        "417세"
       ],
-      "role": "그린스토아 전임 지도자 · 여관 주인",
-      "summary": "그린스토아의 전임 지도자인 하프엘프 여관 주인.",
-      "body": "417세의 하프엘프. 그린스토아의 전임 지도자이며 여관 주인이다."
+      "role": "전임 지도자, 현임 여관 주인",
+      "summary": "전임 지도자, 현임 여관 주인",
+      "body": "몇십 년 전까지 그린스토아를 이끌던 지도자였지만, 지금은 취미 삼아 거대한 여관을 운영 중입니다. 살아온 세월만큼 성격도 유연하고, 파릇파릇한 열기와 새싹들을 귀여워하는 경향이 있습니다. 딸이자 후임인 아란을 굉장히 아끼고, 또 바른 길로 이끌어주기 위해 다분히 노력하고 있습니다. 암묵적인 서열 1위입니다."
     },
     {
       "id": "ellen",
@@ -546,7 +549,7 @@ const greenstoaLore = (() => {
       ],
       "role": "나르시시즘 영애님",
       "summary": "나르시시즘 영애님",
-      "body": "하이엘프 중에서도 가장 깨끗한 피를 지닌 가문의 영애입니다. 취미는 힐리아스 여관에서의 차 한 잔, 카니아 흉보기입니다. 비교적 안전한 곳에서 특출난 마법 재능으로 후방을 지원하는 것이 하이엘프들의 역할이지만, 헤니아는 사실 놀고 있다네요! 시민들은 이 사실에 은근히 헤니아를 무시하고 있지만, 본인은 인정 안 한다네요. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.",
+      "body": "하이엘프 중에서도 가장 깨끗한 피를 지닌 가문의 영애입니다. 취미는 힐리아스 여관에서의 차 한 잔, 카니아 흉보기입니다. 비교적 안전한 곳에서 특출난 마법 재능으로 후방을 지원하는 것이 하이엘프들의 역할이지만, 헤니아는 사실 놀고 있습니다! 시민들은 이 사실에 은근히 헤니아를 무시하지만, 본인은 인정하지 않는 것 같습니다. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.",
       "bodyLinks": [{ "name": "힐리아스 여관", "articleTitle": "그린스토아의 행정", "sectionTitle": "힐리아스 여관" }]
     },
   ];
@@ -604,7 +607,13 @@ const greenstoaLore = (() => {
       { targetId: "helen", relation: "존경하는 전임 지도자. 헬렌 님께는 예를 갖춰라!", emotion: "neutral" },
       { targetId: "aran", relation: "현임 지도자. 신뢰한다만... 아니, 아니!", emotion: "flustered" },
     ],
-    helen: [{ targetId: "aran", relation: "미공개" }],
+    helen: [
+      { targetId: "aran", relation: "딸. 기특하게 잘 해주고 있어~", emotion: "neutral" },
+      { targetId: "scout", relation: "믿음직한 아이. 놀리는게 재밌고 귀여워~.", emotion: "neutral" },
+      { targetId: "henia", relation: "고양이같은 아이. 틱틱대면서도 주눅드는게 귀여워~", emotion: "neutral" },
+      { targetId: "klone", relation: "똑똑한 마법탐구자. 옷차림 덕분에 시민들을 놀래키곤 하지만... 말은 잘 통해~", emotion: "neutral" },
+      { targetId: "mareri", relation: "술친구. 허울없는 모습이 맘에 들어~", emotion: "neutral" },
+    ],
     aran: [{ targetId: "helen", relation: "미공개" }],
     remu: [{ targetId: "ellen", relation: "미공개" }],
     ellen: [{ targetId: "remu", relation: "미공개" }],

@@ -40,7 +40,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
 test('relationships exist only for the seven requested sources and keep the requested target order',()=>{
-  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
   assert.equal(people.filter(p=>p.relationships.length).length,7);
   for(const person of people){
     const targets=person.relationships.map(link=>{
@@ -53,6 +53,7 @@ test('relationships exist only for the seven requested sources and keep the requ
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    helen:[['aran','딸. 기특하게 잘 해주고 있어~','neutral'],['scout','믿음직한 아이. 놀리는게 재밌고 귀여워~.','neutral'],['henia','고양이같은 아이. 틱틱대면서도 주눅드는게 귀여워~','neutral'],['klone','똑똑한 마법탐구자. 옷차림 덕분에 시민들을 놀래키곤 하지만... 말은 잘 통해~','neutral'],['mareri','술친구. 허울없는 모습이 맘에 들어~','neutral']],
     mareri:[['henia','고지식한 녀석','neutral'],['helen','술친구','neutral'],['aran','어리버리.','neutral']],
     scout:[['henia','악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],['klone','신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered'],['remu','신뢰하는 대장장이. 능률이 대단하군.','neutral'],['helen','존경하는 전임 지도자. 헬렌 님께는 예를 갖춰라!','neutral'],['aran','현임 지도자. 신뢰한다만... 아니, 아니!','flustered']],
     henia:[['scout','악우. 정말 안타깝구나, 카니아. 하이엘프라면 응당 품위를 차리는게 종족에 대한 예의 아니겠니? 정찰대같은 진흙탕이 아니라.','puzzled'],['klone','이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed'],['helen','인정하는 전임 지도자. 헬렌 님의 체면을 생각해서 순순히 지내는 거란다. 절대 내가 무시당하는 게 아니고!','flustered']],

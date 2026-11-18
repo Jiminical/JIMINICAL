@@ -175,8 +175,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌'],'레무':['엘레나'],'엘레나':['레무']};
   const copy={
+    '헬렌':{'아란':['딸. 기특하게 잘 해주고 있어~','neutral'],'카니아':['믿음직한 아이. 놀리는게 재밌고 귀여워~.','neutral'],'헤니아':['고양이같은 아이. 틱틱대면서도 주눅드는게 귀여워~','neutral'],'클로네':['똑똑한 마법탐구자. 옷차림 덕분에 시민들을 놀래키곤 하지만... 말은 잘 통해~','neutral'],'마르에리':['술친구. 허울없는 모습이 맘에 들어~','neutral']},
     '마르에리':{'헤니아':['고지식한 녀석','neutral'],'헬렌':['술친구','neutral'],'아란':['어리버리.','neutral']},
     '카니아':{'헤니아':['악우. 온실 속 화초 주제에 정찰대를 흉본다!','annoyed'],'클로네':['신뢰하는 탐구자. 거적데기만 걸쳐 눈 둘 곳이 없다...','flustered'],'레무':['신뢰하는 대장장이. 능률이 대단하군.','neutral'],'헬렌':['존경하는 전임 지도자. 헬렌 님께는 예를 갖춰라!','neutral'],'아란':['현임 지도자. 신뢰한다만... 아니, 아니!','flustered']},
     '헤니아':{'카니아':['악우. 정말 안타깝구나, 카니아. 하이엘프라면 응당 품위를 차리는게 종족에 대한 예의 아니겠니? 정찰대같은 진흙탕이 아니라.','puzzled'],'클로네':['이해 불가. 왜 저런 천쪼가리만 걸치고 다니는 거니?','annoyed'],'헬렌':['인정하는 전임 지도자. 헬렌 님의 체면을 생각해서 순순히 지내는 거란다. 절대 내가 무시당하는 게 아니고!','flustered']},
@@ -191,9 +192,10 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
+   if(names[i]==='헬렌')check(tag+' Helen has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='전임 지도자, 현임 여관 주인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#너그러움','#나긋나긋','#전임_지도자','#여관_주인','#하프엘프','#417세'])));
    if(names[i]==='헤니아'){
     check(tag+' Henia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='나르시시즘 영애님'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#오만함','#귀족','#영애','#온실_속_화초','#197세'])));
-    check(tag+' Henia citizen sentence follows the idle reveal before the closing description',await p.locator('.archive-person-biography').innerText().then(text=>text.includes('헤니아는 사실 놀고 있다네요! 시민들은 이 사실에 은근히 헤니아를 무시하고 있지만, 본인은 인정 안 한다네요. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.')&&!text.includes('(하이퍼링크)')));
+    check(tag+' Henia citizen sentence follows the idle reveal before the closing description',await p.locator('.archive-person-biography').innerText().then(text=>text.includes('헤니아는 사실 놀고 있습니다! 시민들은 이 사실에 은근히 헤니아를 무시하지만, 본인은 인정하지 않는 것 같습니다. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.')&&!text.includes('(하이퍼링크)')));
     const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key)),url=p.url(),inn=p.locator('.archive-person-biography a').filter({hasText:'힐리아스 여관'});
     check(tag+' Henia biography contains an accessible inn link',await inn.count()===1&&await inn.getAttribute('aria-label')==='힐리아스 여관 설명 보기');
     await inn.focus();await p.keyboard.press('Enter');
