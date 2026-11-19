@@ -402,12 +402,15 @@ const greenstoaLore = (() => {
       "portraitKind": "photo",
       "tags": [
         "고양이 수인",
+        "온순함",
+        "예의범절",
         "슈냐의 친구",
-        "온순함"
+        "마법사",
+        "20세"
       ],
-      "role": "슈냐의 친구 · 고양이 수인",
-      "summary": "슈냐의 친구인 온순한 고양이 수인.",
-      "body": "20세의 고양이 수인. 슈냐의 친구이며 온순한 성격이다."
+      "role": "슈냐의 억제기",
+      "summary": "슈냐의 억제기",
+      "body": "순하고 예의바른 고양이 수인 마법사입니다. 어릴 적부터 엘프들에게 마법을 겉핥기로 배웠으며, 꾸준히 배운 덕에 꽤나 고난도 마법인 월광 마법의 기초를 사용할 수 있게 되었습니다. 슈냐와는 오래된 친구로, 너무나도 자유분방한 그녀의 성격 탓에 골머리를 썩힐 때가 많지만 그만큼 친구를 아끼고 항상 동행하는 우정도 보입니다. 슈냐에 비해 동물의 본능은 많이 남아있지 않습니다."
     },
     {
       "id": "shunya",
@@ -643,6 +646,11 @@ const greenstoaLore = (() => {
       { targetId: "ellen", relation: "무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!", emotion: "flustered" },
       { targetId: "scout", relation: "정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...", emotion: "puzzled" },
       { targetId: "sena", relation: "정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!", emotion: "neutral" },
+    ],
+    runya: [
+      { targetId: "shunya", relation: "친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!", emotion: "annoyed" },
+      { targetId: "helen", relation: "전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.", emotion: "neutral" },
+      { targetId: "ellen", relation: "소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.", emotion: "puzzled" },
     ],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };

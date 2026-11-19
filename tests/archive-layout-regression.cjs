@@ -182,8 +182,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'엘레나':['레무']};
   const copy={
+    '루냐':{'슈냐':['친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],'헬렌':['전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],'엘레나':['소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']},
     '레무':{'엘레나':['무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],'카니아':['정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],'장위':['정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']},
     '클로네':{'헬렌':['대화가 잘 통하는 전 지도자. 헬렌 님의 지원 덕에 많은 마법식을 만들고 개량했다.','neutral'],'헤니아':['피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.','neutral'],'뮈르슈':['흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.','neutral']},
     '아란':{'헬렌':['존경하는 어머니. 기대에 부응할 수 있었으면 좋겠다.','neutral'],'카니아':['신뢰하는 동료. 발빠르게 움직이며 소식을 빠르게 알려준다.','neutral'],'클로네':['뛰어난 마법탐구자. 정말 유능하지만 그... 그 옷차림 만큼은! 어떻게 안 되겠나앗...','flustered'],'레무':['믿을 수 있는 대장장이. 직접적 만남은 뜸하지만 정찰대의 무기를 수리해주는 고마운 녀석이다.','neutral'],'헤니아':['마법은 뛰어난 영애. 카니아와 티격대는 것을 많이 봤는데, 서로 친한가...?','puzzled']},
@@ -204,6 +205,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
    if(names[i]==='아란')check(tag+' Aran has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='얼렁뚱땅 현임 지도자'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#허당','#하프엘프','#현임_지도자','#품위_연기','#백치미','#160세'])));
    if(names[i]==='레무')check(tag+' Remu has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='슬라임 대장장이'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#몬스터','#슬라임','#대장장이','#신체변형','#활기참','#나이불명'])));
+   if(names[i]==='루냐')check(tag+' Runya has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='슈냐의 억제기'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#고양이_수인','#온순함','#예의범절','#슈냐의_친구','#마법사','#20세'])));
    if(names[i]==='클로네'){
     check(tag+' Klone has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='천재 마법탐구자'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#고지능','#우드엘프','#현실적','#개방적_생활문화','#마법탐구자','#311세'])));
     check(tag+' Klone clarification follows the common-sense sentence',await p.locator('.archive-person-biography').innerText().then(text=>text.endsWith('그녀에겐 그것이 상식입니다. 때와 장소를 가리지 않는 것도 아닙니다.')));

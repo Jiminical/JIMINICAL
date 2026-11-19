@@ -39,9 +39,9 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the eight requested sources and keep the requested target order',()=>{
-  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'엘레나':['레무']};
-  assert.equal(people.filter(p=>p.relationships.length).length,8);
+test('relationships exist only for the nine requested sources and keep the requested target order',()=>{
+  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'엘레나':['레무']};
+  assert.equal(people.filter(p=>p.relationships.length).length,9);
   for(const person of people){
     const targets=person.relationships.map(link=>{
       const target=people.find(p=>p.id===link.targetId);assert.ok(target);assert.ok(link.relation);return target.name;
@@ -53,6 +53,7 @@ test('relationships exist only for the eight requested sources and keep the requ
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    runya:[['shunya','친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],['helen','전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],['ellen','소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']],
     remu:[['ellen','무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],['scout','정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],['sena','정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']],
     klone:[['helen','대화가 잘 통하는 전 지도자. 헬렌 님의 지원 덕에 많은 마법식을 만들고 개량했다.','neutral'],['henia','피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.','neutral'],['rael','흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.','neutral']],
     aran:[['helen','존경하는 어머니. 기대에 부응할 수 있었으면 좋겠다.','neutral'],['scout','신뢰하는 동료. 발빠르게 움직이며 소식을 빠르게 알려준다.','neutral'],['klone','뛰어난 마법탐구자. 정말 유능하지만 그... 그 옷차림 만큼은! 어떻게 안 되겠나앗...','flustered'],['remu','믿을 수 있는 대장장이. 직접적 만남은 뜸하지만 정찰대의 무기를 수리해주는 고마운 녀석이다.','neutral'],['henia','마법은 뛰어난 영애. 카니아와 티격대는 것을 많이 봤는데, 서로 친한가...?','puzzled']],
