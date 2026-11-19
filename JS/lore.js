@@ -488,14 +488,16 @@ const greenstoaLore = (() => {
       "portraitSrc": "assets/person-remu.webp",
       "portraitKind": "photo",
       "tags": [
+        "몬스터",
         "슬라임",
         "대장장이",
-        "몬스터",
-        "형태변환"
+        "신체변형",
+        "활기참",
+        "나이불명"
       ],
-      "role": "대장장이 · 슬라임",
-      "summary": "형태변환을 할 수 있는 슬라임 대장장이.",
-      "body": "슬라임 대장장이이며 몬스터에 속한다. 형태를 변환할 수 있다."
+      "role": "슬라임 대장장이",
+      "summary": "슬라임 대장장이",
+      "body": "그린스토아 중심 상권은 모루와 망치가 부딪히는 금속음이 끊이지 않습니다. 인기도, 평가도 제일인 레무의 대장간이 바로 그 이유입니다. 레무는 모든 손님들을 반기는 순한 슬라임 대장장이입니다.  슬라임이라고 하면 자칫 흐물흐물하고 힘이라고는 없을 것 같지만, 그녀의 실력은 타의 추종을 불허할 정도로 야무집니다. 오히려 차갑고 물컹한 신체가 열을 빠르게 식히는 도움을 주기도 하죠. 궁금하다면, 만져도 되냐고 물어보세요. 그녀에겐 일상입니다."
     },
     {
       "id": "klone",
@@ -637,7 +639,11 @@ const greenstoaLore = (() => {
       { targetId: "henia", relation: "피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.", emotion: "neutral" },
       { targetId: "rael", relation: "흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.", emotion: "neutral" },
     ],
-    remu: [{ targetId: "ellen", relation: "미공개" }],
+    remu: [
+      { targetId: "ellen", relation: "무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!", emotion: "flustered" },
+      { targetId: "scout", relation: "정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...", emotion: "puzzled" },
+      { targetId: "sena", relation: "정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!", emotion: "neutral" },
+    ],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };
   const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena" };
