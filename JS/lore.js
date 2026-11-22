@@ -436,11 +436,13 @@ const greenstoaLore = (() => {
       "tags": [
         "양 수인",
         "여행객",
-        "모험가 선망"
+        "제르디아 출신",
+        "모험가 선망",
+        "21세"
       ],
-      "role": "모험가를 선망하는 여행객 · 양 수인",
-      "summary": "모험가를 선망하는 양 수인 여행객.",
-      "body": "21세의 양 수인 여행객. 모험가를 선망한다."
+      "role": "털 날리는 여행객",
+      "summary": "털 날리는 여행객",
+      "body": "제르디아에서 온 양 수인 여행객입니다. 특별히 혈통이 좋거나 귀족 가문에서 태어나지는 않았지만, 집안이 부유하여 여러가지 경험을 쌓는 데에 지장이 없는 편입니다. 꽤 수준 높은 마법인 빛 마법도 배우고, 이곳저곳 돌아다니며 지혜 또한 쌓고 있습니다. 특히 모험가를 선망하는데, 본인의 좋아하는 것에 열정적인 성격 덕에 모험가를 마주치면 흥분하기도 합니다. 그녀에게 '침착하라'고 말해보세요. 방금까지 자신이 들떠있던 것에 부끄러워 할지도요."
     },
     {
       "id": "carola",
@@ -656,6 +658,12 @@ const greenstoaLore = (() => {
     ],
     shunya: [
       { targetId: "runya", relation: "친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.", emotion: "annoyed" },
+    ],
+    sif: [
+      { targetId: "hero", targetType: "player", relation: "모험가 님. 혹시, 괜찮으시면 대화라도...!", emotion: "flustered" },
+      { targetId: "aran", relation: "이 곳의 지도자. 명성은 알고 있어요...", emotion: "neutral" },
+      { targetId: "helen", relation: "이 곳의 지도자. 명성은 알고 있어요...", emotion: "neutral" },
+      { targetId: "carola", relation: "목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.", emotion: "neutral" },
     ],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };

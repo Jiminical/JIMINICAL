@@ -182,8 +182,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
-  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'엘레나':['레무']};
+  const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   const copy={
+    '시프':{'당신(플레이어)':['모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],'아란':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'헬렌':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'캐롤라':['목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']},
     '슈냐':{'루냐':['친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']},
     '루냐':{'슈냐':['친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],'헬렌':['전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],'엘레나':['소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']},
     '레무':{'엘레나':['무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],'카니아':['정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],'장위':['정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']},
@@ -224,6 +225,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.screenshot({path:path.join(out,tag+'-henia-inn-link.png')});
     await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
    }
+   if(names[i]==='시프')check(tag+' Sif has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='털 날리는 여행객'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#양_수인','#여행객','#제르디아_출신','#모험가_선망','#21세'])));
    const person=await p.evaluate(i=>({kind:greenstoaLore.people[i].portraitKind,src:greenstoaLore.people[i].portraitSrc,id:greenstoaLore.people[i].id}),i);
    let portraitOk;
    if(person.src){
@@ -235,9 +237,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    else portraitOk=await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)});
    check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&portraitOk);
    const targets=relationships[names[i]]||[];
-   check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships button').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
+   check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships .archive-relationship-target').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
    if(targets.length){
-    check(tag+' '+names[i]+' relationship targets have their own dot icons',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>icon.dataset.person===greenstoaLore.people.find(person=>person.name===targets[index]).id&&icon.querySelector('img')),targets));
+    check(tag+' '+names[i]+' relationship targets have their own dot icons',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>targets[index]==='당신(플레이어)'?icon.dataset.person==='hero'&&icon.querySelector('canvas'):icon.dataset.person===greenstoaLore.people.find(person=>person.name===targets[index]).id&&icon.querySelector('img')),targets));
     await p.locator('.archive-relationship-detail .archive-relationship-reaction img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
     const faces=await p.locator('.archive-relationship-detail .archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,columns:Number(e.dataset.columns),rows:Number(e.dataset.rows),frame:Number(e.dataset.frame),renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
     const id=await p.evaluate(i=>greenstoaLore.people[i].id,i);
@@ -247,6 +249,14 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.screenshot({path:path.join(out,tag+'-supporting-last.png')});
   for(const [source,targets]of Object.entries(relationships))for(const target of targets){
    await p.locator('#archive-index button').nth(names.indexOf(source)).click();
+   if(target==='당신(플레이어)'){
+    const player=p.locator('.archive-relationship-player[data-target="hero"]');await player.scrollIntoViewIfNeeded();
+    check(tag+' Sif player relationship uses the existing hero portrait',await player.evaluate(element=>{const canvas=element.querySelector('canvas'),pixels=canvas?.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;return element.tagName==='SPAN'&&!element.matches('button,a')&&pixels?.some((value,index)=>index%4===3&&value>96)}));
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key)),url=p.url();await player.click();
+    check(tag+' player label keeps the cast roster save and selected Sif intact',await p.locator('.archive-person-copy h3').innerText()==='시프'&&await p.locator('#archive-index button').count()===24&&p.url()===url&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
+    await p.screenshot({path:path.join(out,tag+'-sif-player-relationship.png')});
+    continue;
+   }
    const link=p.locator('.archive-person-relationships button').filter({hasText:target});
    await link.scrollIntoViewIfNeeded();
    check(tag+' '+source+' to '+target+' relationship link is a reachable touch target',await link.evaluate(e=>{const r=e.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.height>=44&&r.left>=s.left&&r.right<=s.right}));

@@ -147,6 +147,12 @@ const libraryArchive = (() => {
     icon.className = "archive-person-icon";
     icon.dataset.person = person.id;
     icon.setAttribute("aria-hidden", "true");
+    if (person.id === "hero" && state) {
+      const portrait = canvas(128, 128);
+      state.drawPortrait(portrait, "hero");
+      icon.append(portrait);
+      return icon;
+    }
     const face = person.reactionAsset && reactionIcon(person);
     if (face) {
       face.querySelector("img").addEventListener("error", () => {
@@ -387,17 +393,22 @@ const libraryArchive = (() => {
         label.id = "archive-relationships-" + person.id;
         label.textContent = "관계도";
         relationships.setAttribute("aria-labelledby", label.id);
-        person.relationships.forEach(({targetId, relation, emotion}) => {
+        person.relationships.forEach(({targetId, targetType, relation, emotion}) => {
+          const isPlayer = targetType === "player" && targetId === "hero";
           const targetIndex = greenstoaLore.people.findIndex(target => target.id === targetId);
-          if (targetIndex < 0) return;
-          const target = greenstoaLore.people[targetIndex], row = document.createElement("li"), name = document.createElement("button"), arrow = document.createElement("span"), detail = document.createElement("span");
-          name.type = "button";
+          if (targetIndex < 0 && !isPlayer) return;
+          const target = isPlayer ? { id: "hero", name: "당신(플레이어)" } : greenstoaLore.people[targetIndex];
+          const row = document.createElement("li"), name = document.createElement(isPlayer ? "span" : "button"), arrow = document.createElement("span"), detail = document.createElement("span");
+          if (isPlayer) row.className = "is-player-relationship";
           name.dataset.target = target.id;
           name.textContent = target.name;
-          name.className = "archive-relationship-target";
+          name.className = "archive-relationship-target" + (isPlayer ? " archive-relationship-player" : "");
           name.prepend(personIcon(target));
-          name.setAttribute("aria-label", target.name + " 인물 소개 보기");
-          name.addEventListener("click", () => choose(targetIndex, true));
+          if (!isPlayer) {
+            name.type = "button";
+            name.setAttribute("aria-label", target.name + " 인물 소개 보기");
+            name.addEventListener("click", () => choose(targetIndex, true));
+          }
           arrow.textContent = "→";
           arrow.setAttribute("aria-hidden", "true");
           detail.className = "archive-relationship-detail";

@@ -39,11 +39,12 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the ten requested sources and keep the requested target order',()=>{
-  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'엘레나':['레무']};
-  assert.equal(people.filter(p=>p.relationships.length).length,10);
+test('relationships exist only for the eleven requested sources and keep the requested target order',()=>{
+  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
+  assert.equal(people.filter(p=>p.relationships.length).length,11);
   for(const person of people){
     const targets=person.relationships.map(link=>{
+      if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
       const target=people.find(p=>p.id===link.targetId);assert.ok(target);assert.ok(link.relation);return target.name;
     });
     assert.deepEqual(targets,expected[person.name]||[],person.name);
@@ -53,6 +54,7 @@ test('relationships exist only for the ten requested sources and keep the reques
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    sif:[['hero','모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],['aran','이 곳의 지도자. 명성은 알고 있어요...','neutral'],['helen','이 곳의 지도자. 명성은 알고 있어요...','neutral'],['carola','목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']],
     shunya:[['runya','친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']],
     runya:[['shunya','친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],['helen','전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],['ellen','소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']],
     remu:[['ellen','무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],['scout','정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],['sena','정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']],
