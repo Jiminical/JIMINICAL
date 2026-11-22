@@ -39,9 +39,9 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the nine requested sources and keep the requested target order',()=>{
-  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'엘레나':['레무']};
-  assert.equal(people.filter(p=>p.relationships.length).length,9);
+test('relationships exist only for the ten requested sources and keep the requested target order',()=>{
+  const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'엘레나':['레무']};
+  assert.equal(people.filter(p=>p.relationships.length).length,10);
   for(const person of people){
     const targets=person.relationships.map(link=>{
       const target=people.find(p=>p.id===link.targetId);assert.ok(target);assert.ok(link.relation);return target.name;
@@ -53,6 +53,7 @@ test('relationships exist only for the nine requested sources and keep the reque
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    shunya:[['runya','친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']],
     runya:[['shunya','친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],['helen','전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],['ellen','소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']],
     remu:[['ellen','무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],['scout','정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],['sena','정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']],
     klone:[['helen','대화가 잘 통하는 전 지도자. 헬렌 님의 지원 덕에 많은 마법식을 만들고 개량했다.','neutral'],['henia','피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.','neutral'],['rael','흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.','neutral']],

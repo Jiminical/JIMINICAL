@@ -419,12 +419,14 @@ const greenstoaLore = (() => {
       "portraitKind": "photo",
       "tags": [
         "고양이 수인",
+        "자유분방",
+        "루냐의 친구",
         "도적",
-        "악동"
+        "20세"
       ],
-      "role": "고양이 수인 도적",
-      "summary": "악동 같은 면모를 지닌 고양이 수인 도적.",
-      "body": "20세의 고양이 수인. 도적이며 악동 같은 면모를 지녔다."
+      "role": "루냐의 애물단지",
+      "summary": "루냐의 애물단지",
+      "body": "자유로운 문제아이자 고양이 수인 도적입니다. 마법처럼 복잡하고 어려운 것에는 영 흥미를 못 느끼고, 한 시라도 가만히 있지 못하는 유형입니다. 타인의 물건을 훔치는 도적이 어떻게 마음대로 돌아다닐 수 있냐 하면, 도난에 성공한 경험이 없기 때문입니다. 설령 성공한다고 한들, 루냐의 닦달에 돌려주기 일쑤입니다. 동물의 본능이 비교적 많이 남은 편이기에, 냐체를 사용합니다."
     },
     {
       "id": "sif",
@@ -651,6 +653,9 @@ const greenstoaLore = (() => {
       { targetId: "shunya", relation: "친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!", emotion: "annoyed" },
       { targetId: "helen", relation: "전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.", emotion: "neutral" },
       { targetId: "ellen", relation: "소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.", emotion: "puzzled" },
+    ],
+    shunya: [
+      { targetId: "runya", relation: "친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.", emotion: "annoyed" },
     ],
     ellen: [{ targetId: "remu", relation: "미공개" }],
   };
