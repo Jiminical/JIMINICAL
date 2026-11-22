@@ -184,7 +184,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
   const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   relationships['뮈르슈']=['클로네','장위'];
+  relationships['엘레나']=['레무','장위'];
   const copy={
+    '엘레나':{'레무':['반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?','neutral'],'장위':['몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~','neutral']},
     '뮈르슈':{'클로네':['흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.','neutral'],'장위':['정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.','neutral']},
     '시프':{'당신(플레이어)':['모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],'아란':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'헬렌':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'캐롤라':['목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']},
     '슈냐':{'루냐':['친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']},
@@ -226,6 +228,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' inn navigation keeps URL and save unchanged',p.url()===url&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
     await p.screenshot({path:path.join(out,tag+'-henia-inn-link.png')});
     await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
+   }
+   if(names[i]==='엘레나'){
+    check(tag+' Elena has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='밤의 마녀'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#서큐버스','#몬스터','#마족','#매혹적','#100세'])));
+    check(tag+' Elena introduction has two paragraphs with only the opening sentence in bold',await p.locator('.archive-person-biography').evaluate(section=>{const paragraphs=[...section.querySelectorAll('p')],bold=section.querySelectorAll('strong'),opening='감언이설과 매혹 마법으로 남성을 유혹하고, 정기를 흡수하는 몽마!';return paragraphs.length===2&&bold.length===1&&paragraphs[0].textContent===opening&&bold[0].textContent===opening&&bold[0].parentElement===paragraphs[0]&&Number(getComputedStyle(bold[0]).fontWeight)>Number(getComputedStyle(paragraphs[1]).fontWeight)&&!paragraphs[1].querySelector('strong')&&paragraphs[1].textContent.startsWith('...일 뻔한 서큐버스입니다.')&&paragraphs[1].textContent.endsWith('진위여부는 불명이지만요.')&&!section.textContent.includes('(볼드)')}));
+    await p.locator('.archive-person-biography strong').scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-elena-bold-introduction.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
    }
    if(names[i]==='뮈르슈'){
     check(tag+' Muirshu has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='깐깐한 도서관 사서'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#드래곤_수인','#염뢰혈_출신','#용족','#사서','#나이_불명'])));

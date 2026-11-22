@@ -551,13 +551,18 @@ const greenstoaLore = (() => {
       "portraitKind": "photo",
       "tags": [
         "서큐버스",
-        "조건부 불로",
         "몬스터",
-        "마족"
+        "마족",
+        "매혹적",
+        "100세"
       ],
-      "role": "서큐버스 · 몬스터와 마족",
-      "summary": "조건부 불로의 특성을 지닌 서큐버스.",
-      "body": "100세의 서큐버스. 조건부 불로의 특성을 지녔으며 몬스터와 마족에 속한다."
+      "role": "밤의 마녀",
+      "summary": "밤의 마녀",
+      "body": [
+        "감언이설과 매혹 마법으로 남성을 유혹하고, 정기를 흡수하는 몽마!",
+        "...일 뻔한 서큐버스입니다. 그린스토아에선 허용되지 않는 행동이거든요. 종족 특유의 방탕한 성격과 유혹적인 말투는 여전하지만, 죄 없는 남성을 미라로 만들어버리지는 않습니다. 그럼에도 마족에 대한 공포심이 남은 시민들은 그녀가 나타난 밤에 남성이 한 명씩 실종된다는 소문을 퍼뜨리기도 합니다. 진위여부는 불명이지만요.",
+      ],
+      "bodyEmphasis": ["감언이설과 매혹 마법으로 남성을 유혹하고, 정기를 흡수하는 몽마!"]
     },
     {
       "id": "henia",
@@ -672,7 +677,10 @@ const greenstoaLore = (() => {
       { targetId: "klone", relation: "흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.", emotion: "neutral" },
       { targetId: "sena", relation: "정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.", emotion: "neutral" },
     ],
-    ellen: [{ targetId: "remu", relation: "미공개" }],
+    ellen: [
+      { targetId: "remu", relation: "반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?", emotion: "neutral" },
+      { targetId: "sena", relation: "몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~", emotion: "neutral" },
+    ],
   };
   const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena" };
   const reactionGrids = {};

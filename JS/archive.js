@@ -380,7 +380,7 @@ const libraryArchive = (() => {
       const biography = document.createElement("section");
       biography.className = "archive-person-biography";
       biography.setAttribute("aria-label", "자세한 설명");
-      (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks)));
+      (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks, person.bodyEmphasis)));
       copy.append(
         paragraph(person.role, "archive-kicker archive-person-role"),
         heading(person.name),

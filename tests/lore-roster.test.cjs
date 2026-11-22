@@ -42,6 +42,7 @@ test('new supporting characters are separate people, without borrowed artwork or
 test('relationships exist only for the twelve requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
+  expected['엘레나']=['레무','장위'];
   assert.equal(people.filter(p=>p.relationships.length).length,12);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
@@ -56,6 +57,7 @@ test('relationships exist only for the twelve requested sources and keep the req
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    ellen:[['remu','반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?','neutral'],['sena','몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~','neutral']],
     rael:[['klone','흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.','neutral'],['sena','정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.','neutral']],
     sif:[['hero','모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],[['aran','helen'],'이 곳의 지도자. 명성은 알고 있어요...','neutral'],['carola','목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']],
     shunya:[['runya','친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']],
