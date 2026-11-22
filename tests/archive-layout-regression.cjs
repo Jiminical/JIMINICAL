@@ -185,11 +185,28 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   relationships['뮈르슈']=['클로네','장위'];
   relationships['엘레나']=['레무','장위'];
+  relationships['슈냐']=['루냐','캐롤라'];
+  relationships['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
   const copy={
+    '캐롤라':{
+     '시프':['귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!','neutral'],
+     '헬렌':['믿음직한 전 지도자님이시지! 헬렌 님과는 성격이 잘 맞아서 좋았어. 바쁘셔서 만나뵐 기회는 많이 없었지만.','neutral'],
+     '아란':['지도자에겐 예를 차리지만, 솔직히 속으로는 귀엽고 기특한 아가씨라고 생각하고 있어. 전임의 품위를 지키기 위해 열심이니까!','neutral'],
+     '카니아':['서부까지 순찰을 돌 때 많이 만나. 툴툴대면서도 할 일은 꼼꼼히 하는 괜찮은 녀석이지. 언젠가 남자 하나 물어 은퇴하지 않으려나?','neutral'],
+     '보르드':['카니아와 가끔씩 같이 순찰을 돌더군. 성격은 좀 고약해도 본성은 착한 녀석이야. 우유 한 병 주면 좋아하더라고.','neutral'],
+     '마르에리':['목장 근처 그늘에서 잠을 자곤 해. 내쫓기 뭐하잖아? 낮잠 잘 곳을 주는 대신 정령들의 도움을 좀 받고 있지. 덕분에 일할 때도 덥지 않아.','neutral'],
+     '레무':['목장 기구가 고장나도 걱정거리가 없는건 이 친구 덕분이지. 서로서로 잘 되고 있어서 좋아.','neutral'],
+     '슈냐':['사고뭉치. 옆에 있는 흰 녀석이 없었다면 아마 정말 큰 사고를 치겠지. 그럴 일은 없겠지만 말야.','neutral'],
+     '루냐':['소심해도 할 말은 다 하는게 귀여워. 검은 녀석한테 휘둘리긴 하지만, 서로 아끼는게 보인단 말이지.','neutral'],
+     '아르다':['그린스토아 말고도 제르디아에 납품할 기회가 있었는데, 제빵이 취미인 녀석이 있더라고. 밝고 선량한게 맘에 들어.','neutral'],
+     '헤니아':['안면 정도는 텄어. 둘 다 만날 일이 별로 없어서 말이야.','neutral'],
+     '클로네':['안면 정도는 텄어. 둘 다 만날 일이 별로 없어서 말이야.','neutral'],
+     '엘레나':['낮에는 아주 가끔씩 보는데, 자세히는 모르고... 소문으로는 알고 있어.','neutral'],
+    },
     '엘레나':{'레무':['반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?','neutral'],'장위':['몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~','neutral']},
     '뮈르슈':{'클로네':['흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.','neutral'],'장위':['정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.','neutral']},
     '시프':{'당신(플레이어)':['모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],'아란':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'헬렌':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'캐롤라':['목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']},
-    '슈냐':{'루냐':['친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']},
+    '슈냐':{'루냐':['친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed'],'캐롤라':['우유...! 가끔씩 우유를 준다냐. 여기 목장 우유는 맛있다냐.','neutral']},
     '루냐':{'슈냐':['친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],'헬렌':['전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],'엘레나':['소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']},
     '레무':{'엘레나':['무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],'카니아':['정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],'장위':['정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']},
     '클로네':{'헬렌':['대화가 잘 통하는 전 지도자. 헬렌 님의 지원 덕에 많은 마법식을 만들고 개량했다.','neutral'],'헤니아':['피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.','neutral'],'뮈르슈':['흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.','neutral']},
@@ -208,6 +225,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' Mareri has the requested role and exact six hashtags',await p.locator('.archive-person-role').innerText()==='주정뱅이 정령사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#하프엘프','#정령술사','#애주가','#앳된_외견','#시니컬','#251세'])));
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
+   if(names[i]==='캐롤라')check(tag+' Carola has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='서부 목장의 주인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#소_수인','#쾌활함','#장난기','#마당발','#31세'])));
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
    if(names[i]==='아란')check(tag+' Aran has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='얼렁뚱땅 현임 지도자'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#허당','#하프엘프','#현임_지도자','#품위_연기','#백치미','#160세'])));
    if(names[i]==='레무')check(tag+' Remu has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='슬라임 대장장이'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#몬스터','#슬라임','#대장장이','#신체변형','#활기참','#나이불명'])));
@@ -258,18 +276,19 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    else portraitOk=await p.locator('.archive-person-photo canvas').evaluate(e=>{const d=e.getContext('2d').getImageData(0,0,e.width,e.height).data;return d.some((v,i)=>i%4===3&&v>96)});
    check(tag+' profile '+(i+1)+' '+names[i]+' renders with the correct portrait and count',await p.locator('.archive-person-copy h3').innerText()===names[i]&&await p.locator('#archive-page-count').innerText()===String(i+1).padStart(2,'0')+' / 24'&&portraitOk);
    const targets=relationships[names[i]]||[];
-   const rowTargets=names[i]==='시프'?['당신(플레이어)','아란','캐롤라']:targets;
+   const rowTargets=names[i]==='시프'?['당신(플레이어)','아란','캐롤라']:names[i]==='캐롤라'?targets.filter(name=>name!=='클로네'):targets;
    check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships .archive-relationship-target').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(rowTargets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
    if(targets.length){
-    check(tag+' '+names[i]+' relationship targets have their own dot icons',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>targets[index]==='당신(플레이어)'?icon.dataset.person==='hero'&&icon.querySelector('canvas'):icon.dataset.person===greenstoaLore.people.find(person=>person.name===targets[index]).id&&icon.querySelector('img')),targets));
+    check(tag+' '+names[i]+' relationship targets have their own icons and unknown people stay unrevealed',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>{if(targets[index]==='당신(플레이어)')return icon.dataset.person==='hero'&&icon.querySelector('canvas');const person=greenstoaLore.people.find(person=>person.name===targets[index]);return icon.dataset.person===person.id&&(person.portraitKind==='unrevealed'?icon.classList.contains('is-unrevealed')&&!icon.querySelector('img'):icon.querySelector('img'))}),targets));
     await p.locator('.archive-relationship-detail .archive-relationship-reaction img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
     const faces=await p.locator('.archive-relationship-detail .archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,columns:Number(e.dataset.columns),rows:Number(e.dataset.rows),frame:Number(e.dataset.frame),renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
     const id=await p.evaluate(i=>greenstoaLore.people[i].id,i);
     check(tag+' '+names[i]+' shows the correct owner and expression in unclipped compact face sprites',faces.length===rowTargets.length&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[rowTargets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&Math.abs(f.naturalWidth/f.columns-f.naturalHeight/f.rows)<.1&&f.renderedWidth===64*f.columns&&f.renderedHeight===64*f.rows&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
-    if(names[i]==='시프'){
+    if(names[i]==='시프'||names[i]==='캐롤라'){
+     const groupedIds=names[i]==='시프'?['aran','helen']:['henia','klone'];
      const group=p.locator('.archive-person-relationships li.is-grouped-relationship');await group.scrollIntoViewIfNeeded();
-     check(tag+' only Sif shares one relationship row and reaction for Aran and Helen',await p.locator('.archive-person-relationships li').count()===3&&await group.count()===1&&await group.evaluate(row=>{const buttons=[...row.querySelectorAll('button')],rects=buttons.map(button=>button.getBoundingClientRect()),scroll=document.querySelector('#archive-scroll').getBoundingClientRect();return buttons.map(button=>button.dataset.target).join(',')==='aran,helen'&&rects[0].top===rects[1].top&&rects.every(r=>r.left>=scroll.left&&r.right<=scroll.right)&&row.querySelectorAll('.archive-relationship-detail').length===1&&row.querySelectorAll('.archive-relationship-detail .archive-relationship-reaction').length===1&&document.querySelector('#archive-scroll').scrollWidth<=document.querySelector('#archive-scroll').clientWidth+1}));
-     await p.screenshot({path:path.join(out,tag+'-sif-grouped-leaders.png')});
+     check(tag+' '+names[i]+' shares one row and reaction for the requested pair',await p.locator('.archive-person-relationships li').count()===rowTargets.length&&await group.count()===1&&await group.evaluate((row,ids)=>{const buttons=[...row.querySelectorAll('button')],rects=buttons.map(button=>button.getBoundingClientRect()),scroll=document.querySelector('#archive-scroll').getBoundingClientRect();return buttons.map(button=>button.dataset.target).join(',')===ids.join(',')&&rects[0].top===rects[1].top&&rects.every(r=>r.left>=scroll.left&&r.right<=scroll.right)&&row.querySelectorAll('.archive-relationship-detail').length===1&&row.querySelectorAll('.archive-relationship-detail .archive-relationship-reaction').length===1&&document.querySelector('#archive-scroll').scrollWidth<=document.querySelector('#archive-scroll').clientWidth+1},groupedIds));
+     await p.screenshot({path:path.join(out,tag+(names[i]==='시프'?'-sif-grouped-leaders.png':'-carola-grouped-acquaintances.png'))});
     }else check(tag+' '+names[i]+' retains separate relationship rows',await p.locator('.is-grouped-relationship').count()===0&&await p.locator('.archive-person-relationships li').count()===targets.length);
    }
   }

@@ -455,12 +455,14 @@ const greenstoaLore = (() => {
       "portraitKind": "photo",
       "tags": [
         "소 수인",
-        "서부 목장 주인",
-        "마당발"
+        "쾌활함",
+        "장난기",
+        "마당발",
+        "31세"
       ],
-      "role": "그린스토아 서부 목장 주인 · 소 수인",
-      "summary": "서부 목장을 운영하는 마당발 소 수인.",
-      "body": "31세의 소 수인. 그린스토아 서부 목장의 주인이며 마당발이다."
+      "role": "서부 목장의 주인",
+      "summary": "서부 목장의 주인",
+      "body": "서부, 중대형 목장을 운영하고 있는 소 수인입니다. 상업 활동을 활발히 하고 있으며, 시민 대부분 및 상인들과 넓게 안면을 트고 있는 마당발입니다. 장난기가 많아 여러가지 농담을 필살기처럼 상시 준비하고 있는데, 자신의 농담에 웃던 안 웃던 신경쓰지 않고 다음 농담이 나온다고 하네요."
     },
     {
       "id": "seia",
@@ -667,6 +669,7 @@ const greenstoaLore = (() => {
     ],
     shunya: [
       { targetId: "runya", relation: "친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.", emotion: "annoyed" },
+      { targetId: "carola", relation: "우유...! 가끔씩 우유를 준다냐. 여기 목장 우유는 맛있다냐.", emotion: "neutral" },
     ],
     sif: [
       { targetId: "hero", targetType: "player", relation: "모험가 님. 혹시, 괜찮으시면 대화라도...!", emotion: "flustered" },
@@ -676,6 +679,20 @@ const greenstoaLore = (() => {
     rael: [
       { targetId: "klone", relation: "흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.", emotion: "neutral" },
       { targetId: "sena", relation: "정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.", emotion: "neutral" },
+    ],
+    carola: [
+      { targetId: "sif", relation: "귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!", emotion: "neutral" },
+      { targetId: "helen", relation: "믿음직한 전 지도자님이시지! 헬렌 님과는 성격이 잘 맞아서 좋았어. 바쁘셔서 만나뵐 기회는 많이 없었지만.", emotion: "neutral" },
+      { targetId: "aran", relation: "지도자에겐 예를 차리지만, 솔직히 속으로는 귀엽고 기특한 아가씨라고 생각하고 있어. 전임의 품위를 지키기 위해 열심이니까!", emotion: "neutral" },
+      { targetId: "scout", relation: "서부까지 순찰을 돌 때 많이 만나. 툴툴대면서도 할 일은 꼼꼼히 하는 괜찮은 녀석이지. 언젠가 남자 하나 물어 은퇴하지 않으려나?", emotion: "neutral" },
+      { targetId: "bord", relation: "카니아와 가끔씩 같이 순찰을 돌더군. 성격은 좀 고약해도 본성은 착한 녀석이야. 우유 한 병 주면 좋아하더라고.", emotion: "neutral" },
+      { targetId: "mareri", relation: "목장 근처 그늘에서 잠을 자곤 해. 내쫓기 뭐하잖아? 낮잠 잘 곳을 주는 대신 정령들의 도움을 좀 받고 있지. 덕분에 일할 때도 덥지 않아.", emotion: "neutral" },
+      { targetId: "remu", relation: "목장 기구가 고장나도 걱정거리가 없는건 이 친구 덕분이지. 서로서로 잘 되고 있어서 좋아.", emotion: "neutral" },
+      { targetId: "shunya", relation: "사고뭉치. 옆에 있는 흰 녀석이 없었다면 아마 정말 큰 사고를 치겠지. 그럴 일은 없겠지만 말야.", emotion: "neutral" },
+      { targetId: "runya", relation: "소심해도 할 말은 다 하는게 귀여워. 검은 녀석한테 휘둘리긴 하지만, 서로 아끼는게 보인단 말이지.", emotion: "neutral" },
+      { targetId: "rose", relation: "그린스토아 말고도 제르디아에 납품할 기회가 있었는데, 제빵이 취미인 녀석이 있더라고. 밝고 선량한게 맘에 들어.", emotion: "neutral" },
+      { targetIds: ["henia", "klone"], relation: "안면 정도는 텄어. 둘 다 만날 일이 별로 없어서 말이야.", emotion: "neutral" },
+      { targetId: "ellen", relation: "낮에는 아주 가끔씩 보는데, 자세히는 모르고... 소문으로는 알고 있어.", emotion: "neutral" },
     ],
     ellen: [
       { targetId: "remu", relation: "반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?", emotion: "neutral" },

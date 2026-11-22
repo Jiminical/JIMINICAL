@@ -39,15 +39,17 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the twelve requested sources and keep the requested target order',()=>{
+test('relationships exist only for the thirteen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
-  assert.equal(people.filter(p=>p.relationships.length).length,12);
+  expected['슈냐']=['루냐','캐롤라'];
+  expected['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
+  assert.equal(people.filter(p=>p.relationships.length).length,13);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
-      if(link.targetIds){assert.equal(person.id,'sif');assert.deepEqual(link.targetIds,['aran','helen']);}
+      if(link.targetIds){assert.ok(['sif','carola'].includes(person.id));assert.deepEqual(link.targetIds,person.id==='sif'?['aran','helen']:['henia','klone']);}
       return (link.targetIds||[link.targetId]).map(id=>{const target=people.find(p=>p.id===id);assert.ok(target);assert.ok(link.relation);return target.name;});
     });
     assert.deepEqual(targets,expected[person.name]||[],person.name);
@@ -57,10 +59,24 @@ test('relationships exist only for the twelve requested sources and keep the req
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    carola:[
+      ['sif','귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!','neutral'],
+      ['helen','믿음직한 전 지도자님이시지! 헬렌 님과는 성격이 잘 맞아서 좋았어. 바쁘셔서 만나뵐 기회는 많이 없었지만.','neutral'],
+      ['aran','지도자에겐 예를 차리지만, 솔직히 속으로는 귀엽고 기특한 아가씨라고 생각하고 있어. 전임의 품위를 지키기 위해 열심이니까!','neutral'],
+      ['scout','서부까지 순찰을 돌 때 많이 만나. 툴툴대면서도 할 일은 꼼꼼히 하는 괜찮은 녀석이지. 언젠가 남자 하나 물어 은퇴하지 않으려나?','neutral'],
+      ['bord','카니아와 가끔씩 같이 순찰을 돌더군. 성격은 좀 고약해도 본성은 착한 녀석이야. 우유 한 병 주면 좋아하더라고.','neutral'],
+      ['mareri','목장 근처 그늘에서 잠을 자곤 해. 내쫓기 뭐하잖아? 낮잠 잘 곳을 주는 대신 정령들의 도움을 좀 받고 있지. 덕분에 일할 때도 덥지 않아.','neutral'],
+      ['remu','목장 기구가 고장나도 걱정거리가 없는건 이 친구 덕분이지. 서로서로 잘 되고 있어서 좋아.','neutral'],
+      ['shunya','사고뭉치. 옆에 있는 흰 녀석이 없었다면 아마 정말 큰 사고를 치겠지. 그럴 일은 없겠지만 말야.','neutral'],
+      ['runya','소심해도 할 말은 다 하는게 귀여워. 검은 녀석한테 휘둘리긴 하지만, 서로 아끼는게 보인단 말이지.','neutral'],
+      ['rose','그린스토아 말고도 제르디아에 납품할 기회가 있었는데, 제빵이 취미인 녀석이 있더라고. 밝고 선량한게 맘에 들어.','neutral'],
+      [['henia','klone'],'안면 정도는 텄어. 둘 다 만날 일이 별로 없어서 말이야.','neutral'],
+      ['ellen','낮에는 아주 가끔씩 보는데, 자세히는 모르고... 소문으로는 알고 있어.','neutral'],
+    ],
     ellen:[['remu','반응 재밌는 슬라임. 이번엔 어떻게 놀려먹어야 할까나~?','neutral'],['sena','몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~','neutral']],
     rael:[['klone','흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.','neutral'],['sena','정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.','neutral']],
     sif:[['hero','모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],[['aran','helen'],'이 곳의 지도자. 명성은 알고 있어요...','neutral'],['carola','목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']],
-    shunya:[['runya','친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']],
+    shunya:[['runya','친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed'],['carola','우유...! 가끔씩 우유를 준다냐. 여기 목장 우유는 맛있다냐.','neutral']],
     runya:[['shunya','친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],['helen','전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],['ellen','소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']],
     remu:[['ellen','무서운 사람. 자꾸 대장간에 찾아와서 놀린다니까요!','flustered'],['scout','정찰병 님. 이따금씩 활을 손질해달라고 찾아오시는데, 저는 금속 외에는 잘...','puzzled'],['sena','정문의 강시. 상권까지 오지는 않지만... 분명 좋은 사람일 거에요!','neutral']],
     klone:[['helen','대화가 잘 통하는 전 지도자. 헬렌 님의 지원 덕에 많은 마법식을 만들고 개량했다.','neutral'],['henia','피곤하게 사는 영애. 다른 문화를 비난할 생각은 없다만, 귀찮은 껍데기 안에서 살아가는 건 분명하군.','neutral'],['rael','흥미로운 용족. 용족의 지능과 압도적인 마력에 관심이 가는군. 기회가 된다면 만남을 가지고 싶다.','neutral']],
