@@ -183,7 +183,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
   const relationships={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
+  relationships['뮈르슈']=['클로네','장위'];
   const copy={
+    '뮈르슈':{'클로네':['흥미로운 학자. 여러가지 지식과 마법식이 눈에 띄는군, 만나봐도 좋을 사람이지.','neutral'],'장위':['정문 근처에서 떠도는 언데드 녀석. 쓸데없는 걱정을 하는 것 같더군.','neutral']},
     '시프':{'당신(플레이어)':['모험가 님. 혹시, 괜찮으시면 대화라도...!','flustered'],'아란':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'헬렌':['이 곳의 지도자. 명성은 알고 있어요...','neutral'],'캐롤라':['목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.','neutral']},
     '슈냐':{'루냐':['친한 친구. 답답하다냐! 내 손에 들어오면 내 거다냐.','annoyed']},
     '루냐':{'슈냐':['친한 친구. 사람들 물건 좀 그만 훔치란 말이야...! 점찍는 것도 안 돼!','annoyed'],'헬렌':['전임 지도자님. 만나볼 기회는 많이 없지만... 월광 마법을 정말 잘 다루세요.','neutral'],'엘레나':['소문의 주인공...? 저, 저는 직접 보기까지는 안 믿을래요.','puzzled']},
@@ -223,6 +225,17 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' inn link opens administration directly at the inn section',await p.locator('[data-archive-tab="world"]').getAttribute('aria-pressed')==='true'&&await p.locator('#archive-page h3').innerText()==='그린스토아의 행정'&&await p.getByRole('heading',{name:'힐리아스 여관',exact:true}).evaluate(heading=>{const r=heading.getBoundingClientRect(),v=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top>=v.top-1&&r.bottom<=v.bottom+1}));
     check(tag+' inn navigation keeps URL and save unchanged',p.url()===url&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
     await p.screenshot({path:path.join(out,tag+'-henia-inn-link.png')});
+    await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
+   }
+   if(names[i]==='뮈르슈'){
+    check(tag+' Muirshu has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='깐깐한 도서관 사서'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#드래곤_수인','#염뢰혈_출신','#용족','#사서','#나이_불명'])));
+    check(tag+' Muirshu biography keeps both requested paragraphs without link annotations',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n')&&!document.querySelector('.archive-person-biography').textContent.includes('(하이퍼링크)'),i));
+    const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key)),url=p.url(),homeland=p.locator('.archive-person-biography a').filter({hasText:'염뢰혈'});
+    check(tag+' Muirshu biography contains a named homeland link',await homeland.count()===1&&await homeland.getAttribute('aria-label')==='염뢰혈 설명 보기');
+    await homeland.focus();await p.keyboard.press('Enter');
+    check(tag+' Muirshu homeland link opens the external world topic directly at the dragon homeland',await p.locator('[data-archive-tab="world"]').getAttribute('aria-pressed')==='true'&&await p.locator('#archive-page h3').innerText()==='외부'&&await p.getByRole('heading',{name:'염뢰혈',exact:true}).evaluate(heading=>{const r=heading.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1}));
+    check(tag+' Muirshu homeland navigation preserves URL and save',p.url()===url&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===saved);
+    await p.screenshot({path:path.join(out,tag+'-muirshu-homeland-link.png')});
     await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
    }
    if(names[i]==='시프')check(tag+' Sif has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='털 날리는 여행객'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#양_수인','#여행객','#제르디아_출신','#모험가_선망','#21세'])));
