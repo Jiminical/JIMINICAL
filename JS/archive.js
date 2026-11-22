@@ -393,29 +393,38 @@ const libraryArchive = (() => {
         label.id = "archive-relationships-" + person.id;
         label.textContent = "관계도";
         relationships.setAttribute("aria-labelledby", label.id);
-        person.relationships.forEach(({targetId, targetType, relation, emotion}) => {
+        person.relationships.forEach(({targetId, targetIds, targetType, relation, emotion}) => {
           const isPlayer = targetType === "player" && targetId === "hero";
-          const targetIndex = greenstoaLore.people.findIndex(target => target.id === targetId);
-          if (targetIndex < 0 && !isPlayer) return;
-          const target = isPlayer ? { id: "hero", name: "당신(플레이어)" } : greenstoaLore.people[targetIndex];
-          const row = document.createElement("li"), name = document.createElement(isPlayer ? "span" : "button"), arrow = document.createElement("span"), detail = document.createElement("span");
+          const targets = (targetIds || [targetId]).map(id => {
+            const index = greenstoaLore.people.findIndex(target => target.id === id);
+            return { index, person: isPlayer ? { id: "hero", name: "당신(플레이어)" } : greenstoaLore.people[index] };
+          }).filter(target => target.person);
+          if (!targets.length) return;
+          const row = document.createElement("li"), names = document.createElement("span"), arrow = document.createElement("span"), detail = document.createElement("span");
           if (isPlayer) row.className = "is-player-relationship";
-          name.dataset.target = target.id;
-          name.textContent = target.name;
-          name.className = "archive-relationship-target" + (isPlayer ? " archive-relationship-player" : "");
-          name.prepend(personIcon(target));
-          if (!isPlayer) {
-            name.type = "button";
-            name.setAttribute("aria-label", target.name + " 인물 소개 보기");
-            name.addEventListener("click", () => choose(targetIndex, true));
-          }
+          if (targets.length > 1) row.classList.add("is-grouped-relationship");
+          names.className = "archive-relationship-targets";
+          targets.forEach(({index, person: target}, position) => {
+            if (position) names.append(" & ");
+            const name = document.createElement(isPlayer ? "span" : "button");
+            name.dataset.target = target.id;
+            name.textContent = target.name;
+            name.className = "archive-relationship-target" + (isPlayer ? " archive-relationship-player" : "");
+            name.prepend(personIcon(target));
+            if (!isPlayer) {
+              name.type = "button";
+              name.setAttribute("aria-label", target.name + " 인물 소개 보기");
+              name.addEventListener("click", () => choose(index, true));
+            }
+            names.append(name);
+          });
           arrow.textContent = "→";
           arrow.setAttribute("aria-hidden", "true");
           detail.className = "archive-relationship-detail";
           detail.textContent = relation;
           const reaction = reactionIcon(person, emotion);
           if (reaction) detail.append(reaction);
-          row.append(name, arrow, detail);
+          row.append(targets.length > 1 ? names : names.firstElementChild, arrow, detail);
           links.append(row);
         });
         relationships.append(label, links);

@@ -661,8 +661,7 @@ const greenstoaLore = (() => {
     ],
     sif: [
       { targetId: "hero", targetType: "player", relation: "모험가 님. 혹시, 괜찮으시면 대화라도...!", emotion: "flustered" },
-      { targetId: "aran", relation: "이 곳의 지도자. 명성은 알고 있어요...", emotion: "neutral" },
-      { targetId: "helen", relation: "이 곳의 지도자. 명성은 알고 있어요...", emotion: "neutral" },
+      { targetIds: ["aran", "helen"], relation: "이 곳의 지도자. 명성은 알고 있어요...", emotion: "neutral" },
       { targetId: "carola", relation: "목장 주인. 목장의 우유에 관심이 있어요. 그리고 저한텐 없는 활력도 느껴져요.", emotion: "neutral" },
     ],
     ellen: [{ targetId: "remu", relation: "미공개" }],

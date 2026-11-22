@@ -2550,6 +2550,11 @@
 .archive-person-relationships .archive-relationship-target { display: inline-flex; align-items: center; gap: 6px; text-align: left; }
 .archive-relationship-player { min-height: 44px; padding: 8px 10px; color: #f0dfaa; overflow-wrap: anywhere; }
 .archive-person-relationships li.is-player-relationship { grid-template-columns: minmax(0, auto) auto minmax(80px, 1fr); }
+.archive-relationship-targets { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 700px) {
+  .archive-person-relationships li.is-grouped-relationship { grid-template-columns: minmax(0, 1fr) auto; }
+  .is-grouped-relationship .archive-relationship-detail { grid-column: 1 / -1; }
+}
 .archive-relationship-target .archive-person-icon { width: 24px; height: 24px; flex-basis: 24px; }
 .archive-relationship-target .archive-person-icon.is-unrevealed::after { font-size: 18px; line-height: 24px; }
 .archive-race-icon > .archive-person-icon { width: 64px; height: 64px; }
