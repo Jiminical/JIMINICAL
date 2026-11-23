@@ -187,7 +187,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['엘레나']=['레무','장위'];
   relationships['슈냐']=['루냐','캐롤라'];
   relationships['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
+  relationships['세이아']=['장위'];
   const copy={
+    '세이아':{'장위':['겁 많은 녀석. 놀래키기 좋아!','neutral']},
     '캐롤라':{
      '시프':['귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!','neutral'],
      '헬렌':['믿음직한 전 지도자님이시지! 헬렌 님과는 성격이 잘 맞아서 좋았어. 바쁘셔서 만나뵐 기회는 많이 없었지만.','neutral'],
@@ -225,6 +227,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' Mareri has the requested role and exact six hashtags',await p.locator('.archive-person-role').innerText()==='주정뱅이 정령사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#하프엘프','#정령술사','#애주가','#앳된_외견','#시니컬','#251세'])));
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
+   if(names[i]==='세이아'){
+    check(tag+' Seia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='악동 뱀파이어'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#토끼_수인','#뱀파이어','#몬스터','#천하태평','#21세'])));
+    check(tag+' Seia biography keeps both requested paragraphs',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-seia-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
+   }
    if(names[i]==='캐롤라')check(tag+' Carola has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='서부 목장의 주인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#소_수인','#쾌활함','#장난기','#마당발','#31세'])));
    if(names[i]==='카니아')check(tag+' Kania has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='그린스토아 정찰대 궁병'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#정찰대','#하이엘프','#츤_70%_데레_30%','#길잡이','#197세'])));
    if(names[i]==='아란')check(tag+' Aran has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='얼렁뚱땅 현임 지도자'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#허당','#하프엘프','#현임_지도자','#품위_연기','#백치미','#160세'])));

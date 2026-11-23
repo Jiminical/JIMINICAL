@@ -39,13 +39,14 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
 });
-test('relationships exist only for the thirteen requested sources and keep the requested target order',()=>{
+test('relationships exist only for the fourteen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
   expected['슈냐']=['루냐','캐롤라'];
   expected['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
-  assert.equal(people.filter(p=>p.relationships.length).length,13);
+  expected['세이아']=['장위'];
+  assert.equal(people.filter(p=>p.relationships.length).length,14);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -59,6 +60,7 @@ test('relationships exist only for the thirteen requested sources and keep the r
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    seia:[['sena','겁 많은 녀석. 놀래키기 좋아!','neutral']],
     carola:[
       ['sif','귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!','neutral'],
       ['helen','믿음직한 전 지도자님이시지! 헬렌 님과는 성격이 잘 맞아서 좋았어. 바쁘셔서 만나뵐 기회는 많이 없었지만.','neutral'],
