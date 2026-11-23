@@ -2589,15 +2589,15 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   opacity: 0;
-  animation: archive-arcane-tear 9s steps(1, end) infinite;
+  animation: archive-arcane-tear 4.2s steps(1, end) infinite;
 }
 .archive-person-arcane::before {
-  clip-path: inset(24% 0 68% 0);
-  filter: drop-shadow(2px 0 #b556ff) hue-rotate(12deg);
+  clip-path: inset(23% 0 66% 0);
+  filter: drop-shadow(3px 0 #b556ff) hue-rotate(18deg);
 }
 .archive-person-arcane::after {
-  clip-path: inset(63% 0 29% 0);
-  filter: drop-shadow(-2px 0 #e251bd) hue-rotate(-12deg);
+  clip-path: inset(62% 0 27% 0);
+  filter: drop-shadow(-3px 0 #e251bd) hue-rotate(-18deg);
   animation-direction: reverse;
 }
 @keyframes archive-arcane-breathe {
@@ -2609,12 +2609,11 @@
   to { opacity: .42; background-position: 8px -6px; }
 }
 @keyframes archive-arcane-tear {
-  0%, 90%, 96%, 100% { opacity: 0; transform: translateX(0); }
-  91% { opacity: .38; transform: translateX(-3px); }
-  92% { opacity: .22; transform: translateX(2px); }
-  93% { opacity: .48; transform: translateX(-1px); }
-  94% { opacity: .18; transform: translateX(3px); }
-  95% { opacity: 0; transform: translateX(0); }
+  0%, 82%, 96%, 100% { opacity: 0; transform: translateX(0); }
+  84% { opacity: .55; transform: translateX(-6px); }
+  88% { opacity: .7; transform: translateX(5px); }
+  92% { opacity: .35; transform: translateX(-3px); }
+  94% { opacity: 0; transform: translateX(0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .archive-person-photo.archive-person-arcane,
@@ -2622,4 +2621,109 @@
   .archive-person-arcane::before,
   .archive-person-arcane::after { animation: none; }
   .archive-person-arcane .archive-arcane-aura { opacity: .2; }
+}
+
+.library-reader.is-mystery {
+  isolation: isolate;
+  overflow: hidden;
+  background: #10081bee;
+}
+.library-reader.is-mystery::before,
+.library-reader.is-mystery::after {
+  content: "";
+  position: absolute;
+  inset: -28%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 25% 28%, #883bc459, transparent 44%), radial-gradient(ellipse at 75% 72%, #462eae66, transparent 43%), repeating-linear-gradient(115deg, transparent 0 14%, #ba5bde0c 17%, transparent 22% 35%);
+  filter: blur(22px);
+  animation: archive-mystery-current 17s ease-in-out infinite alternate;
+}
+.library-reader.is-mystery::after { opacity: .6; animation-direction: alternate-reverse; animation-duration: 23s; }
+.library-reader.is-mystery .archive-window {
+  position: relative;
+  background: linear-gradient(145deg, #291438ed, #160e24e8 68%, #321542eb);
+  border-color: #ae7bc9;
+  box-shadow: 0 0 0 3px #1d0e2b, 0 0 0 5px #7f539a, inset 0 0 70px #873abb18;
+  color: #e8d9ed;
+}
+.library-reader.is-mystery #archive-title,
+.library-reader.is-mystery #archive-page h3 { color: #f3d8ff; }
+.library-reader.is-mystery .archive-kicker,
+.library-reader.is-mystery .archive-window > footer { color: #bba4cb; }
+.library-reader.is-mystery .archive-tabs,
+.library-reader.is-mystery .archive-window > footer,
+.library-reader.is-mystery .archive-person-biography { border-color: #825b94; }
+.library-reader.is-mystery #archive-index { border-color: #714b85; }
+.library-reader.is-mystery #archive-index button { color: #d0badd; }
+.library-reader.is-mystery .archive-tabs .is-current,
+.library-reader.is-mystery #archive-index button.is-current { background: #583266; color: #fff0ff; box-shadow: inset 0 -2px #d19de5; }
+.library-reader.is-mystery #archive-close,
+.library-reader.is-mystery #archive-scroll-more { border-color: #b883d0; background: #41244f; color: #f5defd; }
+.library-reader.is-mystery #archive-scroll { scrollbar-color: #be8fd1 #21112e; }
+.library-reader.is-mystery #archive-scroll::-webkit-scrollbar-track { background: #21112e; }
+.library-reader.is-mystery #archive-scroll::-webkit-scrollbar-thumb { background: #be8fd1; border-color: #21112e; }
+.library-reader.is-mystery .archive-reading-pane::before { background: linear-gradient(#21112e, #21112e00); }
+.library-reader.is-mystery .archive-reading-pane::after { background: linear-gradient(#21112e00, #21112e); }
+.library-reader.is-mystery-intro:not(.is-mystery-unsealing) #archive-page { visibility: hidden; }
+.library-reader.is-mystery-unsealing #archive-page > .archive-person-photo,
+.library-reader.is-mystery-unsealing #archive-page > .archive-person-copy {
+  position: relative;
+  animation: archive-mystery-burn 1.8s ease-out both;
+}
+.library-reader.is-mystery-unsealing #archive-page > .archive-person-copy { animation-delay: 1.05s; animation-duration: 1.4s; }
+.archive-mystery-burn-edge {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 10px;
+  z-index: 4;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 2%, #e899dd 14%, #ffd398 23%, #9d42e8 41%, #ffdbaa 58%, #dc7fdb 76%, transparent 98%);
+  transform: translateY(-100%);
+  clip-path: polygon(0 40%, 8% 0, 16% 60%, 27% 20%, 38% 70%, 52% 0, 64% 65%, 78% 10%, 87% 60%, 100% 20%, 100% 100%, 0 100%);
+  box-shadow: 0 -3px 12px #a130e6bb, 0 5px 18px #f08d55aa;
+  animation: archive-mystery-embers 1.8s ease-out both;
+}
+.archive-person-copy > .archive-mystery-burn-edge { animation-delay: 1.05s; animation-duration: 1.4s; }
+.archive-mystery-reveal { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; isolation: isolate; }
+.archive-mystery-reveal::before,
+.archive-mystery-reveal::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.archive-mystery-reveal::before { background: #020104; opacity: 1; transition: opacity .7s ease; }
+.archive-mystery-reveal::after {
+  background: radial-gradient(ellipse at center, #9c45dd4d, #30114f33 34%, transparent 65%), repeating-conic-gradient(from 12deg at 50% 50%, transparent 0deg 26deg, #a953d70c 29deg, transparent 35deg 60deg);
+  opacity: 0;
+  transition: opacity .8s ease;
+  animation: archive-mystery-current 9s ease-in-out infinite alternate;
+}
+.archive-mystery-sigil { position: relative; z-index: 1; width: min(48vw, 260px); aspect-ratio: 1; border: 1px solid #b47be0; border-radius: 50%; opacity: 0; transform: scale(.6); box-shadow: 0 0 45px #9e40de88, inset 0 0 38px #b354e544; transition: opacity .6s ease, transform 1.2s ease; }
+.archive-mystery-sigil::before { content: ""; position: absolute; inset: 14%; border: 1px dashed #d9a2ff99; transform: rotate(45deg); box-shadow: 0 0 22px #b553e866; }
+.archive-mystery-sigil::after { content: ""; position: absolute; inset: 42%; background: #d93cb8; border-radius: 50%; transform: scaleX(.35) rotate(24deg); box-shadow: 0 0 28px #ee4bd1, 0 0 65px #963bec; }
+.archive-mystery-reveal[data-phase="gathering"]::after { opacity: 1; }
+.archive-mystery-reveal[data-phase="gathering"] .archive-mystery-sigil { opacity: .85; transform: scale(1); }
+.archive-mystery-reveal[data-phase="unsealing"]::before,
+.archive-mystery-reveal[data-phase="unsealing"]::after { opacity: 0; }
+.archive-mystery-reveal[data-phase="unsealing"] .archive-mystery-sigil { opacity: 0; transform: scale(1.3); }
+.archive-mystery-skip { position: absolute; right: max(24px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); z-index: 2; min-height: 44px; padding: 10px 16px; background: #180d22e6; border: 1px solid #8b649e; color: #d5b6e4; font: inherit; cursor: pointer; }
+.archive-mystery-skip:focus-visible { outline: 2px solid #f3caff; outline-offset: 4px; }
+@keyframes archive-mystery-current { from { transform: translate(-2%, -1%) rotate(-4deg); } to { transform: translate(3%, 2%) rotate(5deg); } }
+@keyframes archive-mystery-burn {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0, 84% 0, 66% 0, 48% 0, 30% 0, 14% 0, 0 0); filter: brightness(.3) saturate(.65); }
+  35% { clip-path: polygon(0 0, 100% 0, 100% 38%, 84% 34%, 66% 40%, 48% 35%, 30% 41%, 14% 36%, 0 39%); filter: brightness(1.15) saturate(1.2); }
+  75% { clip-path: polygon(0 0, 100% 0, 100% 80%, 84% 76%, 66% 82%, 48% 78%, 30% 83%, 14% 77%, 0 81%); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 84% 100%, 66% 100%, 48% 100%, 30% 100%, 14% 100%, 0 100%); filter: brightness(1) saturate(1); }
+}
+@keyframes archive-mystery-embers { 0% { top: 0; opacity: 0; } 12% { opacity: .9; } 35% { top: 37%; opacity: .85; } 75% { top: 79%; opacity: .65; } 100% { top: 100%; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .library-reader.is-mystery::before,
+  .library-reader.is-mystery::after,
+  .archive-mystery-reveal::after,
+  .library-reader.is-mystery-unsealing #archive-page > .archive-person-photo,
+  .library-reader.is-mystery-unsealing #archive-page > .archive-person-copy,
+  .archive-mystery-burn-edge { animation: none; }
+  .archive-mystery-burn-edge { display: none; }
+  .archive-mystery-sigil { transition: none; }
+  .archive-mystery-reveal::before,
+  .archive-mystery-reveal::after { transition-duration: .12s; }
 }

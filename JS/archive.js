@@ -12,6 +12,82 @@ const libraryArchive = (() => {
     selected = 0,
     inputAfter = 0;
   let scrollFrame = 0;
+  const mysteryRevealKey = "greenstoa-mystery-reveal-v1";
+  let mysteryRevealed = false, mysteryReveal = null;
+  function hasRevealedMystery() {
+    if (mysteryRevealed) return true;
+    try { return localStorage.getItem(mysteryRevealKey) === "1"; } catch { return false; }
+  }
+  function finishMysteryReveal(remember = false, focus = false) {
+    const reveal = mysteryReveal;
+    if (!reveal) return;
+    mysteryReveal = null;
+    reveal.timers.forEach(clearTimeout);
+    reveal.overlay.remove();
+    root.inert = false;
+    root.classList.remove("is-mystery-intro", "is-mystery-unsealing");
+    root.removeAttribute("aria-busy");
+    delete root.dataset.mysteryPhase;
+    page.querySelectorAll(".archive-mystery-burn-edge").forEach(edge => edge.remove());
+    if (remember) {
+      mysteryRevealed = true;
+      try { localStorage.setItem(mysteryRevealKey, "1"); } catch {}
+    }
+    if (focus && state && !root.hidden) scroll.focus({preventScroll:true});
+    updateScrollCue();
+  }
+  function revealMystery(photo) {
+    if (hasRevealedMystery()) return;
+    const overlay = document.createElement("div"), sigil = document.createElement("span"), skip = document.createElement("button");
+    overlay.className = "archive-mystery-reveal";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-label", "봉인된 기록의 최초 열람");
+    sigil.className = "archive-mystery-sigil";
+    sigil.setAttribute("aria-hidden", "true");
+    skip.type = "button";
+    skip.className = "archive-mystery-skip";
+    skip.textContent = "연출 넘기기 · Enter";
+    skip.addEventListener("click", () => finishMysteryReveal(true, true));
+    overlay.append(sigil, skip);
+    const reveal = mysteryReveal = {overlay, skip, timers:[]};
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const later = (fn, ms) => reveal.timers.push(setTimeout(() => { if (mysteryReveal === reveal) fn(); }, ms));
+    const phase = name => { root.dataset.mysteryPhase = name; overlay.dataset.phase = name; };
+    root.classList.add("is-mystery-intro");
+    root.setAttribute("aria-busy", "true");
+    root.inert = true;
+    phase("dark");
+    document.body.append(overlay);
+    skip.focus({preventScroll:true});
+    let gathering = false;
+    const gather = () => {
+      if (mysteryReveal !== reveal || gathering) return;
+      gathering = true;
+      phase("gathering");
+      later(() => {
+        phase("unsealing");
+        root.classList.add("is-mystery-unsealing");
+        for (const target of page.querySelectorAll(".archive-person-photo,.archive-person-copy")) {
+          const edge = document.createElement("span");
+          edge.className = "archive-mystery-burn-edge";
+          edge.setAttribute("aria-hidden", "true");
+          target.append(edge);
+        }
+        later(() => {
+          const copy = page.querySelector(".archive-person-copy"), bounds = scroll.getBoundingClientRect();
+          if (copy && copy.getBoundingClientRect().bottom > bounds.bottom) {
+            scroll.scrollTo({top:scroll.scrollTop + copy.getBoundingClientRect().top - bounds.top - 8, behavior:reduced ? "instant" : "smooth"});
+          }
+        }, reduced ? 0 : 850);
+        later(() => finishMysteryReveal(true, true), reduced ? 180 : 2800);
+      }, reduced ? 80 : 1100);
+    };
+    later(gather, reduced ? 500 : 1600);
+    (photo?.decode().catch(() => {}) || Promise.resolve()).then(() => {
+      if (mysteryReveal === reveal) later(gather, reduced ? 80 : 650);
+    });
+  }
   function updateScrollCue() {
     cancelAnimationFrame(scrollFrame);
     scrollFrame = requestAnimationFrame(() => {
@@ -273,6 +349,8 @@ const libraryArchive = (() => {
   }
   function render() {
     if (!state) return;
+    finishMysteryReveal();
+    root.classList.toggle("is-mystery", tab === "people" && greenstoaLore.people[selected]?.portraitEffect === "arcane");
     root.dataset.tab = tab;
     tabs.forEach((b) => {
       const current = b.dataset.archiveTab === tab;
@@ -442,6 +520,7 @@ const libraryArchive = (() => {
         copy.append(relationships);
       }
       page.append(portrait, copy);
+      if (person.portraitEffect === "arcane") revealMystery(portrait.querySelector("img"));
     } else {
       // 프롤로그를 웹툰으로 다시 복기하세요
       page.append(paragraph("프롤로그를 웹툰으로 다시 복기하세요", "archive-comic-note"));
@@ -484,6 +563,8 @@ const libraryArchive = (() => {
       .focus({ preventScroll: true });
   }
   function hide() {
+    finishMysteryReveal();
+    root.classList.remove("is-mystery");
     state = null;
     root.hidden = true;
     webtoonMedia.releaseView();
@@ -499,6 +580,12 @@ const libraryArchive = (() => {
   }
   function handle(code, repeat = false, shift = false) {
     if (!state) return false;
+    if (mysteryReveal) {
+      if (code === "Tab") mysteryReveal.skip.focus({preventScroll:true});
+      else if (!repeat && ["Enter", "Space", "KeyE"].includes(code)) finishMysteryReveal(true, true);
+      else if (!repeat && ["Escape", "KeyC"].includes(code)) { finishMysteryReveal(true); close(true); }
+      return true;
+    }
     if (code === "Tab") {
       const focusable = [
         ...root.querySelectorAll("button:not([disabled]),a[href],[tabindex='0']"),

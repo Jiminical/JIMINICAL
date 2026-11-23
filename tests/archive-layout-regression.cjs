@@ -15,6 +15,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   p.on('request',request=>{if(/\/assets\/person-[a-z]+\.webp/.test(request.url()))personImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
+  await p.evaluate(()=>localStorage.setItem('greenstoa-mystery-reveal-v1','1'));
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
   check(tag+' person cards do not load before the library is opened',personImageRequests.length===0);
   // Resume from a real saved slot instead of depending on an autosave frame before opening the book.
@@ -179,6 +180,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
+  await p.evaluate(()=>localStorage.removeItem('greenstoa-mystery-reveal-v1'));
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
@@ -228,7 +230,32 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' cast icons fit their buttons without changing the accessible names',await p.locator('#archive-index button').evaluateAll(buttons=>buttons.every(button=>{const icon=button.querySelector('.archive-person-icon'),r=icon.getBoundingClientRect(),b=button.getBoundingClientRect();return r.width===32&&r.height===32&&r.left>=b.left&&r.right<=b.right&&button.textContent.trim().length>0})));
   check(tag+' Mareri has the requested role and exact six hashtags',await p.locator('.archive-person-role').innerText()==='주정뱅이 정령사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#하프엘프','#정령술사','#애주가','#앳된_외견','#시니컬','#251세'])));
   for(let i=0;i<names.length;i++){
+   const firstMystery=names[i]==='???',savedBeforeMystery=firstMystery?await p.evaluate(()=>localStorage.getItem(journeySave.key)):null;
+   if(firstMystery&&width!==844)await p.emulateMedia({reducedMotion:'no-preference'});
    await p.locator('#archive-index button').nth(i).click();
+   if(firstMystery){
+    const reveal=p.locator('.archive-mystery-reveal');await reveal.waitFor();
+    check(tag+' first mystery visit starts a full-screen blackout with an accessible skip control',await reveal.evaluate(e=>{const r=e.getBoundingClientRect();return r.left===0&&r.top===0&&r.width===innerWidth&&r.height===innerHeight&&e.getAttribute('aria-modal')==='true'&&document.querySelector('#library-reader').inert&&getComputedStyle(document.querySelector('#archive-page')).visibility==='hidden'&&e.contains(document.activeElement)})&&await reveal.locator('button').evaluate(e=>e.getBoundingClientRect().height>=44));
+    await p.screenshot({path:path.join(out,tag+'-mystery-first-blackout.png')});
+    if(width===320)await reveal.locator('button').click();
+    else if(width!==844){
+     await p.waitForFunction(()=>document.querySelector('.archive-mystery-reveal')?.dataset.phase==='gathering');await p.waitForTimeout(450);
+     await p.screenshot({path:path.join(out,tag+'-mystery-first-magic.png')});
+     await p.waitForFunction(()=>document.querySelector('#library-reader').classList.contains('is-mystery-unsealing'));await p.waitForTimeout(850);
+     check(tag+' the first reveal burns open the image and information together',await p.locator('.archive-mystery-burn-edge').count()===2&&await p.locator('.archive-person-copy').evaluate(e=>getComputedStyle(e).animationName==='archive-mystery-burn'));
+     await p.screenshot({path:path.join(out,tag+'-mystery-first-burn.png')});
+     await p.waitForTimeout(1000);
+     check(tag+' the first reveal brings the burning information into view',await p.locator('.archive-person-biography').evaluate(e=>{const r=e.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1}));
+     await p.screenshot({path:path.join(out,tag+'-mystery-first-information.png')});
+    }
+    await reveal.waitFor({state:'detached'});
+    check(tag+' first reveal records completion without changing the journey save',await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'&&!document.querySelector('#library-reader').inert)&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===savedBeforeMystery);
+    await p.locator('#archive-index button').first().click();
+    check(tag+' leaving the mystery restores the original window and background',await p.locator('#library-reader.is-mystery').count()===0&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('.archive-window').evaluate(e=>getComputedStyle(e).backgroundColor==='rgb(32, 49, 45)'));
+    await p.locator('#archive-index button').nth(i).click();
+    check(tag+' repeat mystery visits show the purple window immediately without replaying the cutscene',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.locator('#archive-title').evaluate(e=>getComputedStyle(e).color==='rgb(243, 216, 255)'));
+    await p.emulateMedia({reducedMotion:'reduce'});
+   }
    if(names[i]==='장위'){
     check(tag+' Jangwi has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='겁쟁이 강시'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#언데드','#강시','#몬스터','#조심성','#내향성','#생전_28세'])));
     check(tag+' Jangwi biography keeps both requested paragraphs',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
@@ -294,13 +321,14 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    if(person.id==='unrevealed'){
     check(tag+' mystery page has only its name and requested body without subtitle hashtags or relationships',await p.locator('.archive-person-role').count()===0&&await p.locator('.archive-person-tags').count()===0&&await p.locator('.archive-person-relationships').count()===0&&await p.locator('.archive-person-biography').innerText()==='(아무 것도 쓰이지 않았다. 혹은, 당신이 인식할 수 없는 무언가로 가득 찬 페이지이다.)');
     const art=p.locator('.archive-person-arcane');
-    check(tag+' reduced motion keeps the mystery aura still',await art.count()===1&&await art.evaluate(e=>e.getAnimations({subtree:true}).length===0&&getComputedStyle(e).position==='relative'&&getComputedStyle(e,'::before').opacity==='0'&&e.querySelector('.archive-arcane-aura').getAttribute('aria-hidden')==='true'));
+    check(tag+' reduced motion keeps the mystery aura and background still',await art.count()===1&&await art.evaluate(e=>e.getAnimations({subtree:true}).length===0&&getComputedStyle(e).position==='relative'&&getComputedStyle(e,'::before').opacity==='0'&&getComputedStyle(document.querySelector('#library-reader'),'::before').animationName==='none'&&e.querySelector('.archive-arcane-aura').getAttribute('aria-hidden')==='true'));
     await p.emulateMedia({reducedMotion:'no-preference'});
-    check(tag+' only the mystery illustration animates while its copy stays still',await art.evaluate(e=>e.getAnimations({subtree:true}).length===4&&getComputedStyle(e.querySelector('.archive-arcane-aura')).pointerEvents==='none'&&document.querySelector('.archive-person-copy').getAnimations({subtree:true}).length===0));
-    await art.evaluate(e=>e.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=a.animationName==='archive-arcane-tear'?8280:3200}));
+    check(tag+' mystery art and background magic animate while its copy stays still',await art.evaluate(e=>e.getAnimations({subtree:true}).length===4&&getComputedStyle(e.querySelector('.archive-arcane-aura')).pointerEvents==='none'&&getComputedStyle(document.querySelector('#library-reader'),'::before').animationName==='archive-mystery-current'&&document.querySelector('.archive-person-copy').getAnimations({subtree:true}).length===0));
+    check(tag+' mystery glitches recur more frequently',await art.evaluate(e=>e.getAnimations({subtree:true}).filter(a=>a.animationName==='archive-arcane-tear').every(a=>a.effect.getComputedTiming().duration===4200)));
+    await art.evaluate(e=>e.getAnimations({subtree:true}).forEach(a=>{a.pause();a.currentTime=a.animationName==='archive-arcane-tear'?3710:3200}));
     await p.screenshot({path:path.join(out,tag+'-mystery-glitch.png')});
     await p.emulateMedia({reducedMotion:'reduce'});
-   }else check(tag+' '+names[i]+' has no mystery effects',await p.locator('.archive-person-arcane,.archive-arcane-aura').count()===0);
+   }else check(tag+' '+names[i]+' has no mystery effects or theme',await p.locator('.archive-person-arcane,.archive-arcane-aura,#library-reader.is-mystery,.archive-mystery-reveal').count()===0);
    const targets=relationships[names[i]]||[];
    const rowTargets=names[i]==='시프'?['당신(플레이어)','아란','캐롤라']:names[i]==='캐롤라'?targets.filter(name=>name!=='클로네'):targets;
    check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships .archive-relationship-target').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(rowTargets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
@@ -382,6 +410,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' archive fits the screen without outer scrolling',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
   await p.locator('#archive-close').click();const after=await p.evaluate(()=>guildGame.getState());
   check(tag+' closing preserves position, quest and save data',after.phase==='free'&&JSON.stringify(after.player)===JSON.stringify(before.player)&&after.hp===before.hp&&after.questAccepted===before.questAccepted&&JSON.stringify(after.items)===JSON.stringify(before.items)&&await p.evaluate(()=>journeySave.valid(journeySave.read())));
+  if(width===390){
+   await p.reload({timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
+   await p.evaluate(async()=>{const save=journeySave.read();document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()});
+   await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').filter({hasText:'???'}).click();
+   check(tag+' the first-only reveal stays completed after a full reload',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'));
+   await p.locator('#archive-close').click();
+  }
   await context.close();
  }
  check('no archive browser errors',report.errors.length===0);
