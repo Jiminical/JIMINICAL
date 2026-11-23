@@ -44,7 +44,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the sixteen requested sources and keep the requested target order',()=>{
+test('relationships exist only for the seventeen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -53,7 +53,8 @@ test('relationships exist only for the sixteen requested sources and keep the re
   expected['세이아']=['장위'];
   expected['장위']=['레무','세이아','엘레나'];
   expected['루시']=['이보리아','하나리','아르다','기루스'];
-  assert.equal(people.filter(p=>p.relationships.length).length,16);
+  expected['아르다']=['캐롤라','루시','이보리아'];
+  assert.equal(people.filter(p=>p.relationships.length).length,17);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -67,6 +68,11 @@ test('relationships exist only for the sixteen requested sources and keep the re
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    rose:[
+      ['carola','우유나 치즈를 가끔 공수해와용. 그린스토아산은 역시 달라용.','neutral'],
+      ['lucy','길드의 접수원님이세용. 자주 마주치진 않지만 착해보이세용.','neutral'],
+      ['bran','가끔씩 잔뜩 취한 채로 잡화점에 올 때가 있는데... 곤란해용...','neutral'],
+    ],
     lucy:[
       ['bran','길드에 상주하다시피 하는 모험가님이시죠. 몸에 붕대만 두르고 다니시는데, 안 춥나?','neutral'],
       ['mia','비교적 최근에 오신 분이세요. 월화국 출신이라던데,.. 말은 별로 안 나눠봤지만, 마력이랑 다른 기운이 나긴 하더라고요.','neutral'],

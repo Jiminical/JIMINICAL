@@ -12,12 +12,8 @@ const libraryArchive = (() => {
     selected = 0,
     inputAfter = 0;
   let scrollFrame = 0;
-  const mysteryRevealKey = "greenstoa-mystery-reveal-v1";
+  // One reveal per page visit; reloading starts a fresh visit.
   let mysteryRevealed = false, mysteryReveal = null;
-  function hasRevealedMystery() {
-    if (mysteryRevealed) return true;
-    try { return localStorage.getItem(mysteryRevealKey) === "1"; } catch { return false; }
-  }
   function finishMysteryReveal(remember = false, focus = false) {
     const reveal = mysteryReveal;
     if (!reveal) return;
@@ -30,20 +26,17 @@ const libraryArchive = (() => {
     root.removeAttribute("aria-busy");
     delete root.dataset.mysteryPhase;
     page.querySelectorAll(".archive-mystery-burn").forEach(veil => veil.remove());
-    if (remember) {
-      mysteryRevealed = true;
-      try { localStorage.setItem(mysteryRevealKey, "1"); } catch {}
-    }
+    if (remember) mysteryRevealed = true;
     if (focus && state && !root.hidden) scroll.focus({preventScroll:true});
     updateScrollCue();
   }
   function revealMystery(photo) {
-    if (hasRevealedMystery()) return;
+    if (mysteryRevealed) return;
     const overlay = document.createElement("div"), sigil = document.createElement("canvas"), skip = document.createElement("button");
     overlay.className = "archive-mystery-reveal";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
-    overlay.setAttribute("aria-label", "봉인된 기록의 최초 열람");
+    overlay.setAttribute("aria-label", "봉인된 기록의 열람");
     sigil.className = "archive-mystery-sigil";
     sigil.setAttribute("aria-hidden", "true");
     sigil.width = sigil.height = 48;

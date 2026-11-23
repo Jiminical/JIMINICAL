@@ -15,6 +15,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   p.on('request',request=>{if(/\/assets\/person-[a-z]+\.webp/.test(request.url()))personImageRequests.push(request.url())});
   p.on('pageerror',e=>report.errors.push(tag+': '+e.message));
   await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
+  // A legacy completed marker must not suppress this page visit's reveal.
   await p.evaluate(()=>localStorage.setItem('greenstoa-mystery-reveal-v1','1'));
   check(tag+' new world illustrations do not delay game startup',worldImageRequests.length===0);
   check(tag+' person cards do not load before the library is opened',personImageRequests.length===0);
@@ -123,7 +124,8 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
      check(tag+' inline '+label+' link opens correct biography',await p.locator('#archive-page h3').innerText()===label);
      await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();
     }
-    for(const id of [...new Set(expected.flat())]){
+    // Exercise the mystery link below, after checking this visit's first reveal.
+    for(const id of [...new Set(expected.flat())].filter(id=>id!=='unrevealed')){
      const link=p.locator('.archive-race-members a[data-person="'+id+'"]').first();
      const label=await link.locator('.archive-race-name').innerText();await link.click();
      check(tag+' race icon '+id+' opens matching biography',await p.locator('#archive-page h3').innerText()===label&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement));
@@ -180,7 +182,6 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    }else check(tag+' article '+titles[i]+' has matching copy and valid art',await p.locator('#archive-page h3').innerText()===titles[i]&&await p.locator('#archive-page p:not(.archive-kicker)').count()>=2&&await p.locator('canvas.archive-world-art').getAttribute('data-chapter')!==null);
   }
   check(tag+' opening scenes remain intact',await p.evaluate(()=>greenstoaLore.scenes.length===9&&greenstoaLore.scenes[0].title==='나라 이전의 시대'&&greenstoaLore.scenes[8].title==='성역에 스미는 그림자'));
-  await p.evaluate(()=>localStorage.removeItem('greenstoa-mystery-reveal-v1'));
   await p.locator('[data-archive-tab="people"]').click();
   const leadNames=['마르에리','카니아','헤니아','헬렌','아란','클로네','레무','루냐','슈냐','시프','뮈르슈','엘레나','캐롤라','세이아','장위','???'];
   const supportNames=['루시','아르다','하나리','이보리아','아이헤르데','기루스','보르드','고드릭'],names=[...leadNames,...supportNames];
@@ -192,7 +193,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['세이아']=['장위'];
   relationships['장위']=['레무','세이아','엘레나'];
   relationships['루시']=['이보리아','하나리','아르다','기루스'];
+  relationships['아르다']=['캐롤라','루시','이보리아'];
   const copy={
+    '아르다':{
+     '캐롤라':['우유나 치즈를 가끔 공수해와용. 그린스토아산은 역시 달라용.','neutral'],
+     '루시':['길드의 접수원님이세용. 자주 마주치진 않지만 착해보이세용.','neutral'],
+     '이보리아':['가끔씩 잔뜩 취한 채로 잡화점에 올 때가 있는데... 곤란해용...','neutral'],
+    },
     '루시':{
       '이보리아':['길드에 상주하다시피 하는 모험가님이시죠. 몸에 붕대만 두르고 다니시는데, 안 춥나?','neutral'],
       '하나리':['비교적 최근에 오신 분이세요. 월화국 출신이라던데,.. 말은 별로 안 나눠봤지만, 마력이랑 다른 기운이 나긴 하더라고요.','neutral'],
@@ -273,12 +280,20 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
      await p.screenshot({path:path.join(out,tag+'-mystery-first-information.png')});
     }
     await reveal.waitFor({state:'detached'});
-    check(tag+' first reveal records completion and removes every veil without changing the journey save',await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'&&!document.querySelector('#library-reader').inert&&!document.querySelector('.archive-mystery-burn'))&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===savedBeforeMystery);
+    check(tag+' this visit completes the reveal and removes every veil without changing the journey save or legacy marker',await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'&&!document.querySelector('#library-reader').inert&&!document.querySelector('.archive-mystery-burn'))&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===savedBeforeMystery);
     await p.locator('#archive-index button').first().click();
     check(tag+' leaving the mystery restores the original window and background',await p.locator('#library-reader.is-mystery').count()===0&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('.archive-window').evaluate(e=>getComputedStyle(e).backgroundColor==='rgb(32, 49, 45)'));
     await p.locator('#archive-index button').nth(i).click();
-    check(tag+' repeat mystery visits show the purple window immediately without replaying the cutscene',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.locator('#archive-title').evaluate(e=>getComputedStyle(e).color==='rgb(243, 216, 255)'));
+    check(tag+' repeat mystery readings in the same visit show the purple window without replaying the cutscene',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.locator('#archive-title').evaluate(e=>getComputedStyle(e).color==='rgb(243, 216, 255)'));
+    await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();await p.locator('.archive-race-members a[data-person="unrevealed"]').click();
+    check(tag+' the mystery race icon opens its biography without replaying within the same visit',await p.locator('#archive-page h3').innerText()==='???'&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement));
     await p.emulateMedia({reducedMotion:'reduce'});
+   }
+   if(names[i]==='아르다'){
+    check(tag+' Arda has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='잡화점 제빵사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#제르디아','#잡화점_주인','#제빵_취미','#특이한_말투','#22세'])));
+    check(tag+' Arda biography keeps the requested two paragraphs and speech ending',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n')&&document.querySelector('.archive-person-biography').textContent.includes('~용 하는 특이한 말투'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-arda-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
    }
    if(names[i]==='루시'){
     check(tag+' Lucy has the requested role and four hashtags',await p.locator('.archive-person-role').innerText()==='길드의 화제'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#인기_접수원','#시니컬','#걱정_많음','#24세'])));
@@ -441,10 +456,18 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   await p.locator('#archive-close').click();const after=await p.evaluate(()=>guildGame.getState());
   check(tag+' closing preserves position, quest and save data',after.phase==='free'&&JSON.stringify(after.player)===JSON.stringify(before.player)&&after.hp===before.hp&&after.questAccepted===before.questAccepted&&JSON.stringify(after.items)===JSON.stringify(before.items)&&await p.evaluate(()=>journeySave.valid(journeySave.read())));
   if(width===390){
+   await p.emulateMedia({reducedMotion:'no-preference'});
    await p.reload({timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);
    await p.evaluate(async()=>{const save=journeySave.read();document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()});
+   const saveAfterReload=await p.evaluate(()=>localStorage.getItem(journeySave.key));
    await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').filter({hasText:'???'}).click();
-   check(tag+' the first-only reveal stays completed after a full reload',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'));
+   await p.locator('.archive-mystery-reveal').waitFor();
+   check(tag+' a fresh page visit replays the mystery despite the legacy completed marker',await p.locator('#library-reader').evaluate(e=>e.inert&&e.classList.contains('is-mystery-intro'))&&await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'));
+   await p.screenshot({path:path.join(out,tag+'-mystery-reconnected-blackout.png')});
+   await p.keyboard.press('Enter');await p.locator('.archive-mystery-reveal').waitFor({state:'detached'});
+   check(tag+' skipping after reconnect leaves the save unchanged',await p.evaluate(()=>localStorage.getItem(journeySave.key))===saveAfterReload);
+   await p.locator('#archive-close').click();await p.keyboard.press('e');await p.waitForFunction(()=>guildGame.getState().archive==='comic');await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').filter({hasText:'???'}).click();
+   check(tag+' reopening the book in the same visit does not replay the cutscene',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1);
    await p.locator('#archive-close').click();
   }
   await context.close();
