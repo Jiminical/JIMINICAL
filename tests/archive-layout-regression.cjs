@@ -188,7 +188,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['슈냐']=['루냐','캐롤라'];
   relationships['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
   relationships['세이아']=['장위'];
+  relationships['장위']=['레무','세이아','엘레나'];
   const copy={
+    '장위':{'레무':['몇 번 본 적 있어요... 좋으신 분이에요.','neutral'],'세이아':['어...어딘가에서 자꾸 나타나고... 막... 놀래켜요...!!!','flustered'],'엘레나':['소문의 주인공이래요... 무서워요...','flustered']},
     '세이아':{'장위':['겁 많은 녀석. 놀래키기 좋아!','neutral']},
     '캐롤라':{
      '시프':['귀여운 손님. 얌전한 부잣집 아가씨 같은데, 우유에 관심있는게 귀여워!','neutral'],
@@ -227,6 +229,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   check(tag+' Mareri has the requested role and exact six hashtags',await p.locator('.archive-person-role').innerText()==='주정뱅이 정령사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#하프엘프','#정령술사','#애주가','#앳된_외견','#시니컬','#251세'])));
   for(let i=0;i<names.length;i++){
    await p.locator('#archive-index button').nth(i).click();
+   if(names[i]==='장위'){
+    check(tag+' Jangwi has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='겁쟁이 강시'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#언데드','#강시','#몬스터','#조심성','#내향성','#생전_28세'])));
+    check(tag+' Jangwi biography keeps both requested paragraphs',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-jangwi-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
+   }
    if(names[i]==='세이아'){
     check(tag+' Seia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='악동 뱀파이어'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#토끼_수인','#뱀파이어','#몬스터','#천하태평','#21세'])));
     check(tag+' Seia biography keeps both requested paragraphs',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));

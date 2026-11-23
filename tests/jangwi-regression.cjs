@@ -39,7 +39,7 @@ const fixture=()=>({version:1,savedAt:Date.now(),name:'여행자',resume:'world'
   await start(save);await press();await hub();check(tag+' loaded save can reopen all three chats',await p.locator('#game-choices button').count()===(id==='rael'?5:4));
   const sprites=await p.evaluate(id=>['down','left','right','up'].map(dir=>{const a=fieldSprites.make(id,dir,0),d=a.getContext('2d').getImageData(0,0,a.width,a.height).data;let n=0,l=56,r=0,t=80,b=0;for(let y=0;y<a.height;y++)for(let x=0;x<a.width;x++)if(d[(y*a.width+x)*4+3]){n++;l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y)}return{n,l,r,t,b,pixels:a.toDataURL()}}),id);
   check(tag+' four field directions fit their sprite bounds',sprites.every(s=>s.n>400&&s.l>=2&&s.r<54&&s.t>=0&&s.b<80)&&new Set(sprites.map(s=>s.pixels)).size===4);
-  check(tag+' character codex records the new identity and backstory',await p.evaluate(({id,name})=>{const a=greenstoaLore.people.find(p=>p.id===id),body=[a.body].flat().join('\n');return a.name===name&&(id==='sena'?body.includes('언데드')&&body.includes('중심지')&&a.summary.includes('호기심'):body.includes('크라슈')&&body.includes('염뢰혈')&&body.includes('역린'))},{id,name}));
+  check(tag+' character codex records the new identity and backstory',await p.evaluate(({id,name})=>{const a=greenstoaLore.people.find(p=>p.id===id),body=[a.body].flat().join('\n');return a.name===name&&(id==='sena'?a.role==='겁쟁이 강시'&&a.tags.includes('언데드')&&body.includes('정문 근처')&&body.includes('차별과 질타'):body.includes('크라슈')&&body.includes('염뢰혈')&&body.includes('역린'))},{id,name}));
   check(tag+' mobile page stays inside viewport',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
   await ctx.close();
  }
