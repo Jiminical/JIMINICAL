@@ -99,9 +99,10 @@ test('relationship copy and reactions preserve the requested directional descrip
   assert.equal(people.filter(p=>p.reactionAsset).length,20);
 });
 
-test('eighteen supplied landscape cards map to their own people without duplicating Seia',()=>{
+test('nineteen supplied landscape cards map to their own people without duplicating Seia',()=>{
   const expected={runya:'runya',carola:'carola',seia:'seia',sif:'sif',sena:'jangwi',shunya:'shunya',aran:'aran',remu:'remu',mareri:'mareri',klone:'klone',helen:'helen',rael:'muirshu',ellen:'elena',scout:'kania',lucy:'lucy',bran:'ivoria',rose:'arda',henia:'henia'};
-  assert.equal(people.filter(p=>p.portraitSrc).length,18);
+  expected.mia='hanari';
+  assert.equal(people.filter(p=>p.portraitSrc).length,19);
   assert.equal(people.filter(p=>p.name==='세이아').length,1);
   for(const [id,file]of Object.entries(expected)){
     const person=people.find(p=>p.id===id);

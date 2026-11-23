@@ -369,7 +369,7 @@ const greenstoaLore = (() => {
     {
       "id": "mia",
       "name": "하나리",
-      "portraitSrc": "",
+      "portraitSrc": "assets/person-hanari.webp",
       "tags": ["월화국 출신", "무녀 검사", "의뢰 탐색", "파티 동료 모집"],
       "role": "동방 월화국에서 온 무녀 검사",
       "summary": "길드에서 의뢰와 파티 동료를 찾는 무녀 검사. 주인공과는 목적지가 달라 지금은 동행하지 않는다.",
