@@ -724,7 +724,7 @@ const greenstoaLore = (() => {
       { targetId: "sena", relation: "몸매 좋은 겁쟁이. 흉악한 걸 달고 다니면서, 겁은 엄청 많다니까~", emotion: "neutral" },
     ],
   };
-  const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena" };
+  const reactionAssets = { scout: "kania", henia: "henia", helen: "helen", aran: "aran", remu: "remu", ellen: "elena", unrevealed: "unknown" };
   const reactionGrids = {};
   for (const [asset, members] of Object.entries({
     casta: ["mareri", "klone", "runya", "shunya"],

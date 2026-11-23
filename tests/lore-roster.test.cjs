@@ -108,7 +108,7 @@ test('relationship copy and reactions preserve the requested directional descrip
     for(const r of p.relationships)assert.ok(['neutral','annoyed','puzzled','flustered'].includes(r.emotion||'neutral'));
     if(!expected[p.id])assert.ok(p.relationships.every(r=>r.relation==='미공개'));
   }
-  assert.equal(people.filter(p=>p.reactionAsset).length,20);
+  assert.equal(people.filter(p=>p.reactionAsset).length,21);
 });
 
 test('twenty supplied landscape images map to their own people without duplicating Seia',()=>{
@@ -129,10 +129,11 @@ test('twenty supplied landscape images map to their own people without duplicati
 test('every revealed person owns four dot-face frames and hidden cast stays unknown',()=>{
   const owners=new Set();
   for(const person of people){
-    if(person.portraitKind==='unrevealed'){assert.equal(person.reactionAsset,'');continue;}
+    if(person.portraitKind==='unrevealed'&&person.id!=='unrevealed'){assert.equal(person.reactionAsset,'');continue;}
     assert.ok(person.reactionAsset,person.name);
     const grid=person.reactionGrid;assert.ok(grid&&grid.start>=0&&grid.start+3<grid.columns*grid.rows);
     const key=person.reactionAsset+':'+grid.start;assert.ok(!owners.has(key),person.name);owners.add(key);
   }
-  assert.equal(owners.size,20);
+  assert.equal(owners.size,21);
+  assert.equal(people.find(p=>p.id==='unrevealed').reactionAsset,'unknown');
 });
