@@ -15,7 +15,8 @@ const libraryArchive = (() => {
   function updateScrollCue() {
     cancelAnimationFrame(scrollFrame);
     scrollFrame = requestAnimationFrame(() => {
-      page.style.setProperty("--archive-card-max-width", Math.floor(Math.max(96, scroll.clientHeight - 48) * 13 / 7) + "px");
+      const aspect = Number(page.querySelector(".archive-person-photo")?.dataset.aspect) || 13 / 7;
+      page.style.setProperty("--archive-card-max-width", Math.floor(Math.max(96, scroll.clientHeight - 48) * aspect) + "px");
       const more = Boolean(state) && scroll.scrollHeight - scroll.clientHeight - scroll.scrollTop > 6;
       scrollMore.hidden = !more;
       pane.classList.toggle("has-more", more);
@@ -330,7 +331,11 @@ const libraryArchive = (() => {
       const person = greenstoaLore.people[selected];
       const portrait = document.createElement("figure");
       portrait.className = "archive-person-photo";
+      portrait.dataset.aspect = String(person.portraitAspect || 13 / 7);
+      portrait.style.aspectRatio = portrait.dataset.aspect;
       function fallbackPortrait() {
+        portrait.classList.remove("archive-person-arcane");
+        portrait.style.removeProperty("--archive-arcane-image");
         if (person.portraitKind === "unrevealed" || person.portraitKind === "photo") {
           const unrevealed = person.portraitKind === "unrevealed";
           const placeholder = document.createElement("div");
@@ -366,6 +371,14 @@ const libraryArchive = (() => {
         photo.addEventListener("error", () => { fallbackPortrait(); updateScrollCue(); }, {once:true});
         photo.src = person.portraitSrc;
         portrait.append(photo);
+        if (person.portraitEffect === "arcane") {
+          portrait.classList.add("archive-person-arcane");
+          portrait.style.setProperty("--archive-arcane-image", 'url("' + photo.src + '")');
+          const aura = document.createElement("span");
+          aura.className = "archive-arcane-aura";
+          aura.setAttribute("aria-hidden", "true");
+          portrait.append(aura);
+        }
       } else fallbackPortrait();
       const copy = document.createElement("div");
       copy.className = "archive-person-copy";
@@ -381,12 +394,10 @@ const libraryArchive = (() => {
       biography.className = "archive-person-biography";
       biography.setAttribute("aria-label", "자세한 설명");
       (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks, person.bodyEmphasis)));
-      copy.append(
-        paragraph(person.role, "archive-kicker archive-person-role"),
-        heading(person.name),
-        tags,
-        biography,
-      );
+      if (person.role) copy.append(paragraph(person.role, "archive-kicker archive-person-role"));
+      copy.append(heading(person.name));
+      if (person.tags?.length) copy.append(tags);
+      copy.append(biography);
       if (person.relationships?.length) {
         const relationships = document.createElement("section"), label = document.createElement("h4"), links = document.createElement("ul");
         relationships.className = "archive-person-relationships";

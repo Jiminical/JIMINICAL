@@ -726,8 +726,14 @@ const greenstoaLore = (() => {
     reactionAssets[id] = asset;
     reactionGrids[id] = { columns: 4, rows: members.length, start: row * 4 };
   });
+  const mystery = {
+    id: "unrevealed", name: "???", portraitKind: "unrevealed",
+    portraitSrc: "assets/person-unknown.webp", portraitAspect: 1216 / 704, portraitEffect: "arcane",
+    tags: [], role: "", summary: "",
+    body: "(아무 것도 쓰이지 않았다. 혹은, 당신이 인식할 수 없는 무언가로 가득 찬 페이지이다.)",
+  };
   const people = peopleGroups.flatMap(group => roster[group.id].map(([id, name]) => {
-    const recorded = id === "mareri" ? mareri : recordedPeople.find(person => person.id === id);
+    const recorded = id === "mareri" ? mareri : id === "unrevealed" ? mystery : recordedPeople.find(person => person.id === id);
     const relationships = personRelationships[id] || [];
     const reactionAsset = reactionAssets[id] || "";
     const reactionGrid = reactionAsset ? reactionGrids[id] || { columns: 2, rows: 2, start: 0 } : null;

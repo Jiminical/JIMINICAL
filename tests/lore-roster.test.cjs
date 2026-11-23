@@ -37,7 +37,12 @@ test('new supporting characters are separate people, without borrowed artwork or
     assert.ok(!['nara','tobin','leon'].includes(person.id));
   }
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
-  assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.role&&p.summary&&p.body));
+  assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.body&&(p.id==='unrevealed'||p.role&&p.summary)));
+  const mystery=people.find(p=>p.id==='unrevealed');
+  assert.deepEqual(mystery.tags,[]);assert.equal(mystery.role,'');assert.equal(mystery.summary,'');
+  assert.equal(mystery.body,'(아무 것도 쓰이지 않았다. 혹은, 당신이 인식할 수 없는 무언가로 가득 찬 페이지이다.)');
+  assert.equal(mystery.portraitAspect,1216/704);
+  assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
 test('relationships exist only for the fifteen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
@@ -99,10 +104,11 @@ test('relationship copy and reactions preserve the requested directional descrip
   assert.equal(people.filter(p=>p.reactionAsset).length,20);
 });
 
-test('nineteen supplied landscape cards map to their own people without duplicating Seia',()=>{
+test('twenty supplied landscape images map to their own people without duplicating Seia',()=>{
   const expected={runya:'runya',carola:'carola',seia:'seia',sif:'sif',sena:'jangwi',shunya:'shunya',aran:'aran',remu:'remu',mareri:'mareri',klone:'klone',helen:'helen',rael:'muirshu',ellen:'elena',scout:'kania',lucy:'lucy',bran:'ivoria',rose:'arda',henia:'henia'};
   expected.mia='hanari';
-  assert.equal(people.filter(p=>p.portraitSrc).length,19);
+  expected.unrevealed='unknown';
+  assert.equal(people.filter(p=>p.portraitSrc).length,20);
   assert.equal(people.filter(p=>p.name==='세이아').length,1);
   for(const [id,file]of Object.entries(expected)){
     const person=people.find(p=>p.id===id);

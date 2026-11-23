@@ -2559,3 +2559,67 @@
 .archive-relationship-target .archive-person-icon.is-unrevealed::after { font-size: 18px; line-height: 24px; }
 .archive-race-icon > .archive-person-icon { width: 64px; height: 64px; }
 .archive-race-icon .archive-person-icon.is-unrevealed::after { font-size: 36px; line-height: 64px; }
+
+/* The unknown character alone carries unstable violet magic. */
+.archive-person-photo.archive-person-arcane {
+  position: relative;
+  isolation: isolate;
+  border-color: #9454bf;
+  box-shadow: 0 0 18px #8d3cbb55, inset 0 0 24px #9b45d744;
+  animation: archive-arcane-breathe 6.5s ease-in-out infinite;
+}
+.archive-arcane-aura {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 5% 90%, #a847ed66, transparent 48%), radial-gradient(ellipse at 95% 8%, #c55af755, transparent 48%), linear-gradient(115deg, transparent 38%, #9639dc18 48%, transparent 58%);
+  mix-blend-mode: screen;
+  opacity: .3;
+  animation: archive-arcane-drift 8s ease-in-out infinite alternate;
+}
+.archive-person-arcane::before,
+.archive-person-arcane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image: var(--archive-arcane-image);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0;
+  animation: archive-arcane-tear 9s steps(1, end) infinite;
+}
+.archive-person-arcane::before {
+  clip-path: inset(24% 0 68% 0);
+  filter: drop-shadow(2px 0 #b556ff) hue-rotate(12deg);
+}
+.archive-person-arcane::after {
+  clip-path: inset(63% 0 29% 0);
+  filter: drop-shadow(-2px 0 #e251bd) hue-rotate(-12deg);
+  animation-direction: reverse;
+}
+@keyframes archive-arcane-breathe {
+  0%, 100% { box-shadow: 0 0 14px #8d3cbb44, inset 0 0 20px #9b45d733; }
+  50% { box-shadow: 0 0 24px #a94ee177, inset 0 0 28px #9b45d755; }
+}
+@keyframes archive-arcane-drift {
+  from { opacity: .18; background-position: 0 0; }
+  to { opacity: .42; background-position: 8px -6px; }
+}
+@keyframes archive-arcane-tear {
+  0%, 90%, 96%, 100% { opacity: 0; transform: translateX(0); }
+  91% { opacity: .38; transform: translateX(-3px); }
+  92% { opacity: .22; transform: translateX(2px); }
+  93% { opacity: .48; transform: translateX(-1px); }
+  94% { opacity: .18; transform: translateX(3px); }
+  95% { opacity: 0; transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .archive-person-photo.archive-person-arcane,
+  .archive-person-arcane .archive-arcane-aura,
+  .archive-person-arcane::before,
+  .archive-person-arcane::after { animation: none; }
+  .archive-person-arcane .archive-arcane-aura { opacity: .2; }
+}
