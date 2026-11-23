@@ -44,7 +44,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the fifteen requested sources and keep the requested target order',()=>{
+test('relationships exist only for the sixteen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -52,7 +52,8 @@ test('relationships exist only for the fifteen requested sources and keep the re
   expected['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
   expected['세이아']=['장위'];
   expected['장위']=['레무','세이아','엘레나'];
-  assert.equal(people.filter(p=>p.relationships.length).length,15);
+  expected['루시']=['이보리아','하나리','아르다','기루스'];
+  assert.equal(people.filter(p=>p.relationships.length).length,16);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -66,6 +67,12 @@ test('relationships exist only for the fifteen requested sources and keep the re
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    lucy:[
+      ['bran','길드에 상주하다시피 하는 모험가님이시죠. 몸에 붕대만 두르고 다니시는데, 안 춥나?','neutral'],
+      ['mia','비교적 최근에 오신 분이세요. 월화국 출신이라던데,.. 말은 별로 안 나눠봤지만, 마력이랑 다른 기운이 나긴 하더라고요.','neutral'],
+      ['rose','길드 근처 잡화점의 주인이에요. 자주 마주치진 않지만 말투가 특이해서 기억에 남네요. 그린스토아로 물건을 납품할 때도 있다고 해요.','neutral'],
+      ['edan','기사단의 일원이세요. 성격은 조금 딱딱하시지만, 그럴 수 밖에 없는 자리니까요. 사석에서의 모습이 궁금하긴 해요.','neutral'],
+    ],
     sena:[['remu','몇 번 본 적 있어요... 좋으신 분이에요.','neutral'],['seia','어...어딘가에서 자꾸 나타나고... 막... 놀래켜요...!!!','flustered'],['ellen','소문의 주인공이래요... 무서워요...','flustered']],
     seia:[['sena','겁 많은 녀석. 놀래키기 좋아!','neutral']],
     carola:[

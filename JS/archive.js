@@ -23,12 +23,13 @@ const libraryArchive = (() => {
     if (!reveal) return;
     mysteryReveal = null;
     reveal.timers.forEach(clearTimeout);
+    cancelAnimationFrame(reveal.frame);
     reveal.overlay.remove();
     root.inert = false;
     root.classList.remove("is-mystery-intro", "is-mystery-unsealing");
     root.removeAttribute("aria-busy");
     delete root.dataset.mysteryPhase;
-    page.querySelectorAll(".archive-mystery-burn-edge").forEach(edge => edge.remove());
+    page.querySelectorAll(".archive-mystery-burn").forEach(veil => veil.remove());
     if (remember) {
       mysteryRevealed = true;
       try { localStorage.setItem(mysteryRevealKey, "1"); } catch {}
@@ -38,19 +39,37 @@ const libraryArchive = (() => {
   }
   function revealMystery(photo) {
     if (hasRevealedMystery()) return;
-    const overlay = document.createElement("div"), sigil = document.createElement("span"), skip = document.createElement("button");
+    const overlay = document.createElement("div"), sigil = document.createElement("canvas"), skip = document.createElement("button");
     overlay.className = "archive-mystery-reveal";
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-label", "봉인된 기록의 최초 열람");
     sigil.className = "archive-mystery-sigil";
     sigil.setAttribute("aria-hidden", "true");
+    sigil.width = sigil.height = 48;
+    const glyph = sigil.getContext("2d");
+    glyph.fillStyle = "#733e9e";
+    for (const x of [3, 37]) for (const y of [3, 37]) {
+      glyph.fillRect(x, y, 8, 2);
+      glyph.fillRect(x, y, 2, 8);
+      glyph.fillRect(x + 6, y + 6, 2, 2);
+    }
+    for (let x = 6; x < 42; x++) {
+      const height = Math.floor((18 - Math.abs(x - 24)) / 2) + 2;
+      glyph.fillStyle = x % 4 < 2 ? "#a76cce" : "#733e9e";
+      glyph.fillRect(x, 24 - height, 1, height * 2);
+      glyph.clearRect(x, 26 - height, 1, Math.max(0, height * 2 - 4));
+    }
+    glyph.fillStyle = "#ce548f";
+    glyph.fillRect(22, 18, 4, 12);
+    glyph.fillStyle = "#f2b5d5";
+    glyph.fillRect(23, 19, 1, 3);
     skip.type = "button";
     skip.className = "archive-mystery-skip";
     skip.textContent = "연출 넘기기 · Enter";
     skip.addEventListener("click", () => finishMysteryReveal(true, true));
     overlay.append(sigil, skip);
-    const reveal = mysteryReveal = {overlay, skip, timers:[]};
+    const reveal = mysteryReveal = {overlay, skip, timers:[], frame:0};
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const later = (fn, ms) => reveal.timers.push(setTimeout(() => { if (mysteryReveal === reveal) fn(); }, ms));
     const phase = name => { root.dataset.mysteryPhase = name; overlay.dataset.phase = name; };
@@ -67,13 +86,52 @@ const libraryArchive = (() => {
       phase("gathering");
       later(() => {
         phase("unsealing");
-        root.classList.add("is-mystery-unsealing");
-        for (const target of page.querySelectorAll(".archive-person-photo,.archive-person-copy")) {
-          const edge = document.createElement("span");
-          edge.className = "archive-mystery-burn-edge";
-          edge.setAttribute("aria-hidden", "true");
-          target.append(edge);
+        // The opaque veil and its burning edge share the same pixel boundary.
+        // A single clock also keeps the image and delayed text reveal in sync.
+        if (!reduced) {
+          const burns = [...page.querySelectorAll(".archive-person-photo,.archive-person-copy")].map((target, index) => {
+            const veil = document.createElement("canvas"), bounds = target.getBoundingClientRect();
+            veil.className = "archive-mystery-burn";
+            veil.setAttribute("aria-hidden", "true");
+            veil.width = Math.max(1, Math.ceil(bounds.width / 4));
+            veil.height = Math.max(1, Math.ceil(bounds.height / 4));
+            target.append(veil);
+            return {veil, ctx:veil.getContext("2d"), delay:index * 1000, duration:index ? 1400 : 1800};
+          });
+          const start = performance.now();
+          let lastTick = -1;
+          const burn = now => {
+            if (mysteryReveal !== reveal) return;
+            const tick = Math.floor((now - start) / 50);
+            if (tick !== lastTick) {
+              lastTick = tick;
+              for (const {veil, ctx, delay, duration} of burns) {
+                const progress = Math.max(0, Math.min(1, (tick * 50 - delay) / duration)), {width, height} = veil;
+                veil.dataset.progress = String(progress);
+                ctx.clearRect(0, 0, width, height);
+                if (progress < 1) for (let x = 0; x < width; x++) {
+                  const noise = (x * 17 + Math.floor(x / 5) * 13) % 7 - 3;
+                  const edge = Math.max(0, Math.min(height, Math.floor(progress * (height + 10)) - 5 + noise));
+                  ctx.fillStyle = "#1a1024";
+                  ctx.fillRect(x, edge, 1, height - edge);
+                  if (progress > 0 && edge > 0 && edge < height) {
+                    ctx.fillStyle = "#593073";
+                    ctx.fillRect(x, edge, 1, 2);
+                    ctx.fillStyle = (x + tick) % 4 === 0 ? "#ffe1a3" : "#bb6cbd";
+                    ctx.fillRect(x, edge, 1, 1);
+                    if ((x * 7 + tick) % 19 === 0) {
+                      ctx.fillStyle = "#d69a64";
+                      ctx.fillRect(x, edge - 2 - tick % 4, 1, 1);
+                    }
+                  }
+                }
+              }
+            }
+            reveal.frame = requestAnimationFrame(burn);
+          };
+          burn(start);
         }
+        root.classList.add("is-mystery-unsealing");
         later(() => {
           const copy = page.querySelector(".archive-person-copy"), bounds = scroll.getBoundingClientRect();
           if (copy && copy.getBoundingClientRect().bottom > bounds.bottom) {

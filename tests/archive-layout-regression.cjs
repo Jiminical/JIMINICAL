@@ -191,7 +191,14 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['캐롤라']=['시프','헬렌','아란','카니아','보르드','마르에리','레무','슈냐','루냐','아르다','헤니아','클로네','엘레나'];
   relationships['세이아']=['장위'];
   relationships['장위']=['레무','세이아','엘레나'];
+  relationships['루시']=['이보리아','하나리','아르다','기루스'];
   const copy={
+    '루시':{
+      '이보리아':['길드에 상주하다시피 하는 모험가님이시죠. 몸에 붕대만 두르고 다니시는데, 안 춥나?','neutral'],
+      '하나리':['비교적 최근에 오신 분이세요. 월화국 출신이라던데,.. 말은 별로 안 나눠봤지만, 마력이랑 다른 기운이 나긴 하더라고요.','neutral'],
+      '아르다':['길드 근처 잡화점의 주인이에요. 자주 마주치진 않지만 말투가 특이해서 기억에 남네요. 그린스토아로 물건을 납품할 때도 있다고 해요.','neutral'],
+      '기루스':['기사단의 일원이세요. 성격은 조금 딱딱하시지만, 그럴 수 밖에 없는 자리니까요. 사석에서의 모습이 궁금하긴 해요.','neutral'],
+    },
     '장위':{'레무':['몇 번 본 적 있어요... 좋으신 분이에요.','neutral'],'세이아':['어...어딘가에서 자꾸 나타나고... 막... 놀래켜요...!!!','flustered'],'엘레나':['소문의 주인공이래요... 무서워요...','flustered']},
     '세이아':{'장위':['겁 많은 녀석. 놀래키기 좋아!','neutral']},
     '캐롤라':{
@@ -242,19 +249,41 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
      await p.waitForFunction(()=>document.querySelector('.archive-mystery-reveal')?.dataset.phase==='gathering');await p.waitForTimeout(450);
      await p.screenshot({path:path.join(out,tag+'-mystery-first-magic.png')});
      await p.waitForFunction(()=>document.querySelector('#library-reader').classList.contains('is-mystery-unsealing'));await p.waitForTimeout(850);
-     check(tag+' the first reveal burns open the image and information together',await p.locator('.archive-mystery-burn-edge').count()===2&&await p.locator('.archive-person-copy').evaluate(e=>getComputedStyle(e).animationName==='archive-mystery-burn'));
+     check(tag+' the first reveal uses two crisp pixel veils without separate clip animations',await p.locator('.archive-mystery-burn').count()===2&&await p.locator('.archive-mystery-burn').evaluateAll(veils=>veils.every(e=>getComputedStyle(e).imageRendering==='pixelated'&&e.getAttribute('aria-hidden')==='true'&&getComputedStyle(e.parentElement).clipPath==='none'))&&await p.locator('.archive-person-copy').evaluate(e=>getComputedStyle(e).animationName==='none'));
+     const burnFront=await p.locator('.archive-person-photo .archive-mystery-burn').evaluate(e=>{
+      const {width:w,height:h}=e,data=e.getContext('2d').getImageData(0,0,w,h).data,front=[];
+      for(let x=0;x<w;x++){
+       let y=0;while(y<h&&data[(y*w+x)*4+3]===0)y++;
+       // Ignore isolated flying embers: the opaque paper must remain connected below the fire.
+       while(y<h&&!(data[(y*w+x)*4]===89&&data[(y*w+x)*4+1]===48))y++;
+       if(y===h)return null;
+       const fire=(y-1)*w*4+x*4;
+       if(data[fire+3]!==255||data[fire]<180)return null;
+       for(let row=y;row<h;row++)if(data[(row*w+x)*4+3]!==255)return null;
+       front.push(y);
+      }
+      return {front,progress:Number(e.dataset.progress),height:h};
+     });
+     check(tag+' every burning pixel touches the unrevealed paper with no holes or detached fire line',burnFront&&burnFront.progress>0&&burnFront.progress<1&&Math.min(...burnFront.front)>0&&Math.max(...burnFront.front)<burnFront.height);
      await p.screenshot({path:path.join(out,tag+'-mystery-first-burn.png')});
      await p.waitForTimeout(1000);
+     check(tag+' pixel burning advances monotonically and fully clears the picture',await p.locator('.archive-person-photo .archive-mystery-burn').evaluate(e=>Number(e.dataset.progress)===1&&e.getContext('2d').getImageData(0,0,e.width,e.height).data.every((v,i)=>i%4!==3||v===0)));
      check(tag+' the first reveal brings the burning information into view',await p.locator('.archive-person-biography').evaluate(e=>{const r=e.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.top>=s.top-1&&r.bottom<=s.bottom+1}));
      await p.screenshot({path:path.join(out,tag+'-mystery-first-information.png')});
     }
     await reveal.waitFor({state:'detached'});
-    check(tag+' first reveal records completion without changing the journey save',await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'&&!document.querySelector('#library-reader').inert)&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===savedBeforeMystery);
+    check(tag+' first reveal records completion and removes every veil without changing the journey save',await p.evaluate(()=>localStorage.getItem('greenstoa-mystery-reveal-v1')==='1'&&!document.querySelector('#library-reader').inert&&!document.querySelector('.archive-mystery-burn'))&&await p.evaluate(()=>localStorage.getItem(journeySave.key))===savedBeforeMystery);
     await p.locator('#archive-index button').first().click();
     check(tag+' leaving the mystery restores the original window and background',await p.locator('#library-reader.is-mystery').count()===0&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('.archive-window').evaluate(e=>getComputedStyle(e).backgroundColor==='rgb(32, 49, 45)'));
     await p.locator('#archive-index button').nth(i).click();
     check(tag+' repeat mystery visits show the purple window immediately without replaying the cutscene',await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#library-reader.is-mystery').count()===1&&await p.locator('#archive-title').evaluate(e=>getComputedStyle(e).color==='rgb(243, 216, 255)'));
     await p.emulateMedia({reducedMotion:'reduce'});
+   }
+   if(names[i]==='루시'){
+    check(tag+' Lucy has the requested role and four hashtags',await p.locator('.archive-person-role').innerText()==='길드의 화제'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#인기_접수원','#시니컬','#걱정_많음','#24세'])));
+    check(tag+' Lucy biography keeps both requested paragraphs',await p.locator('.archive-person-biography p').count()===2&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-lucy-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
    }
    if(names[i]==='장위'){
     check(tag+' Jangwi has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='겁쟁이 강시'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#언데드','#강시','#몬스터','#조심성','#내향성','#생전_28세'])));
