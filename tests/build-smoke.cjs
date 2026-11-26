@@ -17,13 +17,14 @@ const {gunzipSync}=require('zlib');
   assert.ok(worldImages.includes('data-'+attribute+'-src="assets/'+file+'.webp"'));
  }
  const companions=JSON.parse(fs.readFileSync(path.join(root,'scripts/offline-assets.json'),'utf8'));
- assert.equal(new Set(companions).size,42);
+ assert.equal(new Set(companions).size,43);
  for(const file of companions){assert.ok(fs.existsSync(path.join(root,file)));assert.ok(html.includes(file));}
  for(let chapter=1;chapter<=9;chapter++){
   const encoded=html.match(new RegExp('data-chapter'+chapter+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/opening-'+String(chapter).padStart(2,'0')+'.webp')));
  }
- for(const attr of ['lucy','iboria','hanari','aina','munia','girus','tobi','arda','jangwi','muirshu','kania']) {
+ assert.ok(html.includes('data-iboria-src="assets/ld-iboria.webp"'));
+ for(const attr of ['lucy','hanari','aina','munia','girus','tobi','arda','jangwi','muirshu','kania']) {
   const encoded=html.match(new RegExp('data-'+attr+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets/ld-'+attr+'.webp')));
  }

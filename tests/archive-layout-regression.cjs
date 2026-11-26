@@ -294,6 +294,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' the mystery race icon opens its biography without replaying within the same visit',await p.locator('#archive-page h3').innerText()==='???'&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement));
     await p.emulateMedia({reducedMotion:'reduce'});
    }
+   if(names[i]==='이보리아'){
+    check(tag+' Iboria has the requested subtitle and five hashtags',await p.locator('.archive-person-role').innerText()==='술, 더 많은 술, 진탕 많은 술'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#제르디아_모험가','#길드_소속','#마인','#주정뱅이','#20세'])));
+    check(tag+' Iboria biography contains the requested three paragraphs',await p.locator('.archive-person-biography p').count()===3&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-iboria-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
+   }
    if(names[i]==='하나리'){
     check(tag+' Hanari has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='월화의 꽃'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#무녀','#검사','#월화국_출신','#모험가','#27세'])));
     check(tag+' Hanari biography preserves the requested three paragraphs',await p.locator('.archive-person-biography p').count()===3&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
@@ -337,7 +343,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    if(names[i]==='헬렌')check(tag+' Helen has the requested role and six hashtags',await p.locator('.archive-person-role').innerText()==='전임 지도자, 현임 여관 주인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#너그러움','#나긋나긋','#전임_지도자','#여관_주인','#하프엘프','#417세'])));
    if(names[i]==='헤니아'){
     check(tag+' Henia has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='나르시시즘 영애님'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#오만함','#귀족','#영애','#온실_속_화초','#197세'])));
-    check(tag+' Henia citizen sentence follows the idle reveal before the closing description',await p.locator('.archive-person-biography').innerText().then(text=>text.includes('헤니아는 사실 놀고 있습니다! 시민들은 이 사실에 은근히 헤니아를 무시하지만, 본인은 인정하지 않는 것 같습니다. 고압적이지만, 칭찬과 반격에 약한 영애님입니다.')&&!text.includes('(하이퍼링크)')));
+    check(tag+' Henia has only the idle reveal in bold and the closing sentence in a new paragraph',await p.locator('.archive-person-biography').evaluate(section=>{const paragraphs=section.querySelectorAll('p'),bold=section.querySelectorAll('strong');return paragraphs.length===2&&bold.length===1&&bold[0].textContent==='헤니아는 사실 놀고 있습니다!'&&bold[0].parentElement===paragraphs[0]&&paragraphs[0].textContent.endsWith('이 사실에 은근히 무시당하고 있지만, 본인은 인정하지 않는 중이라네요.')&&paragraphs[1].textContent==='고압적이지만, 칭찬과 반격에 약한 영애님입니다.'&&!section.textContent.includes('(하이퍼링크)')}));
     const saved=await p.evaluate(()=>localStorage.getItem(journeySave.key)),url=p.url(),inn=p.locator('.archive-person-biography a').filter({hasText:'힐리아스 여관'});
     check(tag+' Henia biography contains an accessible inn link',await inn.count()===1&&await inn.getAttribute('aria-label')==='힐리아스 여관 설명 보기');
     await inn.focus();await p.keyboard.press('Enter');
