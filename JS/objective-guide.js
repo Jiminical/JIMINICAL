@@ -15,7 +15,7 @@ function createObjectiveGuideModel() {
       checkpoint:["checkpoint","카니아에게 모험가증과 의뢰서 보여 주기"],
       gate:["enter-grove","정문을 지나 그린스토아 숲길로 들어가기"],
       grove: flags.libraryAmbushCleared
-        ? ["enter-library","이슬잎 도서관에 들어가 성역의 기록 확인하기"]
+        ? ["enter-library","뮈르슈의 도서관에 들어가 성역의 기록 확인하기"]
         : ["reach-library","숲길을 따라 다리 너머 도서관으로 향하기"],
       library: flags.libraryLetterRead
         ? ["read-records","세계의 기록과 인물 도감, 프롤로그 웹툰 살펴보기"]

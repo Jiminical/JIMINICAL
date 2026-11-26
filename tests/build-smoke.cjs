@@ -13,11 +13,11 @@ const {gunzipSync}=require('zlib');
   const encoded=worldImages.match(new RegExp('data-'+attribute+'-src="data:image/webp;base64,([^" ]+)"'))[1];
   assert.deepEqual(Buffer.from(encoded,'base64'),fs.readFileSync(path.join(root,'assets',file+'.webp')));
  }
- for(const [attribute,file]of [['mother-tree','world-mother-tree'],['high-elf','world-high-elf'],['half-elf','world-half-elf'],['wood-elf','world-wood-elf'],['peace','world-peace'],['crisis','world-crisis'],['investigation-lucy','world-investigation-lucy'],['investigation-greenstoa','world-investigation-greenstoa']]){
+ for(const [attribute,file]of [['mother-tree','world-mother-tree'],['high-elf','world-high-elf'],['half-elf','world-half-elf'],['wood-elf','world-wood-elf'],['peace','world-peace'],['crisis','world-crisis'],['investigation-lucy','world-investigation-lucy'],['investigation-greenstoa','world-investigation-greenstoa'],['races-overview','world-races-overview'],['race-beast','world-race-beast'],['race-demon','world-race-demon'],['race-monster','world-race-monster']]){
   assert.ok(worldImages.includes('data-'+attribute+'-src="assets/'+file+'.webp"'));
  }
  const companions=JSON.parse(fs.readFileSync(path.join(root,'scripts/offline-assets.json'),'utf8'));
- assert.equal(new Set(companions).size,52);
+ assert.equal(new Set(companions).size,56);
  for(const file of companions){assert.ok(fs.existsSync(path.join(root,file)));assert.ok(html.includes(file));}
  for(let chapter=1;chapter<=9;chapter++){
   const file='assets/opening-'+String(chapter).padStart(2,'0')+'.webp';

@@ -22,7 +22,7 @@ const fieldWorld = (() => {
       npcs: [["sena", 143, 280, "left"]],
       targets: [
         { id: "gate-return", name: "그린스토아 정문", x: 395, y: 444 },
-        { id: "library-entry", name: "이슬잎 도서관", x: 529, y: 191 },
+        { id: "library-entry", name: "뮈르슈의 도서관", x: 529, y: 191 },
         { id: "river-leaf", name: "강가에 내려앉은 잎", x: 116, y: 298 },
         { id: "spring", name: "작은 샘", x: 73, y: 266 },
         { id: "grove-sign", name: "숲길 비석", x: 456, y: 326 },
@@ -33,7 +33,7 @@ const fieldWorld = (() => {
       targets: [{ id: "shop-exit", name: "가게 밖으로", x: 360, y: 444 }],
     },
     library: {
-      names: ["이종족연합국 그린스토아", "이슬잎 도서관"],
+      names: ["이종족연합국 그린스토아", "뮈르슈의 도서관"],
       targets: [
         { id: "library-exit", name: "숲길로 돌아가기", x: 360, y: 439 },
         { id: "archive-world", name: "세계관의 기록", x: 174, y: 269 },

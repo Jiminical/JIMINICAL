@@ -559,7 +559,7 @@ function updateContinue() {
   const saved = journeySave.read(), button = document.querySelector("#continue-button");
   button.hidden = !saved;
   if (saved) {
-    const places = { guild: "모험가 길드", city: "길드 앞 광장", shop: "잡화점", carriage: "동쪽 숲길", checkpoint: "성역 검문소", gate: "그린스토아 정문", grove: "이슬잎 숲길", library: "이슬잎 도서관" };
+    const places = { guild: "모험가 길드", city: "길드 앞 광장", shop: "잡화점", carriage: "동쪽 숲길", checkpoint: "성역 검문소", gate: "그린스토아 정문", grove: "이슬잎 숲길", library: "뮈르슈의 도서관" };
     document.querySelector("#continue-summary").textContent = `${saved.name} · ${places[saved.location]}`;
   }
   selectMenu(0);

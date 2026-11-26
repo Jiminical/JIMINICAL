@@ -167,13 +167,13 @@ const greenstoaLore = (() => {
       personLinks: [{ name: "루시", targetId: "lucy" }],
       dividerBefore: 2,
       bodyImages: {
-        2: { asset: "investigationGreenstoa", width: 1920, height: 1088, alt: "거대한 나무와 폭포, 푸른 수정이 빛나는 그린스토아 전경" },
+        2: { asset: "investigationGreenstoa", width: 1216, height: 704, alt: "어머니 나무와 성역을 바라보는 검은 망토의 모험가" },
       },
     },
     {
       title: "엘프 외의 종족",
       tag: "서로 다른 이웃을 알아가는 일",
-      chapter: 5,
+      hero: { asset: "racesOverview", width: 1216, height: 704, alt: "푸른 하늘 아래 대화하는 고양이 수인 루냐와 슈냐" },
       body: [
         "대륙, 그리고 그린스토아에는 엘프 외에도 마족, 몬스터, 언데드, 수인 등 많은 종족들이 뒤섞여 살아가고 있습니다. 사악하고 적대적인 기운을 내재하지 않는다면 어떠한 종족도 차별 없이 지낼 수 있게 해주는 헬렌의 정책 덕분이죠. 그 때문에 엘프들만으로는 이뤄낼 수 없었던 발전 또한 가능했습니다.",
       ],
@@ -181,17 +181,20 @@ const greenstoaLore = (() => {
       sections: [
         {
           title: "수인",
+          image: { asset: "raceBeast", width: 1216, height: 704, alt: "붉은 마법 문양을 펼치는 드래곤 수인 뮈르슈" },
           body: ["대륙에 존재하는 동물들의 특징이 인간에게 결합되어 태어난 종족입니다. 다만, 두 종족이 반반으로 섞였다기보다는 동물의 특성을 띈 인간에 더 가깝습니다. 그렇기에 육식이나 사냥에 부담을 느끼지 않고, 자신들이 동물과는 다르다는 것을 정확히 인지하고 살아갑니다. 예시로, 캐롤라는 목장의 소들을 친구라고 생각하면서도 사고 파는 데에 전혀 개의치 않습니다."],
           personLinks: [{ name: "캐롤라", targetId: "carola" }],
           members: ["seia", "shunya", "runya", "rael", "carola", "sif"],
         },
         {
           title: "마족",
+          image: { asset: "raceDemon", width: 1216, height: 704, alt: "보랏빛 마력을 두른 검은 갑옷의 마족" },
           body: ["본래 대륙을 위협했던 마족은 성역에서 살아가는 것이 물리적으로 불가했습니다. 하지만 엘프들의 연구로 어머니 나무가 막아내는 것은 마족 그 자체가 아닌 그들이 뿜어내는 '사악한 마력'임을 알아내었고, 이에 가끔씩 나타나던 우호적이고 공존을 원했던 마족들은 그린스토아에서 살아가는 것을 허락받았습니다. 이따금씩 무의식 속의 두려움을 지워내지 못한 시민들이 진위가 불분명한 소문을 퍼뜨리기도 합니다."],
           members: ["ellen", { id: "bran", note: "마인" }, "unrevealed"],
         },
         {
           title: "언데드, 몬스터",
+          image: { asset: "raceMonster", width: 1216, height: 704, alt: "슬라임 추출물이 든 병을 보고 놀란 슬라임 레무" },
           body: ["대륙에 남은 사자의 혼이 죽은 몸에 들어가거나, 대지의 마력으로부터 태어난 존재들입니다. 이들은 적대적인 존재보다는 생과 사 그 어디에도 속하지 않는 부류에 가깝습니다. 그렇기에 본능에 충실한 경우가 많고, 그 중 시민들을 위협하는 존재는 그린스토아에 발을 들일 수 없습니다. 워낙에 개개인의 성격과 특성이 천차만별이기 때문에 이들에 대한 입국 심사는 보다 더 엄격하게 치뤄집니다."],
           members: ["sena", "remu", "seia", "ellen"],
         },

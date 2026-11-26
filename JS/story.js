@@ -309,7 +309,7 @@ const storyJourney = (() => {
       screen.hidden = true;
       title.hidden = true;
       scene.classList.add("is-game-active", "is-story-active");
-      scene.setAttribute("aria-label", directLibrary ? "그린스토아 이슬잎 도서관" : "제르디아 왕국 모험가 길드");
+      scene.setAttribute("aria-label", directLibrary ? "그린스토아 뮈르슈의 도서관" : "제르디아 왕국 모험가 길드");
       phase = "game";
       if (directLibrary) await guildGame.startLibrary(draftName, returnToTitle);
       else await guildGame.start(saved ? saved.name : draftName, returnToTitle, saved);

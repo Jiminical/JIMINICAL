@@ -752,7 +752,7 @@ const guildGame = (() => {
         {
           kind: "rael",
           expression: "playful",
-          text: "이슬잎 도서관에 온 걸 환영해. 난 뮈르슈야.\n먼 길을 왔나? 그럼 잠깐 앉아서 쉬어 보라고.",
+          text: "뮈르슈의 도서관에 온 걸 환영해. 난 뮈르슈야.\n먼 길을 왔나? 그럼 잠깐 앉아서 쉬어 보라고.",
         },
         {
           kind: "rael",
@@ -2355,7 +2355,7 @@ const guildGame = (() => {
         itemList.append(toggle);
       }
       itemDetail.textContent = questAccepted
-        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city", "cliff"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 이슬잎 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
+        ? `의뢰인: 제르디아 기사단\n목적지: 성역 그린스토아\n\n성역에 감도는 이상 징후를 사전 조사한다.\n${["guild", "city", "cliff"].includes(location) || (location === "shop" && shopOrigin === "city") ? "광장의 기사단 마차로 출발하자." : ["gate", "grove", "library"].includes(location) || (location === "shop" && shopOrigin === "grove") ? "정문 통과 완료 · 뮈르슈의 도서관에서 성역의 기록을 읽어 보자." : "그린스토아로 이동 중이다."}`
         : "접수원 루시에게 말을 걸어 보자.";
     } else {
       itemDetail.textContent =
