@@ -194,7 +194,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['장위']=['레무','세이아','엘레나'];
   relationships['루시']=['이보리아','하나리','아르다','기루스'];
   relationships['아르다']=['캐롤라','루시','이보리아'];
+  relationships['하나리']=['이보리아','루시'];
   const copy={
+    '하나리':{
+     '이보리아':['얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.','neutral'],
+     '루시':['접수원. 인기가 많은가 봐. 맡은 일만 열심히 해주면 그만이지만.','neutral'],
+    },
     '아르다':{
      '캐롤라':['우유나 치즈를 가끔 공수해와용. 그린스토아산은 역시 달라용.','neutral'],
      '루시':['길드의 접수원님이세용. 자주 마주치진 않지만 착해보이세용.','neutral'],
@@ -288,6 +293,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('[data-archive-tab="world"]').click();await p.locator('#archive-index button').nth(5).click();await p.locator('.archive-race-members a[data-person="unrevealed"]').click();
     check(tag+' the mystery race icon opens its biography without replaying within the same visit',await p.locator('#archive-page h3').innerText()==='???'&&await p.locator('.archive-mystery-reveal').count()===0&&await p.locator('#archive-index button[aria-pressed="true"]').evaluate(e=>e===document.activeElement));
     await p.emulateMedia({reducedMotion:'reduce'});
+   }
+   if(names[i]==='하나리'){
+    check(tag+' Hanari has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='월화의 꽃'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#무녀','#검사','#월화국_출신','#모험가','#27세'])));
+    check(tag+' Hanari biography preserves the requested three paragraphs',await p.locator('.archive-person-biography p').count()===3&&await p.evaluate(i=>[...document.querySelectorAll('.archive-person-biography p')].map(p=>p.textContent).join('\n')===greenstoaLore.people[i].body.join('\n'),i));
+    await p.locator('.archive-person-biography p').last().scrollIntoViewIfNeeded();await p.screenshot({path:path.join(out,tag+'-hanari-biography.png')});
+    await p.locator('#archive-scroll').evaluate(scroll=>scroll.scrollTop=0);
    }
    if(names[i]==='아르다'){
     check(tag+' Arda has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='잡화점 제빵사'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#제르디아','#잡화점_주인','#제빵_취미','#특이한_말투','#22세'])));
