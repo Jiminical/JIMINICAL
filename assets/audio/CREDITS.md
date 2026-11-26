@@ -1,8 +1,17 @@
 # Audio sources
 
-The sourced music and downloaded effects below are released under **CC0 1.0**:
+The music and effects marked CC0 below are released under **CC0 1.0**:
 https://creativecommons.org/publicdomain/zero/1.0/
 Commercial use, redistribution and adaptation are permitted.
+
+## Carriage and yellow-haired rogue scene music
+
+- BentoMusic — **Sneaky, Evil, Mysterious Conversations - Comical Style**.
+- Owner-supplied track title and Pixabay music ID: **383034**.
+- Original source: https://pixabay.com/music/comedy-sneaky-evil-mysterious-conversations-comical-style-383034/
+- Used as `sneaky-conversations.mp3`: full 97.23-second, 256 kbps MP3, without
+  trimming, recomposition or re-encoding. This track is provided under the
+  Pixabay Content License, rather than the CC0 terms of the effects below.
 
 ## Previous battle theme (retained source, no longer selected)
 

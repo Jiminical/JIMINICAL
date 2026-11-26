@@ -9,15 +9,18 @@ import zipfile
 root = Path(__file__).resolve().parent.parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--output-dir", type=Path, required=True)
+parser.add_argument("--archive-only", action="store_true", help="Skip loose preview copies and write only the ZIP and manifest")
 args = parser.parse_args()
 output = args.output_dir.resolve()
 output.mkdir(parents=True, exist_ok=True)
-shutil.copy2(root / "index.html", output / "greenstoa-portable.html")
+if not args.archive_only:
+    shutil.copy2(root / "index.html", output / "greenstoa-portable.html")
 images = [root / name for name in json.loads((root / "scripts/offline-assets.json").read_text(encoding="utf-8"))]
-for image in images:
-    destination = output / image.relative_to(root)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(image, destination)
+if not args.archive_only:
+    for image in images:
+        destination = output / image.relative_to(root)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(image, destination)
 note = """그린스토아 오프라인 실행
 
 압축을 모두 푼 뒤 index.html을 최신 Chrome 또는 Edge에서 여세요.

@@ -6,22 +6,52 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH}),report={url:process.env.TEST_URL||'http://127.0.0.1:8766/dist-cloudflare/',checks:[],errors:[],measurements:[]};
  const check=(label,ok)=>{assert.ok(ok,label);report.checks.push(label);console.log('PASS '+label)};
- try{for(const [width,height]of [[1280,800],[320,568],[844,390]]){
+ try{for(const [width,height]of (process.env.AUDIO_SINGLE_VIEW?[[390,844]]:[[1280,800],[320,568],[844,390]])){
   const tag=width+'x'+height,ctx=await browser.newContext({viewport:{width,height},hasTouch:width!==1280,reducedMotion:'reduce'});
-  await ctx.addInitScript(()=>{const Audio=window.AudioContext||window.webkitAudioContext,create=Audio.prototype.createMediaElementSource;window.__musicProbes={};Audio.prototype.createMediaElementSource=function(element){const source=create.call(this,element),connect=source.connect.bind(source);source.connect=(destination,...args)=>{const result=connect(destination,...args);if(['battle-music','greenstoa-music'].includes(element.id)){const analyser=this.createAnalyser();analyser.fftSize=2048;destination.connect(analyser);window.__musicProbes[element.id]=analyser}return result};return source}});
+  await ctx.addInitScript(()=>{const Audio=window.AudioContext||window.webkitAudioContext,create=Audio.prototype.createMediaElementSource;window.__musicProbes={};Audio.prototype.createMediaElementSource=function(element){const source=create.call(this,element),connect=source.connect.bind(source);source.connect=(destination,...args)=>{const result=connect(destination,...args);if(['battle-music','greenstoa-music','scene-music'].includes(element.id)){const analyser=this.createAnalyser();analyser.fftSize=2048;destination.connect(analyser);window.__musicProbes[element.id]=analyser}return result};return source}});
   const p=await ctx.newPage();p.on('pageerror',e=>report.errors.push(tag+': '+e.message));p.on('response',r=>{if(r.status()>=400)report.errors.push(tag+': '+r.status()+' '+r.url())});
-  await p.goto(report.url);await p.evaluate(()=>guildGame.ready);await p.locator('#game-sound-toggle').evaluate(e=>e.click());await p.evaluate(async()=>{settings.sound=true;gameAudio.configure({enabled:true,volume:35});await gameAudio.unlock()});
+  await p.goto(report.url,{timeout:120000});await p.waitForFunction(()=>typeof guildGame!=='undefined'&&!document.documentElement.classList.contains('is-loading'),{},{timeout:120000});await p.evaluate(()=>guildGame.ready);await p.locator('#game-sound-toggle').evaluate(e=>e.click());await p.evaluate(async()=>{settings.sound=true;gameAudio.configure({enabled:true,volume:35});await gameAudio.unlock()});
   const state=()=>p.evaluate(()=>guildGame.getState()),press=async()=>{await p.keyboard.press('e');await p.waitForTimeout(65)};
   const start=async save=>{await p.evaluate(async save=>{document.querySelector('.scene').classList.add('is-game-active','is-story-active');document.querySelector('#title-screen').hidden=true;document.querySelector('#story-screen').hidden=true;await guildGame.start(save.name,()=>{},save);guildGame.unlock()},save);await p.waitForTimeout(130)};
   const until=async predicate=>{const end=Date.now()+90000;while(Date.now()<end){if(await predicate(await state()))return;await press()}throw Error('Scene timeout '+JSON.stringify(await state()))};
   const signal=async id=>p.evaluate(id=>{const d=new Float32Array(2048);window.__musicProbes[id].getFloatTimeDomainData(d);return Math.sqrt(d.reduce((s,x)=>s+x*x,0)/d.length)},id);
   check(tag+' Greenstoa reuses original Pixel Memories URL',await p.evaluate(()=>document.querySelector('#greenstoa-music').src===document.querySelector('#opening-music').src));
-  check(tag+' battle selects Makai Toppa Sen',await p.evaluate(()=>document.querySelector('#battle-music').getAttribute('src').endsWith('makai-toppa-sen.mp3')));
+  const battleSource=await p.locator('#battle-music').getAttribute('src');
+  check(tag+' battle selects Makai Toppa Sen',battleSource.startsWith('data:audio/mpeg;base64,')?Buffer.from(battleSource.split(',')[1],'base64').equals(fs.readFileSync(path.join(__dirname,'../assets/audio/makai-toppa-sen.mp3'))):battleSource.endsWith('makai-toppa-sen.mp3'));
   // Prime the city exactly as a player does before traveling to the checkpoint.
   await start(fixture({location:'city',storyStep:'accepted',player:{x:350,y:280,dir:'down'}}));
   await p.emulateMedia({reducedMotion:'no-preference'});await p.evaluate(()=>{settings.motion=true;document.body.classList.remove('no-motion');window.__rogueNature=[];const draw=livingNature.draw;livingNature.draw=function(c,image,key,...rest){if(c.canvas.id==='action-art'){window.__rogueNature.push({key,width:image.width,height:image.height});if(!window.__rogueBackground)window.__rogueBackground=image.toDataURL()}return draw.call(this,c,image,key,...rest)}});
-  await start(fixture({location:'carriage',storyStep:'carriage',player:{x:250,y:326,dir:'right'},npcs:[{id:'rogue',x:466,y:326,dir:'left',talkCount:0}]}));
+  if(width===1280){
+   await start(fixture({location:'city',storyStep:'accepted',player:{x:500,y:341,dir:'down'},npcs:[{id:'edan',x:500,y:365,dir:'right',talkCount:0}]}));
+   const choices=()=>until(async()=>p.locator('#game-choices').isVisible());
+   await press();await choices();await p.locator('#game-choices button').filter({hasText:'마차에 탑승'}).click();await choices();
+   await p.locator('#game-choices button').filter({hasText:'조금 더'}).click();await until(s=>s.phase==='free');
+   check('cancelling boarding leaves the scene track stopped',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused));
+   await press();await choices();await p.locator('#game-choices button').filter({hasText:'마차에 탑승'}).click();await choices();
+   await p.locator('#game-choices button').filter({hasText:'출발한다'}).click();await until(s=>s.phase==='event'&&s.event==='departure');
+   await p.waitForFunction(()=>gameAudio.getSceneMusicState().scene==='carriage'&&!document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime>.1);
+   const boardingOffset=await p.locator('#scene-music').evaluate(e=>e.currentTime);
+   check('boarding starts the supplied scene music',boardingOffset>0);
+   await until(s=>s.location==='carriage'&&s.phase==='dialogue');
+   check('boarding and carriage conversation keep one music playhead',await p.locator('#scene-music').evaluate((e,offset)=>e.currentTime>=offset,boardingOffset));
+  }else await start(fixture({location:'carriage',storyStep:'carriage',player:{x:250,y:326,dir:'right'},npcs:[{id:'rogue',x:466,y:326,dir:'left',talkCount:0}]}));
+  await p.waitForFunction(()=>gameAudio.getSceneMusicState().scene==='carriage'&&!document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime>.6);
+  await p.waitForFunction(()=>{const data=new Float32Array(2048);window.__musicProbes['scene-music'].getFloatTimeDomainData(data);return data.some(x=>Math.abs(x)>1e-5)});
+  check(tag+' carriage plays the full supplied track through its music bus',await signal('scene-music')>1e-5&&await p.locator('#scene-music').evaluate(e=>Math.abs(e.duration-97.23)<.5&&e.loop));
+  check(tag+' other background music is paused during the scene',await p.evaluate(()=>['journey','town','opening','battle','greenstoa'].every(id=>document.querySelector('#'+id+'-music').paused)));
+  await p.evaluate(()=>gameAudio.configure({enabled:false,volume:35}));
+  check(tag+' mute pauses the scene track',await p.locator('#scene-music').evaluate(e=>e.paused));
+  await p.evaluate(()=>gameAudio.configure({enabled:true,volume:0}));
+  check(tag+' zero volume keeps the scene track paused',await p.locator('#scene-music').evaluate(e=>e.paused));
+  await p.evaluate(()=>gameAudio.configure({enabled:true,volume:35}));await p.waitForFunction(()=>!document.querySelector('#scene-music').paused);
+  await until(s=>s.phase==='vista'&&s.vista==='forest');
+  check(tag+' ending the carriage scene stops and resets its music',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime===0));
+  await until(s=>s.location==='checkpoint'&&s.phase==='dialogue'&&s.speaker==='scout');
+  await p.waitForFunction(()=>gameAudio.getSceneMusicState().scene==='rogue'&&!document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime>.25);
+  const rogueOffset=await p.locator('#scene-music').evaluate(e=>e.currentTime);
   await until(s=>s.action==='rogue');await p.waitForTimeout(650);
+  check(tag+' rogue dialogue and exit animation keep the same cue',await p.evaluate(()=>gameAudio.getSceneMusicState().scene==='rogue')&&await p.locator('#scene-music').evaluate((e,offset)=>!e.paused&&e.currentTime>=offset,rogueOffset));
+  check(tag+' rogue cue pauses the other background music',await p.evaluate(()=>['journey','town','opening','battle','greenstoa'].every(id=>document.querySelector('#'+id+'-music').paused)));
   check(tag+' crying scene uses checkpoint effects',await p.evaluate(()=>window.__rogueNature.length>0&&window.__rogueNature.every(r=>r.key==='checkpoint'&&r.width===720&&r.height===480)));
   const painting=await p.evaluate(async()=>{const real=new Image(),expected=new Image();real.src=window.__rogueBackground;expected.src=document.querySelector('#guild-assets').dataset.checkpointSrc;await Promise.all([real.decode(),expected.decode()]);const cv=document.createElement('canvas');cv.width=720;cv.height=480;const c=cv.getContext('2d',{willReadFrequently:true});c.imageSmoothingEnabled=false;c.drawImage(real,0,0);const a=c.getImageData(0,0,720,480).data;c.clearRect(0,0,720,480);const scale=Math.min(720/expected.naturalWidth,480/expected.naturalHeight);c.fillStyle='#121d26';c.fillRect(0,0,720,480);c.drawImage(expected,0,0,expected.naturalWidth,expected.naturalHeight,(720-expected.naturalWidth*scale)/2,(480-expected.naturalHeight*scale)/2,expected.naturalWidth*scale,expected.naturalHeight*scale);const b=c.getImageData(0,0,720,480).data;let difference=0;for(let by=0;by<480;by+=16)for(let bx=0;bx<720;bx+=16)for(let ch=0;ch<3;ch++){let aa=0,bb=0;for(let y=by;y<by+16;y++)for(let x=bx;x<bx+16;x++){const i=(y*720+x)*4+ch;aa+=a[i];bb+=b[i]}difference+=Math.abs(aa-bb)/256}return{mean:difference/(45*30*3),actual:real.src,expected:cv.toDataURL()}});
   for(const name of ['actual','expected'])fs.writeFileSync(path.join(out,tag+'-checkpoint-'+name+'.png'),Buffer.from(painting[name].split(',')[1],'base64'));
@@ -29,8 +59,17 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   // Compare block averages to verify the painting, not that sampling phase.
   report.measurements.push({tag,checkpointBlockMeanDifference:painting.mean});
   check(tag+' crying scene retains the actual checkpoint painting',painting.mean<4);
-  await p.screenshot({path:path.join(out,tag+'-rogue.png')});await until(s=>s.phase==='free'&&s.location==='checkpoint');
+  await p.screenshot({path:path.join(out,tag+'-rogue.png')});
+  if(width===1280){
+   await p.waitForFunction(()=>guildGame.getState().action===null,{},{timeout:15000});
+   check('natural rogue exit stops the track before the following narration',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused));
+  }
+  await until(s=>s.phase==='free'&&s.location==='checkpoint');
   check(tag+' rogue departure and quest progress remain intact',!(await state()).npcs.some(n=>n.id==='rogue')&&(await state()).questAccepted);
+  await p.waitForTimeout(250);
+  check(tag+' rogue scene completion stops its music without a late restart',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime===0));
+  await p.waitForFunction(()=>!document.querySelector('#journey-music').paused);
+  check(tag+' ending the rogue cue restores journey music',await p.evaluate(()=>gameAudio.getJourneyState().active));
   await p.emulateMedia({reducedMotion:'reduce'});
   check(tag+' Greenstoa theme is silent before its introduction',await p.evaluate(()=>!gameAudio.getGreenstoaState().ready&&!gameAudio.getGreenstoaState().active&&document.querySelector('#greenstoa-music').paused));
   await start(fixture({location:'gate',storyStep:'arrival',player:{x:360,y:384,dir:'up'},npcs:[{id:'scout',x:360,y:305,dir:'down',talkCount:0}]}));
@@ -61,6 +100,9 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   }
   await p.evaluate(()=>guildGame.stop());await p.waitForTimeout(400);
   check(tag+' title stops and resets the new theme',await p.evaluate(()=>!gameAudio.getGreenstoaState().ready&&!gameAudio.getGreenstoaState().active&&document.querySelector('#greenstoa-music').paused&&document.querySelector('#greenstoa-music').currentTime===0));
+  await start(fixture({location:'carriage',storyStep:'carriage',player:{x:250,y:326,dir:'right'},npcs:[{id:'rogue',x:466,y:326,dir:'left',talkCount:0}]}));
+  await p.evaluate(()=>guildGame.stop());await p.waitForTimeout(350);
+  check(tag+' leaving a music scene cancels pending playback',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime===0));
   check(tag+' viewport remains inside mobile bounds',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1&&document.documentElement.scrollHeight<=innerHeight+1));
   await ctx.close();
  }

@@ -902,8 +902,8 @@ const guildGame = (() => {
       },
     });
   }
-  function hideAction() {
-    if (actionScenes.kind === "guide") gameAudio.scene(location);
+  function hideAction(kind = actionScenes.kind) {
+    if (["guide", "rogue"].includes(kind)) gameAudio.scene(location);
     actionScenes.stop();
     root.classList.remove("is-action");
     root.classList.remove("is-guide-chat");
@@ -923,6 +923,7 @@ const guildGame = (() => {
       root.dataset.phase = phase;
       root.classList.add("is-action");
       if (kind === "guide") gameAudio.scene("guide");
+      else if (kind === "rogue") gameAudio.scene(location, "rogue");
       document.querySelector(".world-viewport").inert = true;
       actionScenes.prepare({
         kind,
@@ -934,7 +935,8 @@ const guildGame = (() => {
         actors: [...npcs, player].map((a) => ({ ...a })),
         after: () => {
           if (!active) return;
-          hideAction();
+          // The renderer has already cleared its kind before this callback.
+          hideAction(kind);
           phase = "free";
           root.dataset.phase = phase;
           keys.clear();
@@ -1623,6 +1625,7 @@ const guildGame = (() => {
     );
   }
   function checkpointConversation() {
+    gameAudio.scene(location, "rogue");
     speak(
       [
         {

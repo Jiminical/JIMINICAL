@@ -30,6 +30,8 @@ const gameAudio = (() => {
   if (greenstoaTrack?.dataset.sharedSource) greenstoaTrack.src = document.getElementById(greenstoaTrack.dataset.sharedSource).getAttribute("src");
   let greenstoaBus, greenstoaReady = false, greenstoaWanted = false,
     greenstoaStopping = false, greenstoaPlay = null, greenstoaFadeTimer = 0;
+  const sceneMusicTrack = document.querySelector("#scene-music"), sceneMusicLevel = .72;
+  let sceneMusicBus, sceneMusicKey = null, sceneMusicPlay = null, sceneMusicRevision = 0;
   let enabled = false,
     volume = 35,
     place = "title",
@@ -175,11 +177,54 @@ const gameAudio = (() => {
     syncTown();
     syncOpening();
     syncGreenstoa();
+    syncSceneMusic();
+  }
+  function selectSceneMusic(key) {
+    if (sceneMusicKey === key) return;
+    sceneMusicKey = key;
+    sceneMusicRevision++;
+    sceneMusicTrack?.pause();
+    if (sceneMusicTrack) sceneMusicTrack.currentTime = 0;
+    if (sceneMusicBus) {
+      sceneMusicBus.gain.cancelScheduledValues(context.currentTime);
+      sceneMusicBus.gain.setValueAtTime(0, context.currentTime);
+    }
+    if (!key) {
+      // An interrupted field-music play may settle after the cutscene ends.
+      Promise.allSettled([musicPlay, battlePlay, townPlay, openingPlay, greenstoaPlay].filter(Boolean)).then(() => {
+        if (!sceneMusicKey) applyVolume();
+      });
+    }
+  }
+  function syncSceneMusic() {
+    if (!sceneMusicTrack || !sceneMusicBus) return;
+    if (!sceneMusicKey || !usable()) {
+      if (sceneMusicPlay) sceneMusicRevision++;
+      sceneMusicTrack.pause();
+      sceneMusicBus.gain.cancelScheduledValues(context.currentTime);
+      sceneMusicBus.gain.setValueAtTime(0, context.currentTime);
+      return;
+    }
+    if (sceneMusicTrack.paused && !sceneMusicPlay) {
+      const revision = sceneMusicRevision;
+      sceneMusicPlay = sceneMusicTrack.play().then(() => {
+        if (!sceneMusicKey || !usable()) {
+          sceneMusicTrack.pause();
+          if (!sceneMusicKey) sceneMusicTrack.currentTime = 0;
+          return;
+        }
+        sceneMusicBus.gain.cancelScheduledValues(context.currentTime);
+        sceneMusicBus.gain.setTargetAtTime(sceneMusicLevel, context.currentTime, .18);
+      }).catch(() => {}).finally(() => {
+        sceneMusicPlay = null;
+        if (revision !== sceneMusicRevision && sceneMusicKey && usable()) syncSceneMusic();
+      });
+    }
   }
   function syncGreenstoa() {
     if (!greenstoaTrack || !greenstoaBus) return;
-    if (greenstoaStopping) { if (!usable()) greenstoaTrack.pause(); return; }
-    if (!greenstoaWanted || !usable()) {
+    if (greenstoaStopping) { if (!usable() || sceneMusicKey) greenstoaTrack.pause(); return; }
+    if (!greenstoaWanted || !usable() || sceneMusicKey) {
       greenstoaTrack.pause();
       greenstoaBus.gain.cancelScheduledValues(context.currentTime);
       greenstoaBus.gain.setValueAtTime(0, context.currentTime);
@@ -187,7 +232,7 @@ const gameAudio = (() => {
     }
     if (greenstoaTrack.paused && !greenstoaPlay) {
       greenstoaPlay = greenstoaTrack.play().then(() => {
-        if (!greenstoaWanted || !usable()) { greenstoaTrack.pause(); return; }
+        if (!greenstoaWanted || !usable() || sceneMusicKey) { greenstoaTrack.pause(); return; }
         const now = context.currentTime;
         greenstoaBus.gain.cancelScheduledValues(now);
         greenstoaBus.gain.setValueAtTime(0, now);
@@ -233,8 +278,8 @@ const gameAudio = (() => {
   }
   function syncOpening() {
     if (!openingBus || !openingTrack) return;
-    if (openingStopping) { if (!usable()) openingTrack.pause(); return; }
-    if (!openingWanted || !usable()) {
+    if (openingStopping) { if (!usable() || sceneMusicKey) openingTrack.pause(); return; }
+    if (!openingWanted || !usable() || sceneMusicKey) {
       openingTrack.pause();
       openingBus.gain.cancelScheduledValues(context.currentTime);
       openingBus.gain.setValueAtTime(0, context.currentTime);
@@ -244,7 +289,7 @@ const gameAudio = (() => {
       openingBus.gain.cancelScheduledValues(context.currentTime);
       openingBus.gain.setValueAtTime(0, context.currentTime);
       openingPlay = openingTrack.play().then(() => {
-        if (!openingWanted || !usable()) { openingTrack.pause(); return; }
+        if (!openingWanted || !usable() || sceneMusicKey) { openingTrack.pause(); return; }
         // Begin the fade when decoded audio actually starts, even on a slow link.
         const now = context.currentTime;
         openingBus.gain.cancelScheduledValues(now);
@@ -284,12 +329,14 @@ const gameAudio = (() => {
   }
   function syncTown() {
     if (!townBus || !townTrack) return;
-    if (townStopping) { if (!usable()) townTrack.pause(); return; }
-    if (!townWanted || !usable()) { townTrack.pause(); townBus.gain.setTargetAtTime(0, context.currentTime, .04); return; }
+    if (townStopping) { if (!usable() || sceneMusicKey) townTrack.pause(); return; }
+    if (!townWanted || !usable() || sceneMusicKey) { townTrack.pause(); townBus.gain.setTargetAtTime(0, context.currentTime, .04); return; }
     if (townTrack.paused && !townPlay) {
       townBus.gain.cancelScheduledValues(context.currentTime);
       townBus.gain.setTargetAtTime(townLevel, context.currentTime, .65);
-      townPlay = townTrack.play().catch(() => {}).finally(() => { townPlay = null; });
+      townPlay = townTrack.play().then(() => {
+        if (!townWanted || !usable() || sceneMusicKey) townTrack.pause();
+      }).catch(() => {}).finally(() => { townPlay = null; });
     }
   }
   function startTown() {
@@ -338,15 +385,15 @@ const gameAudio = (() => {
   }
   function syncBattle() {
     if (!battleTrack || !battleBus) return;
-    if (battleStopping) { if (!usable()) battleTrack.pause(); return; }
-    if (!battleWanted || !usable()) {
+    if (battleStopping) { if (!usable() || sceneMusicKey) battleTrack.pause(); return; }
+    if (!battleWanted || !usable() || sceneMusicKey) {
       battleTrack.pause(); battleBus.gain.setTargetAtTime(0, context.currentTime, .025); return;
     }
     if (battleTrack.paused && !battlePlay) {
       battleBus.gain.cancelScheduledValues(context.currentTime);
       battleBus.gain.setTargetAtTime(battleLevel(), context.currentTime, .18);
       battlePlay = battleTrack.play().then(() => {
-        if (!battleWanted || !usable()) battleTrack.pause();
+        if (!battleWanted || !usable() || sceneMusicKey) battleTrack.pause();
       }).catch(() => {}).finally(() => { battlePlay = null; });
     }
   }
@@ -387,10 +434,10 @@ const gameAudio = (() => {
   function syncJourney() {
     if (!journeyTrack || !musicBus) return;
     if (musicStopping) {
-      if (!usable()) journeyTrack.pause();
+      if (!usable() || sceneMusicKey) journeyTrack.pause();
       return;
     }
-    if (!journeyWanted || !usable()) {
+    if (!journeyWanted || !usable() || sceneMusicKey) {
       journeyTrack.pause();
       musicBus.gain.setTargetAtTime(0, context.currentTime, 0.035);
       return;
@@ -399,7 +446,10 @@ const gameAudio = (() => {
     if (journeyTrack.paused && !musicPlay) {
       musicBus.gain.cancelScheduledValues(context.currentTime);
       musicBus.gain.setTargetAtTime(musicLevel, context.currentTime, 0.7);
-      musicPlay = journeyTrack.play().then(seekJourney).catch(() => {}).finally(() => { musicPlay = null; });
+      musicPlay = journeyTrack.play().then(() => {
+        if (!journeyWanted || !usable() || sceneMusicKey) { journeyTrack.pause(); return; }
+        seekJourney();
+      }).catch(() => {}).finally(() => { musicPlay = null; });
     }
   }
   function seekJourney() {
@@ -444,7 +494,8 @@ const gameAudio = (() => {
   function ambientLevel() {
     return (landscapes[place] || landscapes.title).wind;
   }
-  function scene(next) {
+  function scene(next, score = ["departure", "carriage"].includes(next) ? "carriage" : null) {
+    selectSceneMusic(score);
     if (next === "title") greenstoaReady = false;
     if (greenstoaReady && greenstoaPlaces.has(next)) {
       if (journeyWanted || musicStopping) stopJourney(.35);
@@ -462,6 +513,7 @@ const gameAudio = (() => {
     }
     if (next === "battle") startBattle();
     else if (battleWanted) stopBattle(.25);
+    applyVolume();
     if (place === next && sceneryClock) return;
     place = next;
     if (!ambience) return;
@@ -608,6 +660,8 @@ const gameAudio = (() => {
         context.createMediaElementSource(openingTrack).connect(openingBus);
         greenstoaBus = context.createGain(); greenstoaBus.gain.value = 0; greenstoaBus.connect(master);
         context.createMediaElementSource(greenstoaTrack).connect(greenstoaBus);
+        sceneMusicBus = context.createGain(); sceneMusicBus.gain.value = 0; sceneMusicBus.connect(master);
+        context.createMediaElementSource(sceneMusicTrack).connect(sceneMusicBus);
         const limiter = context.createDynamicsCompressor();
         limiter.threshold.value = -15;
         limiter.knee.value = 12;
@@ -658,7 +712,7 @@ const gameAudio = (() => {
         waterFilter.connect(waterBed);
         waterBed.connect(sceneryBus);
         river.start();
-        scene(place);
+        scene(place, sceneMusicKey);
         wind.start();
         context.onstatechange = () => {
           applyVolume();
@@ -797,6 +851,11 @@ const gameAudio = (() => {
       musicBus.gain.cancelScheduledValues(lastVoice);
       musicBus.gain.setTargetAtTime(0.65, lastVoice, 0.045);
       musicBus.gain.setTargetAtTime(musicLevel, lastVoice + 0.2, 0.55);
+    }
+    if (sceneMusicKey && sceneMusicBus) {
+      sceneMusicBus.gain.cancelScheduledValues(lastVoice);
+      sceneMusicBus.gain.setTargetAtTime(sceneMusicLevel * .55, lastVoice, .04);
+      sceneMusicBus.gain.setTargetAtTime(sceneMusicLevel, lastVoice + .2, .5);
     }
     if (battleWanted && battleBus && !battleStopping) {
       battleBus.gain.cancelScheduledValues(lastVoice);
@@ -1039,12 +1098,14 @@ const gameAudio = (() => {
   townTrack?.addEventListener("canplay", syncTown);
   openingTrack?.addEventListener("canplay", syncOpening);
   greenstoaTrack?.addEventListener("canplay", syncGreenstoa);
+  sceneMusicTrack?.addEventListener("canplay", syncSceneMusic);
   const retryMusic = () => {
     if (journeyWanted && journeyTrack?.paused) syncJourney();
     if (battleWanted && battleTrack?.paused) syncBattle();
     if (townWanted && townTrack?.paused) syncTown();
     if (openingWanted && openingTrack?.paused) syncOpening();
     if (greenstoaWanted && greenstoaTrack?.paused) syncGreenstoa();
+    if (sceneMusicKey && sceneMusicTrack?.paused) syncSceneMusic();
   };
   document.addEventListener("pointerdown", retryMusic, { passive: true });
   document.addEventListener("keydown", retryMusic, { passive: true });
@@ -1065,6 +1126,7 @@ const gameAudio = (() => {
     getOpeningState: () => ({ active: openingWanted, offset: openingTrack?.currentTime ?? 0, gain: openingBus?.gain.value ?? 0 }),
     getGreenstoaState: () => ({ ready: greenstoaReady, active: greenstoaWanted, offset: greenstoaTrack?.currentTime ?? 0, gain: greenstoaBus?.gain.value ?? 0 }),
     getJourneyState: () => ({ active: journeyWanted, offset: journeySeek ?? journeyTrack?.currentTime ?? 0 }),
+    getSceneMusicState: () => ({ active: Boolean(sceneMusicKey), scene: sceneMusicKey, offset: sceneMusicTrack?.currentTime ?? 0 }),
     stopVoice: () => stopTransient("voice"),
     stopTransient,
     get unlocked() {
