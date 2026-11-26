@@ -1,4 +1,4 @@
-"""Bundle the embedded game and companion library artwork for offline reading."""
+"""Bundle the embedded game and companion illustrations for offline play."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -21,7 +21,7 @@ for image in images:
 note = """그린스토아 오프라인 실행
 
 압축을 모두 푼 뒤 index.html을 최신 Chrome 또는 Edge에서 여세요.
-assets 폴더 전체를 함께 보관하면 도서관 웹툰과 어머니 나무·엘프 그림도 인터넷 없이 읽을 수 있습니다.
+assets 폴더 전체를 함께 보관하면 오프닝 그림과 도서관 웹툰·세계관 그림도 인터넷 없이 읽을 수 있습니다.
 웹툰 순서: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 10
 웹툰의 원본 화질과 WebP 애니메이션을 보존했습니다.
 """

@@ -2,7 +2,7 @@
 
 Run: python3 scripts/build-standalone.py
 The generated index.html embeds the core game styles, script and backgrounds.
-Companion library artwork listed in offline-assets.json stays beside the HTML.
+Companion illustrations listed in offline-assets.json stay beside the HTML.
 """
 
 from pathlib import Path
@@ -34,7 +34,7 @@ script = minify(script, "js")
 asset_refs = sorted(set(re.findall(r"(?:\.\./)?assets/[a-zA-Z0-9_./-]+\.(?:png|webp|mp3)", page + "\n" + styles)))
 external_assets = set(json.loads((ROOT / "scripts/offline-assets.json").read_text(encoding="utf-8")))
 for ref in asset_refs:
-    # Keep companion library art byte-for-byte beside the HTML, leaving the
+    # Keep companion illustrations byte-for-byte beside the HTML, leaving the
     # portable game below GitHub's 100 MiB per-file limit without quality loss.
     if ref.removeprefix("../") in external_assets:
         continue
@@ -81,7 +81,7 @@ assert '<style id="greenstoa-styles">' in page
 assert '<script id="greenstoa-script">' in page
 assert 'data-sprite-src="data:image/webp;base64,' in page
 for chapter in range(1, 10):
-    assert f'data-chapter{chapter}-src="data:image/webp;base64,' in page
+    assert f'data-chapter{chapter}-src="assets/opening-{chapter:02}.webp"' in page
 for attribute in ('lucy', 'cast', 'kania', 'rogue', 'guild', 'carriage', 'checkpoint', 'gate', 'sanctuary', 'events', 'event-props', 'sd-hero', 'sd-rogue', 'city', 'grove', 'shop', 'sd-kania', 'library', 'guide-forest', 'guide-kania'):
     assert 'data-' + attribute + '-src="data:image/webp;base64,' in page
 for attribute in ('demon-actions', 'item-specimens', 'first-person-arms', 'forest-ambush', 'journey-carriage'):
