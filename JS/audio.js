@@ -494,7 +494,7 @@ const gameAudio = (() => {
   function ambientLevel() {
     return (landscapes[place] || landscapes.title).wind;
   }
-  function scene(next, score = ["departure", "carriage"].includes(next) ? "carriage" : null) {
+  function scene(next, score = null) {
     selectSceneMusic(score);
     if (next === "title") greenstoaReady = false;
     if (greenstoaReady && greenstoaPlaces.has(next)) {

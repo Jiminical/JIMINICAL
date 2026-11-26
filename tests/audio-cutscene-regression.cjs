@@ -21,19 +21,21 @@ const fixture=(patch={})=>({version:1,savedAt:Date.now(),name:'여행자',resume
   // Prime the city exactly as a player does before traveling to the checkpoint.
   await start(fixture({location:'city',storyStep:'accepted',player:{x:350,y:280,dir:'down'}}));
   await p.emulateMedia({reducedMotion:'no-preference'});await p.evaluate(()=>{settings.motion=true;document.body.classList.remove('no-motion');window.__rogueNature=[];const draw=livingNature.draw;livingNature.draw=function(c,image,key,...rest){if(c.canvas.id==='action-art'){window.__rogueNature.push({key,width:image.width,height:image.height});if(!window.__rogueBackground)window.__rogueBackground=image.toDataURL()}return draw.call(this,c,image,key,...rest)}});
-  if(width===1280){
+  if(width===1280||process.env.AUDIO_SINGLE_VIEW){
    await start(fixture({location:'city',storyStep:'accepted',player:{x:500,y:341,dir:'down'},npcs:[{id:'edan',x:500,y:365,dir:'right',talkCount:0}]}));
    const choices=()=>until(async()=>p.locator('#game-choices').isVisible());
    await press();await choices();await p.locator('#game-choices button').filter({hasText:'마차에 탑승'}).click();await choices();
    await p.locator('#game-choices button').filter({hasText:'조금 더'}).click();await until(s=>s.phase==='free');
    check('cancelling boarding leaves the scene track stopped',await p.evaluate(()=>!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused));
+   await p.evaluate(()=>{window.__boardingMusicLeaks=0;document.querySelector('#scene-music').addEventListener('play',()=>{if(guildGame.getState().event==='departure')window.__boardingMusicLeaks++})});
    await press();await choices();await p.locator('#game-choices button').filter({hasText:'마차에 탑승'}).click();await choices();
    await p.locator('#game-choices button').filter({hasText:'출발한다'}).click();await until(s=>s.phase==='event'&&s.event==='departure');
+   await p.waitForTimeout(350);
+   check(tag+' boarding cutscene leaves the supplied music stopped at its beginning',await p.evaluate(()=>guildGame.getState().event==='departure'&&!gameAudio.getSceneMusicState().active&&document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime===0));
+   if(width===1280)await p.waitForFunction(()=>guildGame.getState().location==='carriage'&&guildGame.getState().phase==='dialogue',{},{timeout:15000});
+   else await until(s=>s.location==='carriage'&&s.phase==='dialogue');
    await p.waitForFunction(()=>gameAudio.getSceneMusicState().scene==='carriage'&&!document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime>.1);
-   const boardingOffset=await p.locator('#scene-music').evaluate(e=>e.currentTime);
-   check('boarding starts the supplied scene music',boardingOffset>0);
-   await until(s=>s.location==='carriage'&&s.phase==='dialogue');
-   check('boarding and carriage conversation keep one music playhead',await p.locator('#scene-music').evaluate((e,offset)=>e.currentTime>=offset,boardingOffset));
+   check(tag+(width===1280?' natural boarding completion':' skipping boarding')+' starts the music with carriage dialogue, with no earlier playback',await p.evaluate(()=>window.__boardingMusicLeaks===0&&guildGame.getState().event===null));
   }else await start(fixture({location:'carriage',storyStep:'carriage',player:{x:250,y:326,dir:'right'},npcs:[{id:'rogue',x:466,y:326,dir:'left',talkCount:0}]}));
   await p.waitForFunction(()=>gameAudio.getSceneMusicState().scene==='carriage'&&!document.querySelector('#scene-music').paused&&document.querySelector('#scene-music').currentTime>.6);
   await p.waitForFunction(()=>{const data=new Float32Array(2048);window.__musicProbes['scene-music'].getFloatTimeDomainData(data);return data.some(x=>Math.abs(x)>1e-5)});

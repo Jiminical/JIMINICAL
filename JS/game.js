@@ -1579,6 +1579,7 @@ const guildGame = (() => {
     );
   }
   function carriageConversation() {
+    gameAudio.scene(location, "carriage");
     speak(
       [
         {
