@@ -253,6 +253,24 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
    const firstMystery=names[i]==='???',savedBeforeMystery=firstMystery?await p.evaluate(()=>localStorage.getItem(journeySave.key)):null;
    if(firstMystery&&width!==844)await p.emulateMedia({reducedMotion:'no-preference'});
    await p.locator('#archive-index button').nth(i).click();
+   if(names[i]==='뮈르슈'){
+    check(tag+' Muirshu aside waits until the profile is scrolled to its end',await p.locator('.archive-muirshu-aside').count()===0);
+    await p.locator('.archive-person-image').evaluate(image=>image.decode());
+    const save=await p.evaluate(()=>localStorage.getItem(journeySave.key));
+    await p.locator('#archive-scroll').focus();await p.keyboard.press('End');
+    const aside=p.locator('.archive-muirshu-aside');await aside.waitFor();
+    const readingPosition=await p.locator('#archive-scroll').evaluate(e=>e.scrollTop);
+    check(tag+' reaching Muirshu profile end opens the requested one-line dialogue',await p.locator('#archive-muirshu-aside-name').innerText()==='뮈르슈'&&await p.locator('#archive-muirshu-aside-line').innerText()==='...남의 뒤를 캐는 버릇이 있나?'&&await aside.getAttribute('aria-modal')==='true'&&await p.locator('#library-reader').evaluate(e=>e.inert)&&await aside.evaluate(e=>e.contains(document.activeElement)));
+    check(tag+' Muirshu dialogue fits the viewport with a reachable touch control',await p.locator('.archive-muirshu-aside-box').evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})&&await aside.locator('button').evaluate(e=>e.getBoundingClientRect().height>=44));
+    await p.screenshot({path:path.join(out,tag+'-muirshu-aside.png')});
+    if(width===320)await aside.locator('button').click();else await p.keyboard.press(width===844?'Escape':'e');
+    await aside.waitFor({state:'detached'});
+    check(tag+' dismissing the aside preserves the reading position and open book',await p.locator('#archive-scroll').evaluate((e,top)=>e.scrollTop===top,readingPosition)&&await p.locator('#library-reader').evaluate(e=>!e.inert&&!e.hidden)&&await p.evaluate(()=>guildGame.getState().archive==='people'));
+    check(tag+' Muirshu aside preserves game progress',await p.evaluate(saved=>{const progress=raw=>{const {savedAt,journeyMusic,...state}=JSON.parse(raw);return state};return JSON.stringify(progress(localStorage.getItem(journeySave.key)))===JSON.stringify(progress(saved))},save));
+    await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=0);await p.locator('#archive-scroll').focus();await p.keyboard.press('End');await p.waitForTimeout(100);
+    check(tag+' scrolling to the same profile end does not repeat the aside',await p.locator('.archive-muirshu-aside').count()===0);
+    await p.locator('#archive-scroll').evaluate(e=>e.scrollTop=0);
+   }
    if(firstMystery){
     const reveal=p.locator('.archive-mystery-reveal');await reveal.waitFor();
     check(tag+' first mystery visit starts a full-screen blackout with an accessible skip control',await reveal.evaluate(e=>{const r=e.getBoundingClientRect();return r.left===0&&r.top===0&&r.width===innerWidth&&r.height===innerHeight&&e.getAttribute('aria-modal')==='true'&&document.querySelector('#library-reader').inert&&getComputedStyle(document.querySelector('#archive-page')).visibility==='hidden'&&e.contains(document.activeElement)})&&await reveal.locator('button').evaluate(e=>e.getBoundingClientRect().height>=44));

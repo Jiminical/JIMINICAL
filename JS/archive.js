@@ -14,6 +14,44 @@ const libraryArchive = (() => {
   let scrollFrame = 0;
   // One reveal per page visit; reloading starts a fresh visit.
   let mysteryRevealed = false, mysteryReveal = null;
+  let muirshuAsideSeen = false, muirshuAside = null;
+  function closeMuirshuAside(focus = false) {
+    const aside = muirshuAside;
+    if (!aside) return;
+    muirshuAside = null;
+    aside.overlay.remove();
+    root.inert = false;
+    if (focus && state && !root.hidden) {
+      const previous = aside.previousFocus;
+      (previous?.isConnected && root.contains(previous) ? previous : scroll).focus({preventScroll:true});
+    }
+  }
+  function showMuirshuAside() {
+    if (muirshuAsideSeen || muirshuAside || mysteryReveal || !state || root.hidden) return;
+    const overlay = document.createElement("div"), box = document.createElement("section"),
+      name = document.createElement("h3"), line = document.createElement("p"), button = document.createElement("button");
+    overlay.className = "archive-muirshu-aside";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "archive-muirshu-aside-name");
+    overlay.setAttribute("aria-describedby", "archive-muirshu-aside-line");
+    box.className = "archive-muirshu-aside-box";
+    name.id = "archive-muirshu-aside-name";
+    name.textContent = "뮈르슈";
+    line.id = "archive-muirshu-aside-line";
+    line.textContent = "...남의 뒤를 캐는 버릇이 있나?";
+    button.type = "button";
+    button.textContent = "계속 읽기 · E";
+    button.addEventListener("click", () => closeMuirshuAside(true));
+    overlay.addEventListener("click", event => { if (event.target === overlay) closeMuirshuAside(true); });
+    box.append(name, line, button);
+    overlay.append(box);
+    muirshuAside = {overlay, button, previousFocus:document.activeElement};
+    muirshuAsideSeen = true;
+    root.inert = true;
+    document.body.append(overlay);
+    button.focus({preventScroll:true});
+  }
   function finishMysteryReveal(remember = false, focus = false) {
     const reveal = mysteryReveal;
     if (!reveal) return;
@@ -148,6 +186,7 @@ const libraryArchive = (() => {
       scrollMore.hidden = !more;
       pane.classList.toggle("has-more", more);
       pane.classList.toggle("is-scrolled", Boolean(state) && scroll.scrollTop > 6);
+      if (state && tab === "people" && greenstoaLore.people[selected]?.id === "rael" && scroll.scrollTop > 6 && !more) showMuirshuAside();
     });
   }
   function scrollPage(delta, smooth = false) {
@@ -399,6 +438,7 @@ const libraryArchive = (() => {
     }
   }
   function render() {
+    closeMuirshuAside();
     if (!state) return;
     finishMysteryReveal();
     root.classList.toggle("is-mystery", tab === "people" && greenstoaLore.people[selected]?.portraitEffect === "arcane");
@@ -614,6 +654,7 @@ const libraryArchive = (() => {
       .focus({ preventScroll: true });
   }
   function hide() {
+    closeMuirshuAside();
     finishMysteryReveal();
     root.classList.remove("is-mystery");
     state = null;
@@ -631,6 +672,11 @@ const libraryArchive = (() => {
   }
   function handle(code, repeat = false, shift = false) {
     if (!state) return false;
+    if (muirshuAside) {
+      if (code === "Tab") muirshuAside.button.focus({preventScroll:true});
+      else if (!repeat && ["Enter", "Space", "KeyE", "Escape", "KeyC"].includes(code)) closeMuirshuAside(true);
+      return true;
+    }
     if (mysteryReveal) {
       if (code === "Tab") mysteryReveal.skip.focus({preventScroll:true});
       else if (!repeat && ["Enter", "Space", "KeyE"].includes(code)) finishMysteryReveal(true, true);
