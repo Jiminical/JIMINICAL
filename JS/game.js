@@ -1181,6 +1181,8 @@ const guildGame = (() => {
       else portraitFrames.set(frameKey, [sx, sy, cw, ch]);
     }
     [sx, sy, cw, ch] = portraitFrames.get(frameKey);
+    // Frame Iboria above the waist in dialogue; codex portraits keep the full bust.
+    if (kind === "bran" && target === portrait) ch = Math.round(ch * 0.84);
     const scale = Math.min((target.width - 12) / cw, (target.height - 12) / ch);
     c.imageSmoothingEnabled = false;
     // Fit the full width of the portrait and remove only its transparent padding.
