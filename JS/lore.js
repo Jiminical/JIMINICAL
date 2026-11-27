@@ -368,6 +368,20 @@ const greenstoaLore = (() => {
       "body": "거칠게 층을 낸 검은 머리와 보랏빛 반사광, 회색 눈과 단정한 인상, 섬세한 음각 무늬가 있는 은빛 판금갑옷, 검은 사슬갑옷, 붉은 목도리와 망토. 냉철하게 상황을 판단하고 사적인 감정을 임무에서 배제하려 하지만, 국민과 여행자에게는 차분하고 온화하게 대한다. 무니아의 능력을 신뢰하면서도 근무 태도에는 선을 긋는다."
     },
     {
+      id: "aiherde",
+      name: "아이헤르데",
+      portraitSrc: "",
+      portraitKind: "unrevealed",
+      tags: ["마법탐구자", "과묵함", "제르디아 왕국", "피지컬", "35세"],
+      role: "전신갑주의 지식인",
+      summary: "전신갑주의 지식인",
+      quote: "강인한 육체 또한 학자의 소양이다.",
+      body: [
+        "라는 말을 입에 달고 사는 제르디아의 마법탐구자입니다. 실제로 191cm의 큰 키와 다부진 체격을 지니고 있으며, 한 치의 빈틈도 찾아볼 수 없는 전신 금 갑주가 특징입니다. 직업과 어울리는 외모는 아니다만 능력은 뛰어납니다.",
+        "박식하지만 제르디아 외부에서 사용되는 마법에는 별로 흥미가 없습니다.",
+      ],
+    },
+    {
       "id": "bran",
       "name": "이보리아",
       "portraitSrc": "assets/person-ivoria.webp",
@@ -651,9 +665,14 @@ const greenstoaLore = (() => {
     "body": "그린스토아 이곳저곳을 돌아다니며 상등품 술을 찾는 정령술사입니다. 소요를 좋아하여 자연발생하듯 나타나 짧게 머무르는 생활을 하며, 이따금씩 그린스토아 밖에서도 나타나고는 합니다. 앳되어보이는 외견과 달리 나이가 많은 편이고 하루 종일 술과 함께하며 성격도 시니컬합니다. 예법이나 지위같은 고리타분한 것들은 그녀의 취향이 아닙니다."
   };
   const personRelationships = {
+    aiherde: [
+      { targetId: "godric", relation: "...간신배", emotion: "neutral" },
+      { targetId: "lucy", relation: "접수원.", emotion: "neutral" },
+      { targetId: "edan", relation: "충신이다.", emotion: "neutral" },
+    ],
     bran: [
       { targetId: "mia", relation: "술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!", emotion: "neutral" },
-      { targetId: "lucy", relation: "접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않으면 불가능하겠지만.", emotion: "neutral" },
+      { targetId: "lucy", relation: "접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않는 이상 불가능하겠지만.", emotion: "neutral" },
     ],
     mia: [
       { targetId: "bran", relation: "얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.", emotion: "neutral" },

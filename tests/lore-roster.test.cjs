@@ -32,10 +32,17 @@ test('existing portraits and biographies stay attached to their original actors'
   assert.equal(people[0].portraitKind,'title');assert.equal(people[0].name,'마르에리');
 });
 test('new supporting characters are separate people, without borrowed artwork or biographies',()=>{
-  for(const name of ['아이헤르데','보르드','고드릭']){
+  for(const name of ['보르드','고드릭']){
     const person=people.find(p=>p.name===name);assert.equal(person.portraitKind,'unrevealed');assert.equal(person.portraitSrc,'');assert.match(person.body,/공개되지/);
     assert.ok(!['nara','tobin','leon'].includes(person.id));
   }
+  const aiherde=people.find(p=>p.id==='aiherde');
+  assert.equal(aiherde.portraitKind,'unrevealed');assert.equal(aiherde.portraitSrc,'');
+  assert.equal(aiherde.role,'전신갑주의 지식인');
+  assert.deepEqual(aiherde.tags,['마법탐구자','과묵함','제르디아 왕국','피지컬','35세']);
+  assert.equal(aiherde.quote,'강인한 육체 또한 학자의 소양이다.');
+  assert.equal(aiherde.body.length,2);assert.match(aiherde.body[0],/^라는 말을.*191cm.*전신 금 갑주/);
+  assert.equal(aiherde.body[1],'박식하지만 제르디아 외부에서 사용되는 마법에는 별로 흥미가 없습니다.');
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.body&&(p.id==='unrevealed'||p.role&&p.summary)));
   const mystery=people.find(p=>p.id==='unrevealed');
@@ -44,7 +51,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the nineteen requested sources and keep the requested target order',()=>{
+test('relationships exist only for the twenty requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -56,7 +63,8 @@ test('relationships exist only for the nineteen requested sources and keep the r
   expected['아르다']=['캐롤라','루시','이보리아'];
   expected['하나리']=['이보리아','루시'];
   expected['이보리아']=['하나리','루시'];
-  assert.equal(people.filter(p=>p.relationships.length).length,19);
+  expected['아이헤르데']=['고드릭','루시','기루스'];
+  assert.equal(people.filter(p=>p.relationships.length).length,20);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -70,9 +78,10 @@ test('relationships exist only for the nineteen requested sources and keep the r
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    aiherde:[['godric','...간신배','neutral'],['lucy','접수원.','neutral'],['edan','충신이다.','neutral']],
     bran:[
       ['mia','술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!','neutral'],
-      ['lucy','접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않으면 불가능하겠지만.','neutral'],
+      ['lucy','접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않는 이상 불가능하겠지만.','neutral'],
     ],
     mia:[
       ['bran','얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.','neutral'],
@@ -120,7 +129,8 @@ test('relationship copy and reactions preserve the requested directional descrip
   };
   for(const [id,links]of Object.entries(expected))assert.deepEqual(people.find(p=>p.id===id).relationships.map(r=>[r.targetIds||r.targetId,r.relation,r.emotion]),links);
   for(const p of people.filter(p=>p.relationships.length)){
-    assert.ok(p.reactionAsset);assert.ok(fs.existsSync(path.join(__dirname,'../assets/reaction-'+p.reactionAsset+'.webp')));
+    if(p.id==='aiherde'){assert.equal(p.portraitKind,'unrevealed');assert.equal(p.reactionAsset,'');}
+    else{assert.ok(p.reactionAsset);assert.ok(fs.existsSync(path.join(__dirname,'../assets/reaction-'+p.reactionAsset+'.webp')));}
     for(const r of p.relationships)assert.ok(['neutral','annoyed','puzzled','flustered'].includes(r.emotion||'neutral'));
     if(!expected[p.id])assert.ok(p.relationships.every(r=>r.relation==='미공개'));
   }

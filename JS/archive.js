@@ -562,6 +562,12 @@ const libraryArchive = (() => {
       const biography = document.createElement("section");
       biography.className = "archive-person-biography";
       biography.setAttribute("aria-label", "자세한 설명");
+      if (person.quote) {
+        const quote = document.createElement("blockquote");
+        quote.className = "archive-person-quote";
+        quote.append(paragraph("“" + person.quote + "”"));
+        biography.append(quote);
+      }
       (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks, person.bodyEmphasis)));
       if (person.role) copy.append(paragraph(person.role, "archive-kicker archive-person-role"));
       copy.append(heading(person.name));

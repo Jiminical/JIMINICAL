@@ -200,10 +200,12 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['아르다']=['캐롤라','루시','이보리아'];
   relationships['하나리']=['이보리아','루시'];
   relationships['이보리아']=['하나리','루시'];
+  relationships['아이헤르데']=['고드릭','루시','기루스'];
   const copy={
+    '아이헤르데':{'고드릭':['...간신배','neutral'],'루시':['접수원.','neutral'],'기루스':['충신이다.','neutral']},
     '이보리아':{
      '하나리':['술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!','neutral'],
-     '루시':['접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않으면 불가능하겠지만.','neutral'],
+     '루시':['접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않는 이상 불가능하겠지만.','neutral'],
     },
     '하나리':{
      '이보리아':['얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.','neutral'],
@@ -397,6 +399,13 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.locator('[data-archive-tab="people"]').click();await p.locator('#archive-index button').nth(i).click();
    }
    if(names[i]==='시프')check(tag+' Sif has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='털 날리는 여행객'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#양_수인','#여행객','#제르디아_출신','#모험가_선망','#21세'])));
+   if(names[i]==='아이헤르데'){
+    check(tag+' Aiherde has the requested role and five hashtags',await p.locator('.archive-person-role').innerText()==='전신갑주의 지식인'&&await p.locator('.archive-person-tags li').allTextContents().then(tags=>JSON.stringify(tags)===JSON.stringify(['#마법탐구자','#과묵함','#제르디아_왕국','#피지컬','#35세'])));
+    const quote=p.locator('blockquote.archive-person-quote');await quote.scrollIntoViewIfNeeded();
+    check(tag+' Aiherde quote is a bordered semantic box before both unchanged paragraphs',await quote.innerText()==='“강인한 육체 또한 학자의 소양이다.”'&&await quote.evaluate(element=>element.parentElement.classList.contains('archive-person-biography')&&element.parentElement.firstElementChild===element&&parseFloat(getComputedStyle(element).borderLeftWidth)>=4)&&await p.locator('.archive-person-biography > p').allTextContents().then(paragraphs=>JSON.stringify(paragraphs)===JSON.stringify(['라는 말을 입에 달고 사는 제르디아의 마법탐구자입니다. 실제로 191cm의 큰 키와 다부진 체격을 지니고 있으며, 한 치의 빈틈도 찾아볼 수 없는 전신 금 갑주가 특징입니다. 직업과 어울리는 외모는 아니다만 능력은 뛰어납니다.','박식하지만 제르디아 외부에서 사용되는 마법에는 별로 흥미가 없습니다.'])));
+    check(tag+' Aiherde quote fits the reading width',await quote.evaluate(element=>{const r=element.getBoundingClientRect(),s=document.querySelector('#archive-scroll').getBoundingClientRect();return r.left>=s.left&&r.right<=s.right&&element.scrollWidth<=element.clientWidth+1}));
+    await p.screenshot({path:path.join(out,tag+'-aiherde-quote.png')});
+   }
    const person=await p.evaluate(i=>({kind:greenstoaLore.people[i].portraitKind,src:greenstoaLore.people[i].portraitSrc,id:greenstoaLore.people[i].id,aspect:greenstoaLore.people[i].portraitAspect||13/7}),i);
    let portraitOk;
    if(person.src){
@@ -425,8 +434,8 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     check(tag+' '+names[i]+' relationship targets have their own icons and unknown people stay unrevealed',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>{if(targets[index]==='당신(플레이어)')return icon.dataset.person==='hero'&&icon.querySelector('canvas');const person=greenstoaLore.people.find(person=>person.name===targets[index]);return icon.dataset.person===person.id&&(!person.reactionAsset?icon.classList.contains('is-unrevealed')&&!icon.querySelector('img'):icon.querySelector('img'))}),targets));
     await p.locator('.archive-relationship-detail .archive-relationship-reaction img').evaluateAll(images=>Promise.all(images.map(i=>i.decode())));
     const faces=await p.locator('.archive-relationship-detail .archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,columns:Number(e.dataset.columns),rows:Number(e.dataset.rows),frame:Number(e.dataset.frame),renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
-    const id=await p.evaluate(i=>greenstoaLore.people[i].id,i);
-    check(tag+' '+names[i]+' shows the correct owner and expression in unclipped compact face sprites',faces.length===rowTargets.length&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[rowTargets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&Math.abs(f.naturalWidth/f.columns-f.naturalHeight/f.rows)<.1&&f.renderedWidth===64*f.columns&&f.renderedHeight===64*f.rows&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
+    const {id,hasReactions}=await p.evaluate(i=>({id:greenstoaLore.people[i].id,hasReactions:Boolean(greenstoaLore.people[i].reactionAsset)}),i);
+    check(tag+' '+names[i]+' shows its own available face reactions without borrowing artwork',faces.length===(hasReactions?rowTargets.length:0)&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[rowTargets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&Math.abs(f.naturalWidth/f.columns-f.naturalHeight/f.rows)<.1&&f.renderedWidth===64*f.columns&&f.renderedHeight===64*f.rows&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
     if(names[i]==='시프'||names[i]==='캐롤라'){
      const groupedIds=names[i]==='시프'?['aran','helen']:['henia','klone'];
      const group=p.locator('.archive-person-relationships li.is-grouped-relationship');await group.scrollIntoViewIfNeeded();

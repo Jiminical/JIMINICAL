@@ -1962,6 +1962,23 @@
 .archive-person-unrevealed > span { font-size: clamp(52px, 8vw, 100px); color: #c9c29d; line-height: 1.2; }
 #archive-page .archive-person-unrevealed p { margin: 12px 0 0; font-size: 13px; letter-spacing: 3px; }
 .archive-person-copy { min-width: 0; overflow-wrap: anywhere; }
+#archive-page .archive-person-quote {
+  max-width: 100%;
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border: 1px solid #657c5e;
+  border-left: 4px solid #d9c78f;
+  background: #273e33;
+  box-shadow: 3px 3px #102420;
+  color: #f0dfaa;
+}
+#archive-page .archive-person-biography .archive-person-quote p {
+  margin: 0;
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.8;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 #archive-page .archive-person-role {
   font-size: 14px;
   line-height: 1.7;
