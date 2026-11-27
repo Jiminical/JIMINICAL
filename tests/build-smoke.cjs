@@ -17,7 +17,12 @@ const {gunzipSync}=require('zlib');
   assert.ok(worldImages.includes('data-'+attribute+'-src="assets/'+file+'.webp"'));
  }
  const companions=JSON.parse(fs.readFileSync(path.join(root,'scripts/offline-assets.json'),'utf8'));
- assert.equal(new Set(companions).size,57);
+ assert.equal(new Set(companions).size,65);
+ for(const name of ['leaders','hall','inn','east','west','south','north','market']){
+  const file='assets/world-administration-'+name+'.webp';
+  assert.ok(companions.includes(file));
+  assert.ok(worldImages.includes('data-administration-'+name+'-src="'+file+'"'));
+ }
  for(const file of companions){assert.ok(fs.existsSync(path.join(root,file)));assert.ok(html.includes(file));}
  for(let chapter=1;chapter<=9;chapter++){
   const file='assets/opening-'+String(chapter).padStart(2,'0')+'.webp';

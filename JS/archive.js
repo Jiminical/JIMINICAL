@@ -490,7 +490,7 @@ const libraryArchive = (() => {
         if (section.members?.length) block.append(personCards(section.members));
         page.append(block);
       });
-      if (!item.hero) {
+      if (!item.hero && !item.sections?.some(section => section.image)) {
         const art = canvas(768, 342);
         art.className = "archive-world-art";
         greenstoaLore.paintChapter(art, item.chapter);
