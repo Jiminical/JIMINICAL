@@ -651,6 +651,10 @@ const greenstoaLore = (() => {
     "body": "그린스토아 이곳저곳을 돌아다니며 상등품 술을 찾는 정령술사입니다. 소요를 좋아하여 자연발생하듯 나타나 짧게 머무르는 생활을 하며, 이따금씩 그린스토아 밖에서도 나타나고는 합니다. 앳되어보이는 외견과 달리 나이가 많은 편이고 하루 종일 술과 함께하며 성격도 시니컬합니다. 예법이나 지위같은 고리타분한 것들은 그녀의 취향이 아닙니다."
   };
   const personRelationships = {
+    bran: [
+      { targetId: "mia", relation: "술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!", emotion: "neutral" },
+      { targetId: "lucy", relation: "접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않으면 불가능하겠지만.", emotion: "neutral" },
+    ],
     mia: [
       { targetId: "bran", relation: "얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.", emotion: "neutral" },
       { targetId: "lucy", relation: "접수원. 인기가 많은가 봐. 맡은 일만 열심히 해주면 그만이지만.", emotion: "neutral" },

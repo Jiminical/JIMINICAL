@@ -44,7 +44,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the eighteen requested sources and keep the requested target order',()=>{
+test('relationships exist only for the nineteen requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -55,7 +55,8 @@ test('relationships exist only for the eighteen requested sources and keep the r
   expected['루시']=['이보리아','하나리','아르다','기루스'];
   expected['아르다']=['캐롤라','루시','이보리아'];
   expected['하나리']=['이보리아','루시'];
-  assert.equal(people.filter(p=>p.relationships.length).length,18);
+  expected['이보리아']=['하나리','루시'];
+  assert.equal(people.filter(p=>p.relationships.length).length,19);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -69,6 +70,10 @@ test('relationships exist only for the eighteen requested sources and keep the r
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    bran:[
+      ['mia','술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!','neutral'],
+      ['lucy','접수원. 피곤에 안 절어있으면 어떤 모습일까 싶은걸! 은퇴하지 않으면 불가능하겠지만.','neutral'],
+    ],
     mia:[
       ['bran','얼마 전에 친해졌어. 뭐, 가끔은 너무 앞서갈 때도 있지만, 괜찮은 녀석이야.','neutral'],
       ['lucy','접수원. 인기가 많은가 봐. 맡은 일만 열심히 해주면 그만이지만.','neutral'],
