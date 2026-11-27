@@ -202,7 +202,7 @@ const greenstoaLore = (() => {
           title: "인간",
           image: { asset: "raceHuman", width: 1216, height: 704, alt: "길드 안에서 취한 이보리아와 그녀를 바라보는 접수원 루시" },
           body: ["가장 나약하면서도 가장 강인한, 대륙 인구의 대부분을 차지하는 종족입니다. 학습력과 창의성이 매우 뛰어나 상대적으로 힘과 지능이 떨어짐에도 모든 고난에 대처할 수 있는, 꺾이지 않는 신성한 열정을 품었습니다. 어떤 국가와 마을을 가도 흔하게 발견할 수 있습니다."],
-          members: ["lucy", "rose", "edan", "bord", "godric", "mia", "aiherde"],
+          members: ["lucy", "rose", "edan", "bord", "godric", "mia", "aiherde", { id: "bran", note: "마인" }],
         },
       ],
     },
