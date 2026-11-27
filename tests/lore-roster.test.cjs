@@ -32,7 +32,7 @@ test('existing portraits and biographies stay attached to their original actors'
   assert.equal(people[0].portraitKind,'title');assert.equal(people[0].name,'마르에리');
 });
 test('new supporting characters are separate people, without borrowed artwork or biographies',()=>{
-  for(const name of ['보르드','고드릭']){
+  for(const name of ['고드릭']){
     const person=people.find(p=>p.name===name);assert.equal(person.portraitKind,'unrevealed');assert.equal(person.portraitSrc,'');assert.match(person.body,/공개되지/);
     assert.ok(!['nara','tobin','leon'].includes(person.id));
   }
@@ -43,6 +43,12 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(aiherde.quote,'강인한 육체 또한 학자의 소양이다.');
   assert.equal(aiherde.body.length,2);assert.match(aiherde.body[0],/^라는 말을.*191cm.*전신 금 갑주/);
   assert.equal(aiherde.body[1],'박식하지만 제르디아 외부에서 사용되는 마법에는 별로 흥미가 없습니다.');
+  const bord=people.find(p=>p.id==='bord');
+  assert.equal(bord.portraitKind,'unrevealed');assert.equal(bord.portraitSrc,'');
+  assert.equal(bord.role,'곧은 동시에 삐뚤어진');
+  assert.deepEqual(bord.tags,['정찰대원','소년미','희귀 남성','인간','20세']);
+  assert.equal(bord.bodyBullets.length,3);assert.equal(bord.body.length,2);
+  assert.deepEqual(bord.bodyEmphasis,[bord.body[0]]);
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.body&&(p.id==='unrevealed'||p.role&&p.summary)));
   const mystery=people.find(p=>p.id==='unrevealed');
@@ -51,7 +57,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the twenty-one requested sources and keep the requested target order',()=>{
+test('relationships exist only for the twenty-two requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -65,11 +71,12 @@ test('relationships exist only for the twenty-one requested sources and keep the
   expected['이보리아']=['하나리','루시'];
   expected['아이헤르데']=['고드릭','루시','기루스'];
   expected['기루스']=['루시','이보리아','하나리'];
-  assert.equal(people.filter(p=>p.relationships.length).length,21);
+  expected['보르드']=['카니아','헬렌','아란'];
+  assert.equal(people.filter(p=>p.relationships.length).length,22);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
-      if(link.targetIds){assert.ok(['sif','carola'].includes(person.id));assert.deepEqual(link.targetIds,person.id==='sif'?['aran','helen']:['henia','klone']);}
+      if(link.targetIds){assert.ok(['sif','carola','bord'].includes(person.id));assert.deepEqual(link.targetIds,person.id==='sif'?['aran','helen']:person.id==='carola'?['henia','klone']:['helen','aran']);}
       return (link.targetIds||[link.targetId]).map(id=>{const target=people.find(p=>p.id===id);assert.ok(target);assert.ok(link.relation);return target.name;});
     });
     assert.deepEqual(targets,expected[person.name]||[],person.name);
@@ -79,6 +86,7 @@ test('relationships exist only for the twenty-one requested sources and keep the
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    bord:[['scout','가끔씩 순찰을 도는 동료. 이봐, 카니아. 왜 자꾸 그렇게 귀찮다는 듯한 눈빛으로 보는 건데?','neutral'],[['helen','aran'],'지도자들. ...대단한 분들이시지. 뭐? 맘에 안 드는 점이라도 말할까 봐? 있지도 않거든.','neutral']],
     edan:[['lucy','길드의 접수원입니다. 능률이 좋은 것 같습니다.','neutral'],['bran','...함구하겠습니다.','neutral'],['mia','월화국 출신의 모험가라는군요. 이질적인 기운이 느껴집니다.','neutral']],
     aiherde:[['godric','...간신배','neutral'],['lucy','접수원.','neutral'],['edan','충신이다.','neutral']],
     bran:[
@@ -131,7 +139,7 @@ test('relationship copy and reactions preserve the requested directional descrip
   };
   for(const [id,links]of Object.entries(expected))assert.deepEqual(people.find(p=>p.id===id).relationships.map(r=>[r.targetIds||r.targetId,r.relation,r.emotion]),links);
   for(const p of people.filter(p=>p.relationships.length)){
-    if(p.id==='aiherde'){assert.equal(p.portraitKind,'unrevealed');assert.equal(p.reactionAsset,'');}
+    if(['aiherde','bord'].includes(p.id)){assert.equal(p.portraitKind,'unrevealed');assert.equal(p.reactionAsset,'');}
     else{assert.ok(p.reactionAsset);assert.ok(fs.existsSync(path.join(__dirname,'../assets/reaction-'+p.reactionAsset+'.webp')));}
     for(const r of p.relationships)assert.ok(['neutral','annoyed','puzzled','flustered'].includes(r.emotion||'neutral'));
     if(!expected[p.id])assert.ok(p.relationships.every(r=>r.relation==='미공개'));

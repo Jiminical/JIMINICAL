@@ -568,6 +568,16 @@ const libraryArchive = (() => {
         quote.append(paragraph("“" + person.quote + "”"));
         biography.append(quote);
       }
+      if (person.bodyBullets?.length) {
+        const points = document.createElement("ul");
+        points.className = "archive-world-points archive-person-points";
+        person.bodyBullets.forEach(text => {
+          const point = document.createElement("li");
+          point.textContent = text;
+          points.append(point);
+        });
+        biography.append(points);
+      }
       (Array.isArray(person.body) ? person.body : [person.body]).forEach(text => biography.append(worldParagraph(text, person.bodyLinks, person.bodyEmphasis)));
       if (person.role) copy.append(paragraph(person.role, "archive-kicker archive-person-role"));
       copy.append(heading(person.name));

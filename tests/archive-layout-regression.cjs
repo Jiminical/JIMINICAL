@@ -202,7 +202,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['이보리아']=['하나리','루시'];
   relationships['아이헤르데']=['고드릭','루시','기루스'];
   relationships['기루스']=['루시','이보리아','하나리'];
+  relationships['보르드']=['카니아','헬렌','아란'];
   const copy={
+    '보르드':{'카니아':['가끔씩 순찰을 도는 동료. 이봐, 카니아. 왜 자꾸 그렇게 귀찮다는 듯한 눈빛으로 보는 건데?','neutral'],'헬렌':['지도자들. ...대단한 분들이시지. 뭐? 맘에 안 드는 점이라도 말할까 봐? 있지도 않거든.','neutral']},
     '기루스':{'루시':['길드의 접수원입니다. 능률이 좋은 것 같습니다.','neutral'],'이보리아':['...함구하겠습니다.','neutral'],'하나리':['월화국 출신의 모험가라는군요. 이질적인 기운이 느껴집니다.','neutral']},
     '아이헤르데':{'고드릭':['...간신배','neutral'],'루시':['접수원.','neutral'],'기루스':['충신이다.','neutral']},
     '이보리아':{
@@ -430,7 +432,7 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     await p.emulateMedia({reducedMotion:'reduce'});
    }else check(tag+' '+names[i]+' has no mystery effects or theme',await p.locator('.archive-person-arcane,.archive-arcane-aura,#library-reader.is-mystery,.archive-mystery-reveal').count()===0);
    const targets=relationships[names[i]]||[];
-   const rowTargets=names[i]==='시프'?['당신(플레이어)','아란','캐롤라']:names[i]==='캐롤라'?targets.filter(name=>name!=='클로네'):targets;
+   const rowTargets=names[i]==='시프'?['당신(플레이어)','아란','캐롤라']:names[i]==='캐롤라'?targets.filter(name=>name!=='클로네'):names[i]==='보르드'?['카니아','헬렌']:targets;
    check(tag+' '+names[i]+' relationship section is limited to the requested people',await p.locator('.archive-person-relationships').count()===(targets.length?1:0)&&await p.locator('.archive-person-relationships .archive-relationship-target').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(targets))&&await p.locator('.archive-relationship-detail').allTextContents().then(actual=>JSON.stringify(actual)===JSON.stringify(rowTargets.map(t=>copy[names[i]]?.[t]?.[0]||'미공개'))));
    if(targets.length){
     check(tag+' '+names[i]+' relationship targets have their own icons and unknown people stay unrevealed',await p.locator('.archive-relationship-target .archive-person-icon').evaluateAll((icons,targets)=>icons.length===targets.length&&icons.every((icon,index)=>{if(targets[index]==='당신(플레이어)')return icon.dataset.person==='hero'&&icon.querySelector('canvas');const person=greenstoaLore.people.find(person=>person.name===targets[index]);return icon.dataset.person===person.id&&(!person.reactionAsset?icon.classList.contains('is-unrevealed')&&!icon.querySelector('img'):icon.querySelector('img'))}),targets));
@@ -438,11 +440,11 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
     const faces=await p.locator('.archive-relationship-detail .archive-relationship-reaction').evaluateAll(es=>es.map(e=>{const r=e.getBoundingClientRect(),i=e.querySelector('img'),s=document.querySelector('#archive-scroll').getBoundingClientRect();return {person:e.dataset.person,emotion:e.dataset.emotion,label:e.getAttribute('aria-label'),width:r.width,height:r.height,naturalWidth:i.naturalWidth,naturalHeight:i.naturalHeight,columns:Number(e.dataset.columns),rows:Number(e.dataset.rows),frame:Number(e.dataset.frame),renderedWidth:i.getBoundingClientRect().width,renderedHeight:i.getBoundingClientRect().height,pixelated:getComputedStyle(i).imageRendering,overflow:getComputedStyle(e).overflow,fits:r.left>=s.left&&r.right<=s.right}}));
     const {id,hasReactions}=await p.evaluate(i=>({id:greenstoaLore.people[i].id,hasReactions:Boolean(greenstoaLore.people[i].reactionAsset)}),i);
     check(tag+' '+names[i]+' shows its own available face reactions without borrowing artwork',faces.length===(hasReactions?rowTargets.length:0)&&faces.every((f,j)=>f.person===id&&f.emotion===(copy[names[i]]?.[rowTargets[j]]?.[1]||'neutral')&&f.label.includes(names[i])&&f.width===64&&f.height===64&&Math.abs(f.naturalWidth/f.columns-f.naturalHeight/f.rows)<.1&&f.renderedWidth===64*f.columns&&f.renderedHeight===64*f.rows&&f.pixelated==='pixelated'&&f.overflow==='hidden'&&f.fits));
-    if(names[i]==='시프'||names[i]==='캐롤라'){
-     const groupedIds=names[i]==='시프'?['aran','helen']:['henia','klone'];
+    if(['시프','캐롤라','보르드'].includes(names[i])){
+     const groupedIds=names[i]==='시프'?['aran','helen']:names[i]==='캐롤라'?['henia','klone']:['helen','aran'];
      const group=p.locator('.archive-person-relationships li.is-grouped-relationship');await group.scrollIntoViewIfNeeded();
-     check(tag+' '+names[i]+' shares one row and reaction for the requested pair',await p.locator('.archive-person-relationships li').count()===rowTargets.length&&await group.count()===1&&await group.evaluate((row,ids)=>{const buttons=[...row.querySelectorAll('button')],rects=buttons.map(button=>button.getBoundingClientRect()),scroll=document.querySelector('#archive-scroll').getBoundingClientRect();return buttons.map(button=>button.dataset.target).join(',')===ids.join(',')&&rects[0].top===rects[1].top&&rects.every(r=>r.left>=scroll.left&&r.right<=scroll.right)&&row.querySelectorAll('.archive-relationship-detail').length===1&&row.querySelectorAll('.archive-relationship-detail .archive-relationship-reaction').length===1&&document.querySelector('#archive-scroll').scrollWidth<=document.querySelector('#archive-scroll').clientWidth+1},groupedIds));
-     await p.screenshot({path:path.join(out,tag+(names[i]==='시프'?'-sif-grouped-leaders.png':'-carola-grouped-acquaintances.png'))});
+     check(tag+' '+names[i]+' shares one row and available reaction for the requested pair',await p.locator('.archive-person-relationships li').count()===rowTargets.length&&await group.count()===1&&await group.evaluate((row,{ids,hasReactions})=>{const buttons=[...row.querySelectorAll('button')],rects=buttons.map(button=>button.getBoundingClientRect()),scroll=document.querySelector('#archive-scroll').getBoundingClientRect();return buttons.map(button=>button.dataset.target).join(',')===ids.join(',')&&rects[0].top===rects[1].top&&rects.every(r=>r.left>=scroll.left&&r.right<=scroll.right)&&row.querySelectorAll('.archive-relationship-detail').length===1&&row.querySelectorAll('.archive-relationship-detail .archive-relationship-reaction').length===(hasReactions?1:0)&&document.querySelector('#archive-scroll').scrollWidth<=document.querySelector('#archive-scroll').clientWidth+1},{ids:groupedIds,hasReactions}));
+     await p.screenshot({path:path.join(out,tag+(names[i]==='시프'?'-sif-grouped-leaders.png':names[i]==='캐롤라'?'-carola-grouped-acquaintances.png':'-bord-grouped-leaders.png'))});
     }else check(tag+' '+names[i]+' retains separate relationship rows',await p.locator('.is-grouped-relationship').count()===0&&await p.locator('.archive-person-relationships li').count()===targets.length);
    }
   }
