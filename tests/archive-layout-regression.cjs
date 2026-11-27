@@ -201,7 +201,9 @@ const fixture={version:1,savedAt:Date.now(),name:'여행자',resume:'world',loca
   relationships['하나리']=['이보리아','루시'];
   relationships['이보리아']=['하나리','루시'];
   relationships['아이헤르데']=['고드릭','루시','기루스'];
+  relationships['기루스']=['루시','이보리아','하나리'];
   const copy={
+    '기루스':{'루시':['길드의 접수원입니다. 능률이 좋은 것 같습니다.','neutral'],'이보리아':['...함구하겠습니다.','neutral'],'하나리':['월화국 출신의 모험가라는군요. 이질적인 기운이 느껴집니다.','neutral']},
     '아이헤르데':{'고드릭':['...간신배','neutral'],'루시':['접수원.','neutral'],'기루스':['충신이다.','neutral']},
     '이보리아':{
      '하나리':['술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!','neutral'],

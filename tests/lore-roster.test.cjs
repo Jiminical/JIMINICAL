@@ -51,7 +51,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(mystery.portraitAspect,1216/704);
   assert.equal(mystery.portraitEffect,'arcane');assert.deepEqual(people.filter(p=>p.portraitEffect).map(p=>p.id),['unrevealed']);
 });
-test('relationships exist only for the twenty requested sources and keep the requested target order',()=>{
+test('relationships exist only for the twenty-one requested sources and keep the requested target order',()=>{
   const expected={'마르에리':['헤니아','헬렌','아란'],'헤니아':['카니아','클로네','헬렌'],'카니아':['헤니아','클로네','레무','헬렌','아란'],'헬렌':['아란','카니아','헤니아','클로네','마르에리'],'아란':['헬렌','카니아','클로네','레무','헤니아'],'클로네':['헬렌','헤니아','뮈르슈'],'레무':['엘레나','카니아','장위'],'루냐':['슈냐','헬렌','엘레나'],'슈냐':['루냐'],'시프':['당신(플레이어)','아란','헬렌','캐롤라'],'엘레나':['레무']};
   expected['뮈르슈']=['클로네','장위'];
   expected['엘레나']=['레무','장위'];
@@ -64,7 +64,8 @@ test('relationships exist only for the twenty requested sources and keep the req
   expected['하나리']=['이보리아','루시'];
   expected['이보리아']=['하나리','루시'];
   expected['아이헤르데']=['고드릭','루시','기루스'];
-  assert.equal(people.filter(p=>p.relationships.length).length,20);
+  expected['기루스']=['루시','이보리아','하나리'];
+  assert.equal(people.filter(p=>p.relationships.length).length,21);
   for(const person of people){
     const targets=person.relationships.flatMap(link=>{
       if(link.targetType==='player'){assert.equal(link.targetId,'hero');assert.equal(person.id,'sif');assert.ok(!people.some(p=>p.id==='hero'));return '당신(플레이어)';}
@@ -78,6 +79,7 @@ test('relationships exist only for the twenty requested sources and keep the req
 });
 test('relationship copy and reactions preserve the requested directional descriptions',()=>{
   const expected={
+    edan:[['lucy','길드의 접수원입니다. 능률이 좋은 것 같습니다.','neutral'],['bran','...함구하겠습니다.','neutral'],['mia','월화국 출신의 모험가라는군요. 이질적인 기운이 느껴집니다.','neutral']],
     aiherde:[['godric','...간신배','neutral'],['lucy','접수원.','neutral'],['edan','충신이다.','neutral']],
     bran:[
       ['mia','술친구 겸 동료. 좀 깐깐해 보여도 은근 마음이 잘 맞아서 말이야!','neutral'],
