@@ -48,7 +48,7 @@ test('new supporting characters are separate people, without borrowed artwork or
   assert.equal(bord.role,'곧은 동시에 삐뚤어진');
   assert.deepEqual(bord.tags,['정찰대원','소년미','희귀 남성','인간','20세']);
   assert.equal(bord.bodyBullets.length,3);assert.equal(bord.body.length,2);
-  assert.deepEqual(bord.bodyEmphasis,[bord.body[0]]);
+  assert.deepEqual(bord.bodyEmphasis,['희귀함의 집합체']);
   assert.equal(people.filter(p=>p.portraitKind==='unrevealed').length,4);
   assert.ok(people.every(p=>typeof p.portraitSrc==='string'&&Array.isArray(p.tags)&&p.body&&(p.id==='unrevealed'||p.role&&p.summary)));
   const mystery=people.find(p=>p.id==='unrevealed');
